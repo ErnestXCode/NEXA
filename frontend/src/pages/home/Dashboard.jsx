@@ -21,12 +21,15 @@ const registerObj = {
 
 const Dashboard = () => {
   const currentUser = useSelector(selectCurrentUser);
+
   const [sidenav, setSidenav] = useState(false);
-  console.log(currentUser)
+  const navigate = useNavigate();
+  // console.log('currentUser', currentUser);
   const handleLogout = async () => {
     try {
       await api.post("/auth/logout");
       store.dispatch(logOut());
+      navigate("/");
     } catch (err) {
       console.error("Logout failed:", err);
     }
@@ -40,7 +43,6 @@ const Dashboard = () => {
   const [canRegister, setCanRegister] = useState(false);
   const [isMatching, setIsMatching] = useState(false);
 
-  const navigate = useNavigate();
   const dispatch = useDispatch();
 
   const handleChange = (e) => {
@@ -83,9 +85,11 @@ const Dashboard = () => {
 
       setMessage("✅ Account created successfully!");
       // maybe redirect after a short timeout
-      console.log(response);
-      dispatch(setCredentials(response.data));
-      // its replacing admin stuff with those personel bad thing
+      // console.log(response);
+      // dispatch(setCredentials(response.data));
+      // its replacing admin stuff with those personel bad thing'
+      // setRegisterDetails(registerObj)
+      
     } catch (err) {
       setMessage(`❌ ${err.response?.data?.msg || "Something went wrong"}`);
     }
@@ -120,7 +124,7 @@ const Dashboard = () => {
                   </section>
 
                   <section className="flex flex-col bg-gray-900 p-2 mt-5 rounded-2xl gap-4">
-                    <NavLink onClick={() => setSidenav(false)} to="/">
+                    <NavLink onClick={() => setSidenav(false)} to="/dashboard">
                       Dashboard
                     </NavLink>
                     <NavLink onClick={() => setSidenav(false)} to="/fees">

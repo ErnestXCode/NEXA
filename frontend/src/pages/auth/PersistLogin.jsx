@@ -1,44 +1,41 @@
 import React, { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { Outlet, Navigate } from "react-router-dom";
+import { setCredentials, logOut } from "../../redux/slices/authSlice";
 import api from "../../api/axios";
-import { logOut, setCredentials } from "../../redux/slices/authSlice";
-
 
 const PersistLogin = () => {
-  const { accessToken, user } = useSelector((state) => state.auth);
-  const dispatch = useDispatch();
-  const [isLoading, setIsLoading] = useState(true);
+//   const userDetails = useSelector((state) => state.auth);
+//   const dispatch = useDispatch();
+//   const [isLoading, setIsLoading] = useState(true);
+ 
 
-  useEffect(() => {
-    const verifyRefreshToken = async () => {
-      try {
-        const res = await api.post("/auth/refresh"); // sends cookie
-        dispatch(setCredentials({ 
-          user: user || res.data.user, 
-          accessToken: res.data.accessToken 
-        }));
-      } catch (err) {
-        console.error("Refresh token failed", err);
-        dispatch(logOut());
-      } finally {
-        setIsLoading(false);
-      }
-    };
+//   useEffect(() => {
+//     const verifyRefreshToken = async () => {
+//       try {
+//         const res = await api.post("/auth/refresh"); // cookie refresh
+//         dispatch(
+//           setCredentials({
+//             ...userDetails,
+//             accessToken: res.data.accessToken,
+//           })
+//         );
+//       } catch (err) {
+//         console.error("Refresh token failed", err);
+//         dispatch(logOut());
+//       } finally {
+//         setIsLoading(false);
+//       }
+//     };
 
-    if (!accessToken) {
-      verifyRefreshToken();
-    } else {
-      setIsLoading(false);
-    }
-  }, []);
+//     verifyRefreshToken();
+//   }, [dispatch]);
 
-//   if (isLoading) return <InitialLoader fullscreen={true} />;
+//   if (isLoading) return <p>Loading...</p>; // while checking refresh
 
-  // If after refresh there’s still no access token, redirect to login
-//   if (!accessToken) return <Navigate to="/login" />;
+//   // if after refresh still no token, force login
+//   if (!userDetails.accessToken) return <Navigate to="/login" replace />;
 
-  // Otherwise render child routes
   return <Outlet />;
 };
 

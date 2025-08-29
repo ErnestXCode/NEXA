@@ -4,6 +4,7 @@ import { Link, NavLink } from "react-router-dom";
 import { logOut, selectCurrentUser } from "../../redux/slices/authSlice";
 import { store } from "../../redux/store";
 import api from "../../api/axios";
+import Dashboard from "./Dashboard";
 
 const Home = () => {
   const [sidenav, setSidenav] = useState(false);
@@ -23,6 +24,7 @@ const Home = () => {
   };
 
   return (
+    <>
     <nav className="p-4 flex gap-4 justify-between items-center pr-10 bg-gray-900">
       <h1 className="font-semibold">
         <Link to="/" className="cursor-pointer">
@@ -51,7 +53,7 @@ const Home = () => {
                   </section>
 
                   <section className="flex flex-col bg-gray-900 p-2 mt-5 rounded-2xl gap-4">
-                    <NavLink onClick={() => setSidenav(false)} to="/">
+                    <NavLink onClick={() => setSidenav(false)} to="/dashboard">
                       Dashboard
                     </NavLink>
                     <NavLink onClick={() => setSidenav(false)} to="/fees">
@@ -81,22 +83,29 @@ const Home = () => {
           </>
         ) : (
           <>
-            <Link
-              className="bg-gray-100 cursor-pointer text-black rounded-2xl p-2 font-semibold hover:bg-black hover:text-white"
-              to="/register"
-            >
-              Register
-            </Link>
-            <Link
-              className="bg-gray-100 cursor-pointer text-black rounded-2xl p-2 font-semibold hover:bg-black hover:text-white"
-              to="/login"
-            >
-              Login
-            </Link>
+            <nav>
+              <Link
+                className="bg-gray-100 cursor-pointer text-black rounded-2xl p-2 font-semibold hover:bg-black hover:text-white"
+                to="/register"
+              >
+                Register
+              </Link>
+              <Link
+                className="bg-gray-100 cursor-pointer text-black rounded-2xl p-2 font-semibold hover:bg-black hover:text-white"
+                to="/login"
+              >
+                Login
+              </Link>
+            </nav>
+            
           </>
         )}
       </section>
     </nav>
+    <main>
+      {'some stories and stuff'}
+    </main>
+        </>
   );
 };
 

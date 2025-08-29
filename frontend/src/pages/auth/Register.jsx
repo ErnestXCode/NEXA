@@ -69,7 +69,7 @@ const Register = () => {
       // maybe redirect after a short timeout
       console.log(response);
       dispatch(setCredentials(response.data));
-      navigate("/");
+      navigate("/dashboard");
     } catch (err) {
       setMessage(`❌ ${err.response?.data?.msg || "Something went wrong"}`);
     }
