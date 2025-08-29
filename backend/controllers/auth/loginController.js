@@ -19,10 +19,10 @@ const handleLogin = async (req, res) => {
   const accessToken = jwt.sign(
     { email, role: foundUser.role, school: foundUser.school },
     process.env.ACCESS_SECRET,
-    { expiresIn: "15s" }
+    { expiresIn: "15m" }
   );
   const refreshToken = jwt.sign({ email }, process.env.REFRESH_SECRET, {
-    expiresIn: "15s",
+    expiresIn: "7d",
   });
 
   const MAX_DEVICES = 5; // max number of active sessions per user

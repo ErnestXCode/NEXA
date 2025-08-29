@@ -2,33 +2,65 @@ const User = require("../../models/User");
 const jwt = require("jsonwebtoken");
 
 const handleTokenRefresh = async (req, res) => {
-  const refreshToken = req.cookies.jwt;
-  if (!refreshToken) return res.sendStatus(401); // no cookie
+  const cookies = req.cookies;
+  if (!cookies?.jwt) return res.sendStatus(401); // No refresh token
+
+  const oldRefreshToken = cookies.jwt;
 
   try {
-    // verify token
-    const decoded = jwt.verify(refreshToken, process.env.REFRESH_SECRET);
+    // Find user with this refresh token
+    const user = await User.findOne({ "refreshTokens.token": oldRefreshToken });
+    if (!user) return res.sendStatus(403); // Token not in DB
 
-    // find user
-    const user = await User.findOne({ email: decoded.email });
-    if (!user) return res.sendStatus(403);
-
-    // check if this refreshToken exists in their array
-    const tokenExists = user.refreshTokens.some(
-      (t) => t.token === refreshToken
-    );
-    if (!tokenExists) return res.sendStatus(403); // invalid token
-
-    // generate new access token
-    const accessToken = jwt.sign(
+    // Verify the old refresh token
+    const decoded = jwt.verify(oldRefreshToken, process.env.REFRESH_SECRET);
+    if(!decoded) return res.sendStatus(403)
+    // ✅ Generate new tokens
+    const newAccessToken = jwt.sign(
       { email: user.email, role: user.role, school: user.school },
       process.env.ACCESS_SECRET,
-      { expiresIn: "5s" }
+      { expiresIn: "15m" }
     );
 
-    res.json({ accessToken });
+    const newRefreshToken = jwt.sign(
+      { email: user.email },
+      process.env.REFRESH_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    // ✅ Replace old refresh token with the new one
+    user.refreshTokens = user.refreshTokens.filter(
+      (rt) => rt.token !== oldRefreshToken
+    );
+    user.refreshTokens.push({
+      token: newRefreshToken,
+      createdAt: new Date(),
+      deviceInfo: req.headers["user-agent"] || "unknown device",
+    });
+
+    await user.save();
+
+    // ✅ Send back tokens
+    res.cookie("jwt", newRefreshToken, {
+      httpOnly: true,
+      sameSite: "Lax",
+      secure: process.env.NODE_ENV !== "dev",
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7d
+    });
+
+    res.json({
+      accessToken: newAccessToken,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        school: user.school,
+      },
+    });
   } catch (err) {
-    return res.sendStatus(403); // expired or invalid
+    console.error(err);
+    return res.sendStatus(403);
   }
 };
 

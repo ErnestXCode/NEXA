@@ -67,7 +67,7 @@ const handleRegister = async (req, res) => {
   const accessToken = jwt.sign(
     { email, role, school: schoolDoc._id },
     process.env.ACCESS_SECRET,
-    { expiresIn: "5s" }
+    { expiresIn: "15m" }
   );
 
   newUser.refreshTokens.push({
