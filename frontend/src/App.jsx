@@ -7,6 +7,7 @@ import Exams from "./pages/exams/Exams"
 import Attendance from "./pages/attendance/Attendance"
 import Communication from "./pages/communication/Communication"
 import Settings from "./pages/settings/Settings"
+import Dashboard from "./pages/home/Dashboard"
 
 function App() {
 
@@ -18,6 +19,7 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/fees" element={<Fees />} />
         <Route path="/exams" element={<Exams />} />
         <Route path="/attendance" element={<Attendance />} />

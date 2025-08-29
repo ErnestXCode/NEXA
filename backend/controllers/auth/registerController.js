@@ -7,22 +7,27 @@ const handleRegister = async (req, res) => {
   const { name, email, password } = content;
 
   // Check if this is a protected admin route
-  const requesterEmail = req.user.email; 
-  console.log(requesterEmail)
-  const requester = await User.findOne({ email: requesterEmail }); // could add school in accesstoken to avoid interrupting db too much
-  let role, schoolName;
+  const requester = req.user; // could add school in accesstoken to avoid interrupting db too much
+  let role, schoolName, schoolDoc;
 
   if (!requester) {
     // Public first admin registration
     role = "admin";
     schoolName = content.school;
     if (!schoolName) return res.status(400).json({ msg: "School required" });
+    schoolDoc = await School.findOne({ name: schoolName });
+    if (!schoolDoc) {
+      schoolDoc = new School({ name: schoolName });
+      await schoolDoc.save();
+    }
   } else {
     // Admin creating teacher/bursar
     role = content.role;
     if (!["teacher", "bursar"].includes(role))
       return res.status(400).json({ msg: "Invalid role" });
-    schoolName = requester.school; // admin's school
+    schoolDoc = await School.findById(requester.school);
+    if (!schoolDoc)
+      return res.status(400).json({ msg: "School does not exist" });
   }
 
   if (!name || !email || !password) {
@@ -32,24 +37,17 @@ const handleRegister = async (req, res) => {
   const foundUser = await User.findOne({ email });
   if (foundUser) return res.status(401).json({ msg: "User Already Exists" });
 
-  // Find or create school
-  let schoolDoc = await School.findOne({ name: schoolName });
-  if (!schoolDoc) {
-    if (role === "admin") {
-      schoolDoc = await new School({ name: schoolName });
-      await schoolDoc.save();
-    } else {
-      return res.status(400).json({ msg: "School does not exist" });
-    }
-  }
-
   const refreshToken = jwt.sign({ email }, process.env.REFRESH_SECRET, {
     expiresIn: "7d",
   });
 
-  const accessToken = jwt.sign({ email, role }, process.env.ACCESS_SECRET, {
-    expiresIn: "15m",
-  });
+  const accessToken = jwt.sign(
+    { email, role, school: schoolDoc._id },
+    process.env.ACCESS_SECRET,
+    {
+      expiresIn: "10m",
+    }
+  );
 
   const newUser = new User({
     ...content,

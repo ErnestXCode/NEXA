@@ -21,9 +21,9 @@ const handleTokenRefresh = async (req, res) => {
 
     // generate new access token
     const accessToken = jwt.sign(
-      { email: user.email, role: user.role },
+      { email: user.email, role: user.role, school: user.school },
       process.env.ACCESS_SECRET,
-      { expiresIn: "15m" }
+      { expiresIn: "10m" }
     );
 
     res.json({ accessToken });
