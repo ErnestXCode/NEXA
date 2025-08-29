@@ -10,6 +10,7 @@ import Settings from "./pages/settings/Settings";
 import Dashboard from "./pages/home/Dashboard";
 import PersistLogin from "./pages/auth/PersistLogin";
 import PersonelForm from "./pages/actions/PersonelForm";
+import StudentForm from "./pages/actions/StudentForm";
 
 function App() {
   return (
@@ -31,6 +32,7 @@ function App() {
             <Route path="communication" element={<Communication />} />
             <Route path="settings" element={<Settings />} />
             <Route path="createPersonel" element={<PersonelForm />} />
+            <Route path="createStudent" element={<StudentForm />} />
             </Route>
           </Route>
         </Routes>

@@ -27,6 +27,8 @@ app.use(cookieParser());
 
 app.use("/api/auth", require("./routes/auth"));
 app.use("/api/schools", require("./routes/schools"));
+app.use("/api/personel", require("./routes/personel"));
+app.use("/api/students", require("./routes/students"));
 
 app.listen(5000, () => {
   connectDB();
