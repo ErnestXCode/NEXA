@@ -23,7 +23,7 @@ const handleTokenRefresh = async (req, res) => {
     const accessToken = jwt.sign(
       { email: user.email, role: user.role, school: user.school },
       process.env.ACCESS_SECRET,
-      { expiresIn: "10m" }
+      { expiresIn: "5s" }
     );
 
     res.json({ accessToken });

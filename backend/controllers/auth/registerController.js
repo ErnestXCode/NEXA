@@ -6,25 +6,26 @@ const handleRegister = async (req, res) => {
   const content = req.body;
   const { name, email, password } = content;
 
-  // Check if this is a protected admin route
-  const requester = req.user; // could add school in accesstoken to avoid interrupting db too much
-  let role, schoolName, schoolDoc;
+  const requester = req.user;
+  let role, schoolDoc;
 
   if (!requester) {
-    // Public first admin registration
+    // 🟢 Public first admin registration
     role = "admin";
-    schoolName = content.school;
+    const schoolName = content.school;
     if (!schoolName) return res.status(400).json({ msg: "School required" });
+
     schoolDoc = await School.findOne({ name: schoolName });
     if (!schoolDoc) {
       schoolDoc = new School({ name: schoolName });
       await schoolDoc.save();
     }
   } else {
-    // Admin creating teacher/bursar
+    // 🟡 Admin creating teacher/bursar
     role = content.role;
     if (!["teacher", "bursar"].includes(role))
       return res.status(400).json({ msg: "Invalid role" });
+
     schoolDoc = await School.findById(requester.school);
     if (!schoolDoc)
       return res.status(400).json({ msg: "School does not exist" });
@@ -37,6 +38,28 @@ const handleRegister = async (req, res) => {
   const foundUser = await User.findOne({ email });
   if (foundUser) return res.status(401).json({ msg: "User Already Exists" });
 
+  // Always create the user
+  const newUser = new User({
+    ...content,
+    role,
+    school: schoolDoc._id,
+  });
+  await newUser.save();
+
+  if (role !== "admin") {
+    // 🟡 Admin creates staff → no tokens returned
+    return res.status(201).json({
+      msg: "Personnel created successfully",
+      user: {
+        id: newUser._id,
+        name: newUser.name,
+        email: newUser.email,
+        role: newUser.role,
+      },
+    });
+  }
+
+  // 🟢 First Admin Register → issue tokens
   const refreshToken = jwt.sign({ email }, process.env.REFRESH_SECRET, {
     expiresIn: "7d",
   });
@@ -44,24 +67,14 @@ const handleRegister = async (req, res) => {
   const accessToken = jwt.sign(
     { email, role, school: schoolDoc._id },
     process.env.ACCESS_SECRET,
-    {
-      expiresIn: "10m",
-    }
+    { expiresIn: "5s" }
   );
 
-  const newUser = new User({
-    ...content,
-    role,
-    school: schoolDoc._id,
-    refreshTokens: [
-      {
-        token: refreshToken,
-        createdAt: new Date(),
-        deviceInfo: req.headers["user-agent"] || "unknown device",
-      },
-    ],
+  newUser.refreshTokens.push({
+    token: refreshToken,
+    createdAt: new Date(),
+    deviceInfo: req.headers["user-agent"] || "unknown device",
   });
-  console.log(newUser);
   await newUser.save();
 
   res
@@ -73,7 +86,7 @@ const handleRegister = async (req, res) => {
     })
     .status(200)
     .json({
-      accessToken: accessToken,
+      accessToken,
       user: {
         id: newUser._id,
         name: newUser.name,
