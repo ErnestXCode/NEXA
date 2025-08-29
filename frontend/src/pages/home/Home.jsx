@@ -25,87 +25,140 @@ const Home = () => {
 
   return (
     <>
-    <nav className="p-4 flex gap-4 justify-between items-center pr-10 bg-gray-900">
-      <h1 className="font-semibold">
-        <Link to="/" className="cursor-pointer">
-          NEXA
-        </Link>
-      </h1>
-      <section className="flex  gap-2 items-center">
-        {currentUser ? (
-          <>
-            <div className="size-10 bg-black rounded-full flex items-center justify-center font-semibold">
-              {currentUser?.name[0]}
+      <main>
+        <div className="min-h-screen bg-black text-gray-100">
+          {/* Navbar */}
+          <nav className="flex justify-between items-center px-8 py-4 bg-gray-900">
+            <h1 className="text-2xl font-bold">Nexa</h1>
+            <ul className="flex gap-6 text-gray-300">
+              <li className="hover:text-white cursor-pointer">Home</li>
+              <li className="hover:text-white cursor-pointer">Features</li>
+              <li className="hover:text-white cursor-pointer">Pricing</li>
+              <li className="hover:text-white cursor-pointer">Contact</li>
+            </ul>
+
+            <Link
+              to="/register"
+              className="px-4 py-2 bg-white font-semibold text-black rounded-lg hover:bg-gray-200"
+            >
+              Sign Up
+            </Link>
+          </nav>
+
+          {/* Hero Section */}
+          <section className="flex flex-col items-center justify-center text-center py-20 bg-black">
+            <h1 className="text-5xl font-bold mb-4 text-white">
+              Welcome to Nexa
+            </h1>
+            <p className="text-lg max-w-2xl mb-8 text-gray-400">
+              Nexa is the next-generation platform that simplifies your
+              workflow, connects your team, and helps you focus on what truly
+              matters.
+            </p>
+            <Link
+              to="/register"
+              className="px-6 font-semibold py-3 bg-white text-black rounded-lg shadow hover:bg-gray-200"
+            >
+              Get Started
+            </Link>
+
+            {/* Fake hero image */}
+            <div className="mt-12 w-3/4 h-64 bg-gray-800 rounded-xl"></div>
+          </section>
+
+          {/* Features Section */}
+          <section className="py-20 bg-gray-900">
+            <div className="max-w-6xl mx-auto text-center">
+              <h2 className="text-3xl font-semibold mb-12 text-white">
+                Why Choose Nexa?
+              </h2>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+                <div className="p-6 bg-black rounded-xl shadow border border-gray-800">
+                  <div className="w-20 h-20 mx-auto mb-4 bg-gray-700 rounded-full"></div>
+                  <h3 className="font-semibold text-xl mb-2 text-white">
+                    Easy to Use
+                  </h3>
+                  <p className="text-gray-400">
+                    An intuitive interface designed to make your experience
+                    seamless and enjoyable.
+                  </p>
+                </div>
+
+                <div className="p-6 bg-black rounded-xl shadow border border-gray-800">
+                  <div className="w-20 h-20 mx-auto mb-4 bg-gray-700 rounded-full"></div>
+                  <h3 className="font-semibold text-xl mb-2 text-white">
+                    Powerful Tools
+                  </h3>
+                  <p className="text-gray-400">
+                    Packed with features that empower you to get more done with
+                    fewer clicks.
+                  </p>
+                </div>
+
+                <div className="p-6 bg-black rounded-xl shadow border border-gray-800">
+                  <div className="w-20 h-20 mx-auto mb-4 bg-gray-700 rounded-full"></div>
+                  <h3 className="font-semibold text-xl mb-2 text-white">
+                    Secure & Reliable
+                  </h3>
+                  <p className="text-gray-400">
+                    Built with security in mind, ensuring your data is always
+                    safe and accessible.
+                  </p>
+                </div>
+              </div>
             </div>
-            <section onClick={() => setSidenav(true)}>Sidenav</section>
-            {sidenav ? (
-              <>
-                <section className="bg-gray-950 fixed right-0 w-90 top-0 h-screen p-5">
-                  <section className="flex justify-between ">
-                    <button
-                      className="bg-gray-100 cursor-pointer text-black rounded-2xl p-2 font-semibold hover:bg-black hover:text-white"
-                      onClick={handleLogout}
-                    >
-                      Logout
-                    </button>
+          </section>
 
-                    <button onClick={handleCloseSidenav}>X</button>
-                  </section>
+          {/* Testimonials Section */}
+          <section className="py-20 bg-black">
+            <div className="max-w-6xl mx-auto text-center">
+              <h2 className="text-3xl font-semibold mb-12 text-white">
+                What Our Users Say
+              </h2>
 
-                  <section className="flex flex-col bg-gray-900 p-2 mt-5 rounded-2xl gap-4">
-                    <NavLink onClick={() => setSidenav(false)} to="/dashboard">
-                      Dashboard
-                    </NavLink>
-                    <NavLink onClick={() => setSidenav(false)} to="/fees">
-                      Fees
-                    </NavLink>
-                    <NavLink onClick={() => setSidenav(false)} to="/exams">
-                      Exams
-                    </NavLink>
-                    <NavLink onClick={() => setSidenav(false)} to="/attendance">
-                      Attendance
-                    </NavLink>
-                    <NavLink
-                      onClick={() => setSidenav(false)}
-                      to="/communication"
-                    >
-                      Communication
-                    </NavLink>
-                    <NavLink onClick={() => setSidenav(false)} to="/settings">
-                      Settings
-                    </NavLink>
-                  </section>
-                </section>
-              </>
-            ) : (
-              ""
-            )}
-          </>
-        ) : (
-          <>
-            <nav>
-              <Link
-                className="bg-gray-100 cursor-pointer text-black rounded-2xl p-2 font-semibold hover:bg-black hover:text-white"
-                to="/register"
-              >
-                Register
-              </Link>
-              <Link
-                className="bg-gray-100 cursor-pointer text-black rounded-2xl p-2 font-semibold hover:bg-black hover:text-white"
-                to="/login"
-              >
-                Login
-              </Link>
-            </nav>
-            
-          </>
-        )}
-      </section>
-    </nav>
-    <main>
-      {'some stories and stuff'}
-    </main>
-        </>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="p-6 border border-gray-800 rounded-lg shadow-sm bg-gray-900">
+                  <div className="w-16 h-16 bg-gray-700 rounded-full mx-auto mb-4"></div>
+                  <p className="italic mb-2 text-gray-300">
+                    “Nexa completely changed how our team collaborates. Highly
+                    recommend!”
+                  </p>
+                  <p className="font-semibold text-white">— Alex Johnson</p>
+                </div>
+
+                <div className="p-6 border border-gray-800 rounded-lg shadow-sm bg-gray-900">
+                  <div className="w-16 h-16 bg-gray-700 rounded-full mx-auto mb-4"></div>
+                  <p className="italic mb-2 text-gray-300">
+                    “The tools are simple yet powerful. We can’t imagine working
+                    without Nexa.”
+                  </p>
+                  <p className="font-semibold text-white">— Sarah Lee</p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* CTA Section */}
+          <section className="py-20 bg-gray-900 text-white text-center">
+            <h2 className="text-3xl font-semibold mb-6">
+              Ready to get started?
+            </h2>
+            <p className="mb-8 text-gray-400">
+              Join the growing community of schools using Nexa.
+            </p>
+            <Link to='/register' className="px-6 py-3 cursor-pointer bg-white text-black font-semibold rounded-lg shadow hover:bg-gray-200">
+              Create Account
+            </Link>
+          </section>
+
+          {/* Footer */}
+          <footer className="py-6 bg-black text-gray-500 text-center border-t border-gray-800">
+            <p>© {new Date().getFullYear()} Nexa. All rights reserved.</p>
+          </footer>
+        </div>
+      </main>
+    </>
   );
 };
 

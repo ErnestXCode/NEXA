@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useEffect, useState } from "react";
 import { setCredentials } from "../../redux/slices/authSlice";
 import api from "../../api/axios";
+import Navigation from "../../components/layout/Navigation";
 
 const PersistLogin = () => {
   const dispatch = useDispatch();
@@ -17,7 +18,11 @@ const PersistLogin = () => {
         const res = await api.post("/auth/refresh");
         dispatch(setCredentials(res.data));
       } catch (err) {
-        console.error("Refresh failed:", err.response?.status, err.response?.data);
+        console.error(
+          "Refresh failed:",
+          err.response?.status,
+          err.response?.data
+        );
       } finally {
         if (isMounted) setLoading(false);
       }
@@ -30,12 +35,19 @@ const PersistLogin = () => {
       setLoading(false);
     }
 
-    return () => { isMounted = false; };
+    return () => {
+      isMounted = false;
+    };
   }, [accessToken, dispatch]);
 
   if (loading) return <p>Loading...</p>;
 
-  return <Outlet />;
+  return (
+    <>
+      <Navigation />
+      <Outlet />
+    </>
+  );
 };
 
 export default PersistLogin;

@@ -1,14 +1,12 @@
 import axios from "axios";
-import React from "react";
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { setCredentials } from "../../redux/slices/authSlice";
-import { useQuery } from "@tanstack/react-query";
 
 const apiBaseUrl = import.meta.env.VITE_BACKEND_URL;
 
-const registerObj = {
+const initialState = {
   name: "",
   email: "",
   school: "",
@@ -17,146 +15,141 @@ const registerObj = {
 };
 
 const Register = () => {
-  const [registerDetails, setRegisterDetails] = useState(registerObj);
-  const [canRegister, setCanRegister] = useState(false);
-  const [isMatching, setIsMatching] = useState(false);
+  const [formData, setFormData] = useState(initialState);
+  const [status, setStatus] = useState({ loading: false, message: "", type: "" });
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-
   const handleChange = (e) => {
-    const updatedDetails = {
-      ...registerDetails,
+    setFormData((prev) => ({
+      ...prev,
       [e.target.name]: e.target.value,
-    };
-
-    setRegisterDetails(updatedDetails);
-
-    if (
-      updatedDetails.confirmPass !== "" &&
-      updatedDetails.confirmPass === updatedDetails.password
-    ) {
-      setIsMatching(true);
-    } else {
-      setIsMatching(false);
-    }
-
-    if (
-      updatedDetails.confirmPass !== "" &&
-      updatedDetails.confirmPass === updatedDetails.password &&
-      Object.values(updatedDetails).every((val) => val !== "")
-    ) {
-      setCanRegister(true);
-    } else {
-      setCanRegister(false);
-    }
+    }));
   };
 
-  const [message, setMessage] = useState("");
+  const isMatching = formData.password && formData.password === formData.confirmPass;
+  const canRegister =
+    Object.values(formData).every((val) => val.trim() !== "") && isMatching;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    try {
-      const { confirmPass, ...dataToSend } = registerDetails;
-      const response = await axios.post(
-        `${apiBaseUrl}/api/auth/register`,
-        dataToSend,
-        { withCredentials: true }
-      );
+    setStatus({ loading: true, message: "", type: "" });
 
-      setMessage("✅ Account created successfully!");
-      // maybe redirect after a short timeout
-      console.log(response);
-      dispatch(setCredentials(response.data));
-      navigate("/dashboard");
+    try {
+      const { confirmPass, ...payload } = formData;
+
+      const res = await axios.post(`${apiBaseUrl}/api/auth/register`, payload, {
+        withCredentials: true,
+      });
+
+      dispatch(setCredentials(res.data));
+      setStatus({ loading: false, message: "✅ Account created!", type: "success" });
+
+      setTimeout(() => navigate("/dashboard"), 1000);
     } catch (err) {
-      setMessage(`❌ ${err.response?.data?.msg || "Something went wrong"}`);
+      setStatus({
+        loading: false,
+        message: `❌ ${err.response?.data?.msg || "Something went wrong"}`,
+        type: "error",
+      });
     }
   };
 
   return (
-    <form
-      className="flex flex-col bg-gray-950 p-3 w-[500px]"
-      onSubmit={handleSubmit}
-    >
-      
-      <label htmlFor="name">Name</label>
-      <input
-        className="bg-amber-50 hover:bg-gray-900  hover:text-white mb-3 mt-1 text-black p-1 font-semibold pl-2"
-        type="text"
-        onChange={handleChange}
-        value={registerDetails.name}
-        name="name"
-        id="name"
-      />
-
-      <label htmlFor="email">Email</label>
-      <input
-        className="bg-amber-50 hover:bg-gray-900  hover:text-white mb-3 mt-1 text-black p-1 font-semibold pl-2"
-        type="email"
-        id="email"
-        onChange={handleChange}
-        value={registerDetails.email}
-        name="email"
-      />
-
-      <label htmlFor="school">School</label>
-
-        <input
-          type="text"
-          id="school"
-          name="school"
-          value={registerDetails.school}
-          onChange={handleChange}
-          className="bg-amber-50 hover:bg-gray-900 hover:text-white mb-3 mt-1 text-black p-1 font-semibold pl-2"
-          placeholder="Enter new school name"
-        />
-
-      <label htmlFor="password">Password</label>
-      <input
-        className="bg-amber-50 hover:bg-gray-900  hover:text-white mb-3 mt-1 text-black p-1 font-semibold pl-2"
-        type="password"
-        onChange={handleChange}
-        value={registerDetails.password}
-        name="password"
-        id="password"
-      />
-
-      <label htmlFor="">Confirm Password</label>
-      <input
-        className={`bg-amber-50 hover:bg-gray-900  hover:text-white mb-3 mt-1 text-black p-1 font-semibold pl-2 ${
-          registerDetails.confirmPass == ""
-            ? ""
-            : isMatching
-            ? "bg-green-400 hover:bg-green-400 text-white"
-            : "bg-red-600 hover:bg-red-600 text-white"
-        }`}
-        type="password"
-        onChange={handleChange}
-        value={registerDetails.confirmPass}
-        name="confirmPass"
-        id="confirmPass"
-      />
-
-      <button
-        className={`bg-gray-50 w-fit ml-auto mr-auto text-black font-semibold p-1 mt-1 pl-2 pr-2 disabled:bg-gray-500 ${
-          canRegister && "hover:scale-95 hover:cursor-pointer"
-        }`}
-        disabled={!canRegister}
+    <div className="flex items-center justify-center min-h-screen bg-gray-900">
+      <form
+        className="flex flex-col gap-3 bg-gray-950 p-6 w-[400px] sm:w-[450px] rounded-lg shadow-lg"
+        onSubmit={handleSubmit}
       >
-        Register
-      </button>
-      {message && (
-        <p
-          className={`mt-3 text-center font-semibold ${
-            message.startsWith("✅") ? "text-green-400" : "text-red-500"
+        <h2 className="text-white text-xl font-bold mb-2 text-center">
+          Create an Account
+        </h2>
+
+        {["name", "email", "school"].map((field) => (
+          <div key={field} className="flex flex-col">
+            <label htmlFor={field} className="text-gray-300 font-medium">
+              {field.charAt(0).toUpperCase() + field.slice(1)}
+            </label>
+            <input
+              type={field === "email" ? "email" : "text"}
+              id={field}
+              name={field}
+              value={formData[field]}
+              onChange={handleChange}
+              className="bg-gray-800 text-white p-2 rounded-md focus:ring-2 focus:ring-gray-500"
+              placeholder={`Enter ${field}`}
+            />
+          </div>
+        ))}
+
+        {/* Password */}
+        <div className="flex flex-col">
+          <label htmlFor="password" className="text-gray-300 font-medium">
+            Password
+          </label>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            value={formData.password}
+            onChange={handleChange}
+            className="bg-gray-800 text-white p-2 rounded-md focus:ring-2 focus:ring-gray-500"
+          />
+        </div>
+
+        {/* Confirm Password */}
+        <div className="flex flex-col">
+          <label htmlFor="confirmPass" className="text-gray-300 font-medium">
+            Confirm Password
+          </label>
+          <input
+            type="password"
+            id="confirmPass"
+            name="confirmPass"
+            value={formData.confirmPass}
+            onChange={handleChange}
+            className={`p-2 rounded-md focus:ring-2 ${
+              !formData.confirmPass
+                ? "bg-gray-800 text-white"
+                : isMatching
+                ? "bg-green-700 text-white focus:ring-green-400"
+                : "bg-red-700 text-white focus:ring-red-400"
+            }`}
+          />
+        </div>
+
+        <button
+          type="submit"
+          disabled={!canRegister || status.loading}
+          className={`p-2 font-semibold rounded-md transition-all ${
+            canRegister
+              ? "bg-gray-100 text-black hover:scale-95"
+              : "bg-gray-600 text-gray-300 cursor-not-allowed"
           }`}
         >
-          {message}
+          {status.loading ? "Registering..." : "Register"}
+        </button>
+
+        {status.message && (
+          <p
+            className={`mt-2 text-center font-semibold ${
+              status.type === "success" ? "text-green-400" : "text-red-500"
+            }`}
+          >
+            {status.message}
+          </p>
+        )}
+
+        {/* Already have an account */}
+        <p className="mt-3 text-center text-gray-400 text-sm">
+          Already have an account?{" "}
+          <Link to="/login" className="text-blue-400 hover:underline">
+            Login
+          </Link>
         </p>
-      )}
-    </form>
+      </form>
+    </div>
   );
 };
 

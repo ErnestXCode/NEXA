@@ -9,6 +9,7 @@ import Communication from "./pages/communication/Communication";
 import Settings from "./pages/settings/Settings";
 import Dashboard from "./pages/home/Dashboard";
 import PersistLogin from "./pages/auth/PersistLogin";
+import PersonelForm from "./pages/actions/PersonelForm";
 
 function App() {
   return (
@@ -22,12 +23,15 @@ function App() {
 
           {/* Protected routes (wrapped in PersistLogin) */}
           <Route element={<PersistLogin />}>
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/fees" element={<Fees />} />
-            <Route path="/exams" element={<Exams />} />
-            <Route path="/attendance" element={<Attendance />} />
-            <Route path="/communication" element={<Communication />} />
-            <Route path="/settings" element={<Settings />} />
+            <Route path="/dashboard" >
+            <Route index element={<Dashboard />} />
+            <Route path="fees" element={<Fees />} />
+            <Route path="exams" element={<Exams />} />
+            <Route path="attendance" element={<Attendance />} />
+            <Route path="communication" element={<Communication />} />
+            <Route path="settings" element={<Settings />} />
+            <Route path="createPersonel" element={<PersonelForm />} />
+            </Route>
           </Route>
         </Routes>
       </BrowserRouter>
