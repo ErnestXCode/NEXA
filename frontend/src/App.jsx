@@ -18,6 +18,7 @@ import StudentAttendanceForm from "./pages/attendance/StudentAttendanceForm";
 import SendMessageForm from "./pages/communication/SendMessageForm";
 import ExamForm from "./pages/exams/ExamForm";
 import FeePaymentForm from "./pages/fees/FeePaymentForm";
+import RecordResult from "./pages/exams/RecordResult";
 
 function App() {
   return (
@@ -48,15 +49,15 @@ function App() {
               <Route path="teachers" element={<AllTeachers />} />
               <Route path="bursars" element={<AllBursars />} />
 
-              <Route path="attendance/mark" element={<StudentAttendanceForm />} />
+              <Route
+                path="attendance/mark"
+                element={<StudentAttendanceForm />}
+              />
               <Route path="communication/send" element={<SendMessageForm />} />
               <Route path="exams/create" element={<ExamForm />} />
               <Route path="fees/record" element={<FeePaymentForm />} />
 
-
-
-
-
+              <Route path="exams/record" element={<RecordResult />} />
             </Route>
           </Route>
         </Routes>

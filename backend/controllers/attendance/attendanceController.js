@@ -1,5 +1,5 @@
 const Attendance = require("../../models/Attendance");
-
+const User = require("../../models/User");
 
 // Mark attendance
 const markAttendance = async (req, res) => {
@@ -7,20 +7,25 @@ const markAttendance = async (req, res) => {
     const requester = req.user;
     const { student, classLevel, stream, status, date } = req.body;
 
+    const requesterDoc = await User.findOne({ email: requester.email });
+
     const attendance = new Attendance({
       student,
       classLevel,
       stream,
       status,
       date: date || new Date(),
-      markedBy: requester._id,
+      markedBy: requesterDoc._id,
       school: requester.school,
     });
 
     const saved = await attendance.save();
     res.status(201).json(saved);
   } catch (err) {
-    res.status(500).json({ msg: "Error marking attendance", error: err.message });
+    console.log(err);
+    res
+      .status(500)
+      .json({ msg: "Error marking attendance", error: err.message });
   }
 };
 
@@ -36,7 +41,9 @@ const getStudentAttendance = async (req, res) => {
     const records = await Attendance.find(query);
     res.status(200).json(records);
   } catch (err) {
-    res.status(500).json({ msg: "Error fetching attendance", error: err.message });
+    res
+      .status(500)
+      .json({ msg: "Error fetching attendance", error: err.message });
   }
 };
 
@@ -52,7 +59,32 @@ const getClassAttendance = async (req, res) => {
     const records = await Attendance.find(query);
     res.status(200).json(records);
   } catch (err) {
-    res.status(500).json({ msg: "Error fetching class attendance", error: err.message });
+    res
+      .status(500)
+      .json({ msg: "Error fetching class attendance", error: err.message });
+  }
+};
+
+// General getAttendance - flexible query (student, class, date)
+const getAttendance = async (req, res) => {
+  try {
+    const requester = req.user;
+    const { studentId, classLevel, stream, date, status } = req.query;
+
+    const query = {};
+    if (studentId) query.student = studentId;
+    if (classLevel) query.classLevel = classLevel;
+    if (status) query.status = status;
+    if (stream) query.stream = stream;
+    if (date) query.date = new Date(date);
+    if (requester.role !== "superadmin") query.school = requester.school;
+
+    const records = await Attendance.find(query).populate("student", "firstName lastName classLevel");
+    res.status(200).json(records);
+  } catch (err) {
+    res
+      .status(500)
+      .json({ msg: "Error fetching attendance", error: err.message });
   }
 };
 
@@ -60,4 +92,5 @@ module.exports = {
   markAttendance,
   getStudentAttendance,
   getClassAttendance,
+  getAttendance,
 };

@@ -4,12 +4,14 @@ const Student = require("../../models/Student");
 
 // Create exam (teacher/admin)
 const createExam = async (req, res) => {
+    console.log('hit exam')
   try {
     const requester = req.user;
     const exam = new Exam({ ...req.body, school: requester.school });
     const saved = await exam.save();
     res.status(201).json(saved);
   } catch (err) {
+    console.log(err)
     res.status(500).json({ msg: "Error creating exam", error: err.message });
   }
 };

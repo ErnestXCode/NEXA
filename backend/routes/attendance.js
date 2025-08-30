@@ -3,6 +3,7 @@ const {
   markAttendance,
   getStudentAttendance,
   getClassAttendance,
+  getAttendance,
 } = require("../controllers/attendance/attendanceController");
 const authorize = require("../middleware/authorize");
 const verifyJWT = require("../middleware/verifyJWT");
@@ -11,11 +12,13 @@ const router = express.Router();
 // Mark attendance (Teacher/Admin)
 router.post("/", verifyJWT, authorize(["teacher", "admin"]), markAttendance);
 
+router.get("/get", verifyJWT, authorize(["teacher", "admin"]), getAttendance);
+
 // Get attendance for a student
 router.get(
   "/student/:studentId",
   verifyJWT,
-  authorize(["superadmin", "admin", "teacher"], "bursar"),
+  authorize(["superadmin", "admin", "teacher", "bursar"]),
   getStudentAttendance
 );
 

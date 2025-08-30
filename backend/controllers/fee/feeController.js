@@ -1,13 +1,16 @@
 const Fee = require("../../models/Fee");
 const Student = require("../../models/Student");
+const User = require("../../models/User");
 
 
 // Add payment / adjust fee
 const addFee = async (req, res) => {
+    console.log('hit fees')
   try {
     const requester = req.user;
     const { studentId, amount, type = "payment", note } = req.body;
 
+    const requesterDoc = await User.findOne({email: requester.email});
     const student = await Student.findById(studentId);
     if (!student) return res.status(404).json({ msg: "Student not found" });
 
@@ -21,13 +24,14 @@ const addFee = async (req, res) => {
       amount,
       type,
       note,
-      handledBy: requester._id,
+      handledBy: requesterDoc._id,
       school: requester.school,
     });
 
     await feeRecord.save();
     res.status(200).json({ msg: "Fee updated", student, feeRecord });
   } catch (err) {
+    console.log(err)
     res.status(500).json({ msg: "Error updating fee", error: err.message });
   }
 };

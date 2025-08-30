@@ -27,7 +27,11 @@ const Communication = () => {
               key={msg._id || i}
               className="p-4 bg-gray-900 rounded shadow hover:bg-gray-800 transition"
             >
-              <h2 className="font-semibold">{msg.subject}</h2>
+              <h2 className="font-semibold">
+                {msg.subject}{" "}
+                <span className="text-gray-400 text-sm">by {msg.sender}</span>
+              </h2>
+
               <p>{msg.body}</p>
               <span className="text-gray-400 text-sm">
                 {new Date(msg.date).toLocaleString()}

@@ -6,15 +6,15 @@ const ExamForm = () => {
   const [name, setName] = useState("");
   const [classLevel, setClassLevel] = useState("");
   const [date, setDate] = useState("");
-  const [duration, setDuration] = useState("");
+  const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await api.post("/exams", { name, classLevel, date, duration });
+      await api.post("/exam", { name, classLevel, date, subject });
       setMessage("✅ Exam created successfully!");
-      setName(""); setClassLevel(""); setDate(""); setDuration("");
+      setName(""); setClassLevel(""); setDate(""); setSubject("");
     } catch (err) {
       setMessage(`❌ ${err.response?.data?.msg || "Failed to create exam"}`);
     }
@@ -46,10 +46,10 @@ const ExamForm = () => {
         />
         <input
           type="text"
-          placeholder="Duration (e.g., 2h)"
+          placeholder="subject (e.g., 2h)"
           className="p-2 rounded bg-gray-900 text-white"
-          value={duration}
-          onChange={(e) => setDuration(e.target.value)}
+          value={subject}
+          onChange={(e) => setSubject(e.target.value)}
         />
         <button type="submit" className="bg-blue-600 hover:bg-blue-700 p-2 rounded font-semibold">
           Create Exam

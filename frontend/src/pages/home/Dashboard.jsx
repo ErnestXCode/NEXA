@@ -123,9 +123,9 @@ const Dashboard = () => {
                 <th className="py-3 px-4 text-left">Admission #</th>
                 <th className="py-3 px-4 text-left">Name</th>
                 <th className="py-3 px-4 text-left">Gender</th>
-                <th className="py-3 px-4 text-left">DOB</th>
+                {/* <th className="py-3 px-4 text-left">DOB</th> */}
                 <th className="py-3 px-4 text-left">Class</th>
-                <th className="py-3 px-4 text-left">Guardian</th>
+                {/* <th className="py-3 px-4 text-left">Guardian</th> */}
                 <th className="py-3 px-4 text-left">Phone</th>
               </tr>
             </thead>
@@ -143,9 +143,9 @@ const Dashboard = () => {
                       {student.firstName} {student.lastName}
                     </td>
                     <td className="py-2 px-4">{student.gender}</td>
-                    <td className="py-2 px-4">{student.dateOfBirth}</td>
+                    {/* <td className="py-2 px-4">{student.dateOfBirth}</td> */}
                     <td className="py-2 px-4">{student.classLevel}</td>
-                    <td className="py-2 px-4">{student.guardianName}</td>
+                    {/* <td className="py-2 px-4">{student.guardianName}</td> */}
                     <td className="py-2 px-4">{student.guardianPhone}</td>
                   </tr>
                 ))
