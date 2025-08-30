@@ -11,19 +11,20 @@ const {
   updateTeacher,
   deleteTeacher,
 } = require("../controllers/personel/teacher/teacherController");
+const verifyJWT = require("../middleware/verifyJWT");
 const router = express.Router();
 
-router.route("/bursar").get(getAllBursars);
-router.route("/teacher").get(getAllTeachers);
+router.route("/bursar").get(verifyJWT, getAllBursars);
+router.route("/teacher").get(verifyJWT, getAllTeachers);
 router
   .route("/bursar/:id")
-  .get(getBursarById)
-  .put(updateBursar)
-  .delete(deleteBursar);
+  .get(verifyJWT, getBursarById)
+  .put(verifyJWT, updateBursar)
+  .delete(verifyJWT, deleteBursar);
 router
   .route("/teacher/:id")
-  .get(getTeacherById)
-  .put(updateTeacher)
-  .delete(deleteTeacher);
+  .get(verifyJWT, getTeacherById)
+  .put(verifyJWT, updateTeacher)
+  .delete(verifyJWT, deleteTeacher);
 
 module.exports = router;

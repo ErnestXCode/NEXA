@@ -10,12 +10,12 @@ const verifyJWT = require("../middleware/verifyJWT");
 const authorize = require("../middleware/authorize");
 const router = express.Router();
 
-router.route("/").get(getAllStudents).post(verifyJWT , createStudent);
+router.route("/").get(verifyJWT, getAllStudents).post(verifyJWT , createStudent);
 
 router
   .route("/:id")
-  .get(getStudentById)
-  .put(updateStudent)
-  .delete(deleteStudent);
+  .get(verifyJWT, getStudentById)
+  .put(verifyJWT, updateStudent)
+  .delete(verifyJWT, deleteStudent);
 
 module.exports = router;

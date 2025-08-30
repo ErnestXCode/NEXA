@@ -1,59 +1,84 @@
 const mongoose = require("mongoose");
 const Student = require("../../models/Student");
 
+// Create a new student
 const createStudent = async (req, res) => {
-  const content = req.body;
-  console.log(content)
-  const requester = req.user;
-  if (!content) return res.sendStatus(204);
-  const newStudent = await new Student({
-    ...content,
-    school: requester.school,
-  });
-  const createdStudent = await newStudent.save();
-  res.status(200).json(createdStudent);
-};
-
-const getStudentById = async (req, res) => {
-  const { id } = req.params;
-  const foundStudent = await Student.findById(new mongoose.Types.ObjectId(id));
-  if (!foundStudent) return res.status(404).json({ msg: "student not found" });
-  res.status(200).json(foundStudent);
-};
-const updateStudent = async (req, res) => {
-  const { id } = req.params;
-  const content = req.body;
-  const foundStudent = await Student.findByIdAndUpdate(
-    new mongoose.Types.ObjectId(id),
-    content,
-    { new: true }
-  );
-  if (!foundStudent) return res.status(404).json({ msg: "student not found" });
-  res.status(200).json({ msg: "updated student successfully" });
-};
-const deleteStudent = async (req, res) => {
-  const { id } = req.params;
-  const foundStudent = await Student.findByIdAndDelete(
-    new mongoose.Types.ObjectId(id)
-  );
-  if (!foundStudent) return res.status(404).json({ msg: "student not found" });
-  res.status(200).json({ msg: "deleted student successfully" });
-};
-
-const getAllStudents = async (req, res) => {
   try {
-    const students = await Student.find();
-    if (!students) return res.sendStatus(500);
-    res.status(200).json(students);
-  } catch (error) {
-    return res.sendStatus(500);
+    const data = req.body;
+    const requester = req.user; // logged-in admin or teacher
+    if (!data) return res.status(400).json({ msg: "No student data provided" });
+
+    const newStudent = new Student({
+      ...data,
+      school: requester.school,
+    });
+
+    const created = await newStudent.save();
+    res.status(201).json(created);
+  } catch (err) {
+    res.status(500).json({ msg: "Error creating student", error: err.message });
   }
 };
 
+// Get student by ID
+const getStudentById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const student = await Student.findById(id);
+    if (!student) return res.status(404).json({ msg: "Student not found" });
+    res.status(200).json(student);
+  } catch (err) {
+    res.status(500).json({ msg: "Error fetching student", error: err.message });
+  }
+};
+
+// Update student
+const updateStudent = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updated = await Student.findByIdAndUpdate(id, req.body, { new: true });
+    if (!updated) return res.status(404).json({ msg: "Student not found" });
+    res.status(200).json({ msg: "Student updated successfully", student: updated });
+  } catch (err) {
+    res.status(500).json({ msg: "Error updating student", error: err.message });
+  }
+};
+
+// Delete student
+const deleteStudent = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deleted = await Student.findByIdAndDelete(id);
+    if (!deleted) return res.status(404).json({ msg: "Student not found" });
+    res.status(200).json({ msg: "Student deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ msg: "Error deleting student", error: err.message });
+  }
+};
+
+// Get all students (optionally filtered by school)
+const getAllStudents = async (req, res) => {
+  try {
+    const requester = req.user;
+
+    let query = {};
+
+    if (requester.role !== "superadmin") {
+      query.school = requester.school; // restrict to their school
+    }
+
+    const students = await Student.find(query);
+    res.status(200).json(students);
+  } catch (err) {
+    res.status(500).json({ msg: "Error fetching students", error: err.message });
+  }
+};
+
+
 module.exports = {
+  createStudent,
   getStudentById,
   updateStudent,
   deleteStudent,
   getAllStudents,
-  createStudent,
 };
