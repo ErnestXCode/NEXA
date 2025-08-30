@@ -17,7 +17,7 @@ import AllStudents from "./pages/actions/AllStudents";
 
 function App() {
   return (
-    <div className="bg-black text-white h-screen">
+    <div className="bg-gray-950 text-white min-h-screen">
       <BrowserRouter>
         <Routes>
           {/* Public routes */}
@@ -25,20 +25,20 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
 
-          {/* Protected routes (wrapped in PersistLogin) */}
+          {/* Protected routes */}
           <Route element={<PersistLogin />}>
-            <Route path="/dashboard" >
-            <Route index element={<Dashboard />} />
-            <Route path="fees" element={<Fees />} />
-            <Route path="exams" element={<Exams />} />
-            <Route path="attendance" element={<Attendance />} />
-            <Route path="communication" element={<Communication />} />
-            <Route path="settings" element={<Settings />} />
-            <Route path="createPersonel" element={<PersonelForm />} />
-            <Route path="createStudent" element={<StudentForm />} />
-            <Route path="students" element={<AllStudents />} />
-            <Route path="teachers" element={<AllTeachers />} />
-            <Route path="bursars" element={<AllBursars />} />
+            <Route path="/dashboard">
+              <Route index element={<Dashboard />} />
+              <Route path="fees" element={<Fees />} />
+              <Route path="exams" element={<Exams />} />
+              <Route path="attendance" element={<Attendance />} />
+              <Route path="communication" element={<Communication />} />
+              <Route path="settings" element={<Settings />} />
+              <Route path="createPersonel" element={<PersonelForm />} />
+              <Route path="createStudent" element={<StudentForm />} />
+              <Route path="students" element={<AllStudents />} />
+              <Route path="teachers" element={<AllTeachers />} />
+              <Route path="bursars" element={<AllBursars />} />
             </Route>
           </Route>
         </Routes>

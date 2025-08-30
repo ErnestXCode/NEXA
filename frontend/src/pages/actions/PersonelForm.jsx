@@ -1,70 +1,46 @@
 import React, { useState } from "react";
-import { Link, NavLink } from "react-router-dom";
 import api from "../../api/axios";
 import Navigation from "../../components/layout/Navigation";
 
-
 const registerObj = {
+  role: "",
   name: "",
   email: "",
   password: "",
   confirmPass: "",
 };
 
-
-
 const PersonelForm = () => {
-  
   const [registerDetails, setRegisterDetails] = useState(registerObj);
   const [canRegister, setCanRegister] = useState(false);
   const [isMatching, setIsMatching] = useState(false);
-
+  const [message, setMessage] = useState("");
 
   const handleChange = (e) => {
     const updatedDetails = {
       ...registerDetails,
       [e.target.name]: e.target.value,
     };
-
     setRegisterDetails(updatedDetails);
 
-    if (
-      updatedDetails.confirmPass !== "" &&
+    setIsMatching(updatedDetails.confirmPass && updatedDetails.confirmPass === updatedDetails.password);
+
+    setCanRegister(
+      updatedDetails.role &&
+      updatedDetails.name &&
+      updatedDetails.email &&
+      updatedDetails.password &&
       updatedDetails.confirmPass === updatedDetails.password
-    ) {
-      setIsMatching(true);
-    } else {
-      setIsMatching(false);
-    }
-
-    if (
-      updatedDetails.confirmPass !== "" &&
-      updatedDetails.confirmPass === updatedDetails.password &&
-      Object.values(updatedDetails).every((val) => val !== "")
-    ) {
-      setCanRegister(true);
-    } else {
-      setCanRegister(false);
-    }
+    );
   };
-
-  const [message, setMessage] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       const { confirmPass, ...dataToSend } = registerDetails;
-      const response = await api.post(`/auth/registerpersonel`, dataToSend, {
-        withCredentials: true,
-      });
-
+      await api.post("/auth/registerpersonel", dataToSend, { withCredentials: true });
       setMessage("✅ Account created successfully!");
-      // maybe redirect after a short timeout
-      // console.log(response);
-      // dispatch(setCredentials(response.data));
-      // its replacing admin stuff with those personel bad thing'
-      // setRegisterDetails(registerObj)
-      
+      setRegisterDetails(registerObj);
     } catch (err) {
       setMessage(`❌ ${err.response?.data?.msg || "Something went wrong"}`);
     }
@@ -72,93 +48,71 @@ const PersonelForm = () => {
 
   return (
     <>
-      <main>
-        <form
-          className="flex flex-col bg-gray-950 p-3 w-[500px]"
-          onSubmit={handleSubmit}
-        >
-          <label htmlFor="role">Role</label>
+      <main className="p-6 bg-gray-950 min-h-screen flex justify-center items-start">
+        <form onSubmit={handleSubmit} className="bg-gray-900 p-6 rounded-lg w-[500px] flex flex-col gap-4">
+          <h1 className="text-2xl font-bold text-white">Add Personel</h1>
+
+          <label>Role</label>
           <select
-            id="role"
             name="role"
-            onChange={handleChange}
             value={registerDetails.role}
-            className="bg- mb-3 mt-1 px-3 py-2 border border-gray-300 rounded appearance-none"
-            defaultValue="" // Optional: empty default
+            onChange={handleChange}
+            className="p-2 rounded bg-gray-800 text-white"
           >
-            <option className="bg-black" value="" disabled>
-              Select role
-            </option>
-            <option className="bg-black" value="teacher">
-              Teacher
-            </option>
-            <option className="bg-black" value="bursar">
-              Bursar
-            </option>
+            <option value="" disabled>Select role</option>
+            <option value="teacher">Teacher</option>
+            <option value="bursar">Bursar</option>
           </select>
-          <label htmlFor="name">Name</label>
+
+          <label>Name</label>
           <input
-            className="bg-amber-50 hover:bg-gray-900  hover:text-white mb-3 mt-1 text-black p-1 font-semibold pl-2"
-            type="text"
-            onChange={handleChange}
-            value={registerDetails.name}
             name="name"
-            id="name"
+            value={registerDetails.name}
+            onChange={handleChange}
+            className="p-2 rounded bg-gray-800 text-white"
           />
 
-          <label htmlFor="email">Email</label>
+          <label>Email</label>
           <input
-            className="bg-amber-50 hover:bg-gray-900  hover:text-white mb-3 mt-1 text-black p-1 font-semibold pl-2"
-            type="email"
-            id="email"
-            onChange={handleChange}
-            value={registerDetails.email}
             name="email"
+            value={registerDetails.email}
+            onChange={handleChange}
+            className="p-2 rounded bg-gray-800 text-white"
           />
 
-          <label htmlFor="password">Password</label>
+          <label>Password</label>
           <input
-            className="bg-amber-50 hover:bg-gray-900  hover:text-white mb-3 mt-1 text-black p-1 font-semibold pl-2"
             type="password"
-            onChange={handleChange}
-            value={registerDetails.password}
             name="password"
-            id="password"
+            value={registerDetails.password}
+            onChange={handleChange}
+            className="p-2 rounded bg-gray-800 text-white"
           />
 
-          <label htmlFor="">Confirm Password</label>
+          <label>Confirm Password</label>
           <input
-            className={`bg-amber-50 hover:bg-gray-900  hover:text-white mb-3 mt-1 text-black p-1 font-semibold pl-2 ${
-              registerDetails.confirmPass == ""
-                ? ""
-                : isMatching
-                ? "bg-green-400 hover:bg-green-400 text-white"
-                : "bg-red-600 hover:bg-red-600 text-white"
-            }`}
             type="password"
-            onChange={handleChange}
-            value={registerDetails.confirmPass}
             name="confirmPass"
-            id="confirmPass"
+            value={registerDetails.confirmPass}
+            onChange={handleChange}
+            className={`p-2 rounded ${
+              registerDetails.confirmPass === ""
+                ? "bg-gray-800 text-white"
+                : isMatching
+                ? "bg-green-600 text-white"
+                : "bg-red-600 text-white"
+            }`}
           />
 
           <button
-            className={`bg-gray-50 w-fit ml-auto mr-auto text-black font-semibold p-1 mt-1 pl-2 pr-2 disabled:bg-gray-500 ${
-              canRegister && "hover:scale-95 hover:cursor-pointer"
-            }`}
+            type="submit"
             disabled={!canRegister}
+            className={`py-2 rounded font-semibold ${canRegister ? "bg-white text-black hover:bg-gray-200" : "bg-gray-500 cursor-not-allowed"}`}
           >
-            Add personel
+            Add Personel
           </button>
-          {message && (
-            <p
-              className={`mt-3 text-center font-semibold ${
-                message.startsWith("✅") ? "text-green-400" : "text-red-500"
-              }`}
-            >
-              {message}
-            </p>
-          )}
+
+          {message && <p className={`${message.startsWith("✅") ? "text-green-400" : "text-red-500"} mt-2`}>{message}</p>}
         </form>
       </main>
     </>

@@ -1,69 +1,50 @@
 import React, { useEffect, useState } from "react";
 import api from "../../api/axios";
+import Navigation from "../../components/layout/Navigation";
 
 const AllTeachers = () => {
   const [teachers, setTeachers] = useState([]);
 
   useEffect(() => {
-    const fetchAllTeachers = async () => {
+    const fetchTeachers = async () => {
       try {
         const res = await api.get("/personel/teacher");
         setTeachers(res.data);
       } catch (err) {
-        console.log(err);
+        console.error(err);
       }
     };
-    fetchAllTeachers();
+    fetchTeachers();
   }, []);
 
   return (
-    <main className="p-6 bg-gray-950 text-white min-h-screen">
-      {/* Header + Search */}
-      <div className="flex flex-col md:flex-row justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">All Teachers</h1>
-        <input
-          type="text"
-          placeholder="Search teachers..."
-          className="mt-3 md:mt-0 bg-gray-900 text-white px-4 py-2 rounded-lg border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full md:w-72"
-        />
-      </div>
-
-      {/* Teachers Table */}
-      <div className="bg-gray-900 rounded-lg shadow overflow-x-auto">
-        <table className="w-full text-sm">
+    <>
+      <main className="p-6 bg-gray-950 min-h-screen">
+        <h1 className="text-2xl font-bold mb-4">All Teachers</h1>
+        <table className="w-full text-sm bg-gray-900 rounded-lg overflow-hidden">
           <thead className="bg-gray-800">
             <tr>
-              <th className="py-3 px-4 text-left">Name</th>
-              <th className="py-3 px-4 text-left">Email</th>
+              <th className="p-2 text-left">Name</th>
+              <th className="p-2 text-left">Email</th>
             </tr>
           </thead>
           <tbody>
             {teachers.length > 0 ? (
-              teachers.map((teacher, i) => (
-                <tr
-                  key={teacher._id || i}
-                  className={`${
-                    i % 2 === 0 ? "bg-gray-950" : "bg-gray-900"
-                  } hover:bg-gray-800 transition`}
-                >
-                  <td className="py-2 px-4">{teacher.name}</td>
-                  <td className="py-2 px-4">{teacher.email}</td>
+              teachers.map((t, i) => (
+                <tr key={t._id || i} className={`${i % 2 === 0 ? "bg-gray-950" : "bg-gray-900"} hover:bg-gray-800`}>
+                  <td className="p-2">{t.name}</td>
+                  <td className="p-2">{t.email}</td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td
-                  colSpan="2"
-                  className="text-center py-6 text-gray-400"
-                >
-                  No teachers found.
-                </td>
+                <td colSpan="2" className="text-center p-4 text-gray-400">No teachers found.</td>
               </tr>
             )}
           </tbody>
         </table>
-      </div>
-    </main>
+      </main>
+    </>
   );
 };
 
