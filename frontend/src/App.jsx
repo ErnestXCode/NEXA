@@ -11,6 +11,9 @@ import Dashboard from "./pages/home/Dashboard";
 import PersistLogin from "./pages/auth/PersistLogin";
 import PersonelForm from "./pages/actions/PersonelForm";
 import StudentForm from "./pages/actions/StudentForm";
+import AllTeachers from "./pages/actions/AllTeachers";
+import AllBursars from "./pages/actions/AllBursars";
+import AllStudents from "./pages/actions/AllStudents";
 
 function App() {
   return (
@@ -33,6 +36,9 @@ function App() {
             <Route path="settings" element={<Settings />} />
             <Route path="createPersonel" element={<PersonelForm />} />
             <Route path="createStudent" element={<StudentForm />} />
+            <Route path="students" element={<AllStudents />} />
+            <Route path="teachers" element={<AllTeachers />} />
+            <Route path="bursars" element={<AllBursars />} />
             </Route>
           </Route>
         </Routes>

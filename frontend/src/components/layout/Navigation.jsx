@@ -26,10 +26,11 @@ const Navigation = () => {
         setSidenav(false);
       };
       const dispatch = useDispatch();
+      const user = useSelector(state => state.auth)
   return (
      <nav className="p-4 flex gap-4 justify-between items-center pr-10 bg-gray-900">
         <h1 className="font-semibold">
-          <Link to="/" className="cursor-pointer">
+          <Link to={user?.accessToken ? "/dashboard" : '/'} className="cursor-pointer">
             NEXA | Hello, {currentUser.name}
           </Link>
         </h1>
@@ -54,7 +55,7 @@ const Navigation = () => {
                   </section>
 
                   <section className="flex flex-col bg-gray-900 p-2 mt-5 rounded-2xl gap-4">
-                    <NavLink onClick={() => setSidenav(false)} to="/dashboard/dashboard">
+                    <NavLink onClick={() => setSidenav(false)} to="/dashboard">
                       Dashboard
                     </NavLink>
                     <NavLink onClick={() => setSidenav(false)} to="/dashboard/fees">
