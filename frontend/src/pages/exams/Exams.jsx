@@ -32,7 +32,7 @@ const Exams = () => {
         </button>
         <button
           onClick={() => navigate("/dashboard/exams/record")}
-          className="bg-green-600 hover:bg-green-700 p-2 rounded font-semibold ml-2"
+          className="bg-blue-500 hover:bg-blue-600 p-2 rounded font-semibold ml-2"
         >
           Record Result
         </button>
@@ -60,7 +60,9 @@ const Exams = () => {
                 >
                   <td className="py-2 px-4">{exam.name}</td>
                   <td className="py-2 px-4">{exam.classLevel}</td>
-                  <td className="py-2 px-4">{new Date(exam.date).toLocaleDateString()}</td>
+                  <td className="py-2 px-4">
+                    {new Date(exam.date).toLocaleDateString()}
+                  </td>
                   <td className="py-2 px-4">{exam.subject}</td>
                   <td className="py-2 px-4">
                     <button

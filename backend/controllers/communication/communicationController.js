@@ -25,8 +25,8 @@ const sendMessage = async (req, res) => {
     const newLog = new Activity({
       type: "text",
       description: `New broadcast by ${senderDoc.name} at ${saved.date} regarding ${saved.subject}`,
-      createdBy: requesterDoc._id,
-      school: requester.school,
+      createdBy: senderDoc._id,
+      school: sender.school,
     });
 
     await newLog.save();

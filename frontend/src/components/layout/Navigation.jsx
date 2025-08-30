@@ -28,7 +28,7 @@ const Navigation = () => {
     }`;
 
   return (
-    <nav className="p-4 flex justify-between items-center bg-gray-900 text-white">
+    <nav className="p-4 flex justify-between items-center bg-gray-900 text-white sticky top-0">
       <h1 className="font-semibold text-lg">
         <NavLink end to="/dashboard">NEXA | Hello, {currentUser?.name}</NavLink>
       </h1>
