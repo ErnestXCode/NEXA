@@ -33,6 +33,7 @@ app.use("/api/personel", require("./routes/personel"));
 app.use("/api/schools", require("./routes/schools"));
 app.use("/api/students", require("./routes/students"));
 app.use("/api/communication", require("./routes/communication"));
+app.use("/api/activity", require("./routes/activity"));
 
 app.listen(5000, () => {
   connectDB();
