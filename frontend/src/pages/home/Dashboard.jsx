@@ -55,7 +55,7 @@ const Dashboard = () => {
       </div>
 
       {/* Management Sections */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Teachers */}
         <section className="bg-gray-900 p-6 rounded-lg shadow">
           <h2 className="text-xl font-bold mb-4">Manage Teachers</h2>
