@@ -1,14 +1,13 @@
 const Message = require("../../models/Message");
 const User = require("../../models/User");
 
-
 // Send message
 const sendMessage = async (req, res) => {
   try {
     const { subject, body } = req.body;
     const sender = req.user; // logged-in user
 
-    const senderDoc = await User.findOne({email: sender.email})
+    const senderDoc = await User.findOne({ email: sender.email });
 
     if (!subject || !body)
       return res.status(400).json({ msg: "Subject and body are required" });
@@ -21,6 +20,15 @@ const sendMessage = async (req, res) => {
     });
 
     const saved = await newMessage.save();
+
+    const newLog = new Activity({
+      type: "text",
+      description: `New broadcast by ${senderDoc.name} at ${saved.date} regarding ${saved.subject}`,
+      createdBy: requesterDoc._id,
+      school: requester.school,
+    });
+
+    await newLog.save();
     res.status(201).json(saved);
   } catch (err) {
     console.error(err);
@@ -32,7 +40,8 @@ const sendMessage = async (req, res) => {
 const getMessages = async (req, res) => {
   try {
     const requester = req.user;
-    const query = requester.role === "superadmin" ? {} : { school: requester.school };
+    const query =
+      requester.role === "superadmin" ? {} : { school: requester.school };
 
     const messages = await Message.find(query)
       .sort({ date: -1 })
@@ -41,7 +50,9 @@ const getMessages = async (req, res) => {
     res.status(200).json(messages);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ msg: "Error fetching messages", error: err.message });
+    res
+      .status(500)
+      .json({ msg: "Error fetching messages", error: err.message });
   }
 };
 

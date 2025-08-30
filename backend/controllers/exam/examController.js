@@ -1,5 +1,7 @@
+const Activity = require("../../models/Activity");
 const Exam = require("../../models/Exam");
 const Student = require("../../models/Student");
+const User = require("../../models/User");
 
 
 // Create exam (teacher/admin)
@@ -7,8 +9,19 @@ const createExam = async (req, res) => {
     console.log('hit exam')
   try {
     const requester = req.user;
+    const requesterDoc = await User.findOne({email: requester.email})
     const exam = new Exam({ ...req.body, school: requester.school });
     const saved = await exam.save();
+
+    const newLog = new Activity({
+          type: "exam",
+          description: `Exam added, ${exam.name} at ${exam.date}`,
+          createdBy: requesterDoc._id,
+          school: requester.school,
+        });
+    
+        await newLog.save();
+
     res.status(201).json(saved);
   } catch (err) {
     console.log(err)

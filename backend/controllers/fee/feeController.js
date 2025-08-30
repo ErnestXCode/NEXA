@@ -1,3 +1,4 @@
+const Activity = require("../../models/Activity");
 const Fee = require("../../models/Fee");
 const Student = require("../../models/Student");
 const User = require("../../models/User");
@@ -29,6 +30,16 @@ const addFee = async (req, res) => {
     });
 
     await feeRecord.save();
+
+    const newLog = new Activity({
+          type: "fee",
+          description: `Fee added for ${student.firstName} ${student.lastName} , KES ${amount}`,
+          createdBy: requesterDoc._id,
+          school: requester.school,
+        });
+    
+        await newLog.save();
+
     res.status(200).json({ msg: "Fee updated", student, feeRecord });
   } catch (err) {
     console.log(err)

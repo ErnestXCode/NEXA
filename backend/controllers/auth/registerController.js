@@ -1,3 +1,4 @@
+const Activity = require("../../models/Activity");
 const School = require("../../models/School");
 const User = require("../../models/User");
 const jwt = require("jsonwebtoken");
@@ -7,6 +8,7 @@ const handleRegister = async (req, res) => {
   const { name, email, password } = content;
 
   const requester = req.user;
+  const requesterDoc = await User.findOne({ email: requester.email });
   let role, schoolDoc;
 
   if (!requester) {
@@ -48,6 +50,14 @@ const handleRegister = async (req, res) => {
 
   if (role !== "admin") {
     // 🟡 Admin creates staff → no tokens returned
+    const newLog = new Activity({
+      type: "personel",
+      description: `New personel ${newUser.name} registered`,
+      createdBy: requesterDoc._id,
+      school: requester.school,
+    });
+
+    await newLog.save();
     return res.status(201).json({
       msg: "Personnel created successfully",
       user: {
