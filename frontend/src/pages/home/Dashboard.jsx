@@ -27,7 +27,7 @@ const Dashboard = () => {
 
         setTeachers(teachersRes.data.slice(0, 3));
         setBursars(bursarsRes.data.slice(0, 3));
-        setStudents(studentsRes.data.slice(0, 3));
+        setStudents(studentsRes.data.slice(0, 12));
         setTeachersLength(teachersRes.data.length);
         setBursarsLength(bursarsRes.data.length);
         setStudentsLength(studentsRes.data.length);

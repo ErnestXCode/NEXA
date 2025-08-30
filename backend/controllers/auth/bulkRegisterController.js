@@ -1,0 +1,58 @@
+const User = require("../../models/User");
+const School = require("../../models/School");
+const Activity = require("../../models/Activity");
+
+
+const handleBulkRegister = async (req, res) => {
+  const requester = req.user;
+  const personnel = req.body.personnel; // array from frontend
+
+  if (!Array.isArray(personnel) || personnel.length === 0) {
+    return res.status(400).json({ msg: "No personnel data provided" });
+  }
+
+  const createdUsers = [];
+
+  for (const p of personnel) {
+    const { name, email, role, password } = p;
+
+    if (!name || !email || !role || !["teacher", "bursar"].includes(role)) {
+      continue; // skip invalid rows
+    }
+
+    const exists = await User.findOne({ email });
+    if (exists) continue;
+
+    const schoolDoc = await School.findById(requester.school);
+    if (!schoolDoc) continue;
+
+    const newUser = new User({
+      name,
+      email,
+      role,
+      password,
+      school: requester.school,
+    });
+
+    await newUser.save();
+
+    // Log activity
+    const log = new Activity({
+      type: "personel",
+      description: `New personel ${name} registered via bulk upload`,
+      createdBy: requester._id,
+      school: requester.school,
+    });
+    await log.save();
+
+    createdUsers.push({ name, email, role });
+  }
+
+  res.status(201).json({
+    msg: "Bulk upload completed",
+    createdCount: createdUsers.length,
+    users: createdUsers,
+  });
+};
+
+module.exports = handleBulkRegister;
