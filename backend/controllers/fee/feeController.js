@@ -4,14 +4,15 @@ const Student = require("../../models/Student");
 const User = require("../../models/User");
 
 
-// Add payment / adjust fee
+
+// Add payment / adjustment
 const addFee = async (req, res) => {
-    console.log('hit fees')
   try {
     const requester = req.user;
-    const { studentId, amount, type = "payment", note } = req.body;
+    const { studentId, amount, term, type = "payment", note, generateReceipt = false } = req.body;
 
-    const requesterDoc = await User.findOne({email: requester.email});
+    const requesterDoc = await User.findOne({email: requester.email})
+
     const student = await Student.findById(studentId);
     if (!student) return res.status(404).json({ msg: "Student not found" });
 
@@ -22,32 +23,25 @@ const addFee = async (req, res) => {
 
     const feeRecord = new Fee({
       student: student._id,
+      term,
+      classLevel: student.classLevel,
       amount,
       type,
       note,
       handledBy: requesterDoc._id,
       school: requester.school,
+      receiptGenerated: generateReceipt,
     });
 
     await feeRecord.save();
 
-    const newLog = new Activity({
-          type: "fee",
-          description: `Fee added for ${student.firstName} ${student.lastName} , KES ${amount}`,
-          createdBy: requesterDoc._id,
-          school: requester.school,
-        });
-    
-        await newLog.save();
-
     res.status(200).json({ msg: "Fee updated", student, feeRecord });
   } catch (err) {
-    console.log(err)
     res.status(500).json({ msg: "Error updating fee", error: err.message });
   }
 };
 
-// Get fee history for a student
+// Get fee history for student
 const getStudentFees = async (req, res) => {
   try {
     const { studentId } = req.params;
@@ -61,5 +55,7 @@ const getStudentFees = async (req, res) => {
     res.status(500).json({ msg: "Error fetching fee history", error: err.message });
   }
 };
+
+// Get total outstanding fees (optionally filtered by term or class)
 
 module.exports = { addFee, getStudentFees };

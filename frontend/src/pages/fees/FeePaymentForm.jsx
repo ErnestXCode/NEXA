@@ -8,7 +8,7 @@ const fetchStudents = async () => {
   return res.data;
 };
 
-const FeePaymentForm = () => {
+const FeePaymentForm = ({ onBack }) => {
   const queryClient = useQueryClient();
   const { data: students = [] } = useQuery({
     queryKey: ["students"],
@@ -19,6 +19,7 @@ const FeePaymentForm = () => {
 
   const [selectedStudent, setSelectedStudent] = useState("");
   const [amount, setAmount] = useState("");
+  const [term, setTerm] = useState("Term 1");
   const [message, setMessage] = useState("");
 
   const mutation = useMutation({
@@ -27,9 +28,7 @@ const FeePaymentForm = () => {
       setMessage("✅ Fee payment recorded successfully!");
       setSelectedStudent("");
       setAmount("");
-      // Invalidate so Fees.jsx refetches with updated balances
       queryClient.refetchQueries(["students"]);
-      queryClient.refetchQueries(["feesOutstanding"]);
     },
     onError: (err) => {
       setMessage(`❌ ${err.response?.data?.msg || "Failed to record payment"}`);
@@ -38,27 +37,47 @@ const FeePaymentForm = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    mutation.mutate({ studentId: selectedStudent, amount });
+    mutation.mutate({
+      studentId: selectedStudent,
+      amount: Number(amount),
+      term,
+      generateReceipt: true,
+    });
   };
 
   return (
     <main className="p-6 bg-gray-950 text-white min-h-screen">
       <h1 className="text-2xl font-bold mb-4">Record Fee Payment</h1>
+      <button
+        onClick={onBack}
+        className="mb-4 bg-gray-700 hover:bg-gray-600 p-2 rounded"
+      >
+        ← Back
+      </button>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4 w-96">
         <select
           value={selectedStudent}
           onChange={(e) => setSelectedStudent(e.target.value)}
           className="p-2 rounded bg-gray-900 text-white"
         >
-          <option value="" disabled>
-            Select student
-          </option>
+          <option value="" disabled>Select student</option>
           {students.map((s) => (
             <option key={s._id} value={s._id}>
               {s.firstName} {s.lastName} ({s.admissionNumber})
             </option>
           ))}
         </select>
+
+        <select
+          value={term}
+          onChange={(e) => setTerm(e.target.value)}
+          className="p-2 rounded bg-gray-900 text-white"
+        >
+          <option value="Term 1">Term 1</option>
+          <option value="Term 2">Term 2</option>
+          <option value="Term 3">Term 3</option>
+        </select>
+
         <input
           type="number"
           placeholder="Amount"
@@ -66,6 +85,7 @@ const FeePaymentForm = () => {
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
         />
+
         <button
           type="submit"
           disabled={mutation.isLoading}
@@ -73,6 +93,7 @@ const FeePaymentForm = () => {
         >
           {mutation.isLoading ? "Recording..." : "Record Payment"}
         </button>
+
         {message && <p>{message}</p>}
       </form>
     </main>

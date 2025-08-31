@@ -21,6 +21,9 @@ import FeePaymentForm from "./pages/fees/FeePaymentForm";
 import RecordResult from "./pages/exams/RecordResult";
 import StudentEditPage from "./pages/actions/StudentEditPage";
 import PersonnelEditPage from "./pages/actions/PersonnelEditPage";
+import FeesModule from "./pages/fees/FeesModule";
+import SetupTermFees from "./pages/fees/SetupTermFees";
+import StudentFeeDetail from "./pages/fees/StudentFeeDetail";
 
 function App() {
   return (
@@ -36,7 +39,8 @@ function App() {
           <Route element={<PersistLogin />}>
             <Route path="/dashboard">
               <Route index element={<Dashboard />} />
-              <Route path="fees" element={<Fees />} />
+              <Route path="fees" element={<FeesModule />} />
+
               <Route path="exams" element={<Exams />} />
               <Route path="attendance" element={<Attendance />} />
               <Route path="communication" element={<Communication />} />
@@ -60,6 +64,8 @@ function App() {
               <Route path="communication/send" element={<SendMessageForm />} />
               <Route path="exams/create" element={<ExamForm />} />
               <Route path="fees/record" element={<FeePaymentForm />} />
+              <Route path="fees/term" element={<SetupTermFees />} />
+              <Route path="fees/detail" element={<StudentFeeDetail />} />
 
               <Route path="exams/record" element={<RecordResult />} />
             </Route>

@@ -19,6 +19,13 @@ const studentSchema = new mongoose.Schema({
 
   feeBalance: { type: Number, default: 0 },
 
+  feeExpectations: [
+    {
+      term: { type: String, enum: ["Term 1", "Term 2", "Term 3"] },
+      amount: { type: Number, default: 0 },
+    }
+  ],
+
   examResults: [
     {
       examName: String,
