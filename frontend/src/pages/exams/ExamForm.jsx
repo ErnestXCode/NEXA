@@ -1,5 +1,6 @@
 // src/pages/exams/ExamForm.jsx
 import React, { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "../../api/axios";
 
 const ExamForm = () => {
@@ -9,15 +10,30 @@ const ExamForm = () => {
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      await api.post("/exam", { name, classLevel, date, subject });
+  const queryClient = useQueryClient();
+
+  const createExam = useMutation({
+    mutationFn: async (newExam) => {
+      const res = await api.post("/exam", newExam);
+      return res.data;
+    },
+    onSuccess: () => {
       setMessage("✅ Exam created successfully!");
-      setName(""); setClassLevel(""); setDate(""); setSubject("");
-    } catch (err) {
+      setName("");
+      setClassLevel("");
+      setDate("");
+      setSubject("");
+      // invalidate cached exams list so Exams.jsx refetches
+      queryClient.refetchQueries(["exams"]);
+    },
+    onError: (err) => {
       setMessage(`❌ ${err.response?.data?.msg || "Failed to create exam"}`);
-    }
+    },
+  });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    createExam.mutate({ name, classLevel, date, subject });
   };
 
   return (
@@ -30,6 +46,7 @@ const ExamForm = () => {
           className="p-2 rounded bg-gray-900 text-white"
           value={name}
           onChange={(e) => setName(e.target.value)}
+          required
         />
         <input
           type="text"
@@ -37,22 +54,29 @@ const ExamForm = () => {
           className="p-2 rounded bg-gray-900 text-white"
           value={classLevel}
           onChange={(e) => setClassLevel(e.target.value)}
+          required
         />
         <input
           type="date"
           className="p-2 rounded bg-gray-900 text-white"
           value={date}
           onChange={(e) => setDate(e.target.value)}
+          required
         />
         <input
           type="text"
-          placeholder="subject (e.g., 2h)"
+          placeholder="Subject"
           className="p-2 rounded bg-gray-900 text-white"
           value={subject}
           onChange={(e) => setSubject(e.target.value)}
+          required
         />
-        <button type="submit" className="bg-blue-600 hover:bg-blue-700 p-2 rounded font-semibold">
-          Create Exam
+        <button
+          type="submit"
+          disabled={createExam.isLoading}
+          className="bg-blue-600 hover:bg-blue-700 p-2 rounded font-semibold disabled:opacity-50"
+        >
+          {createExam.isLoading ? "Creating..." : "Create Exam"}
         </button>
         {message && <p>{message}</p>}
       </form>

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import api from "../../api/axios";
 import Papa from "papaparse";
 import * as XLSX from "xlsx";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 const studentObj = {
   admissionNumber: "",
@@ -19,19 +20,45 @@ const StudentForm = () => {
   const [file, setFile] = useState(null);
   const [message, setMessage] = useState("");
 
-  // Single entry input
+  const queryClient = useQueryClient();
+
+  // Mutation for single student
+  const addStudentMutation = useMutation({
+    mutationFn: (newStudent) => api.post("/students", newStudent),
+    onSuccess: () => {
+      queryClient.refetchQueries(["students"]);
+      setMessage("✅ Student added successfully!");
+      setStudent(studentObj);
+      setFile(null);
+    },
+    onError: (err) => {
+      setMessage(`❌ ${err.response?.data?.msg || "Something went wrong"}`);
+    },
+  });
+
+  // Mutation for bulk upload
+  const bulkUploadMutation = useMutation({
+    mutationFn: (students) => api.post("/students/bulk", { students }),
+    onSuccess: () => {
+      queryClient.refetchQueries(["students"]);
+      setMessage("✅ Bulk upload successful!");
+      setFile(null);
+    },
+    onError: (err) => {
+      setMessage(`❌ ${err.response?.data?.msg || "Something went wrong"}`);
+    },
+  });
+
   const handleChange = (e) => {
     setStudent({ ...student, [e.target.name]: e.target.value });
   };
 
-  // File input
   const handleFileChange = (e) => setFile(e.target.files[0]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       if (file) {
-        // BULK mode
         let parsedData = [];
 
         if (file.name.endsWith(".csv")) {
@@ -52,18 +79,12 @@ const StudentForm = () => {
           return alert("Unsupported file type");
         }
 
-        await api.post("/students/bulk", { students: parsedData });
-        setMessage("✅ Bulk upload successful!");
+        bulkUploadMutation.mutate(parsedData);
       } else {
-        // SINGLE ENTRY mode
-        await api.post("/students", student);
-        setMessage("✅ Student added successfully!");
-        setStudent(studentObj);
+        addStudentMutation.mutate(student);
       }
-
-      setFile(null);
     } catch (err) {
-      setMessage(`❌ ${err.response?.data?.msg || "Something went wrong"}`);
+      setMessage(`❌ ${err.message}`);
     }
   };
 
@@ -103,7 +124,9 @@ const StudentForm = () => {
           onChange={handleChange}
           className="p-2 rounded bg-gray-800 text-white col-span-1"
         >
-          <option value="" disabled>Select Gender</option>
+          <option value="" disabled>
+            Select Gender
+          </option>
           <option value="male">Male</option>
           <option value="female">Female</option>
         </select>
@@ -161,7 +184,11 @@ const StudentForm = () => {
         </button>
 
         {message && (
-          <p className={`col-span-2 ${message.startsWith("✅") ? "text-green-400" : "text-red-500"} mt-2`}>
+          <p
+            className={`col-span-2 ${
+              message.startsWith("✅") ? "text-green-400" : "text-red-500"
+            } mt-2`}
+          >
             {message}
           </p>
         )}

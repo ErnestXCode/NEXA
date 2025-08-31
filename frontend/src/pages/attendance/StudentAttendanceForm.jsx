@@ -1,48 +1,57 @@
-import React, { useState, useEffect } from "react";
+// src/pages/attendance/StudentAttendanceForm.jsx
+import React, { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "../../api/axios";
 
+const fetchStudents = async () => {
+  const res = await api.get("/students");
+  return res.data;
+};
+
 const StudentAttendanceForm = () => {
-  const [students, setStudents] = useState([]);
+  const queryClient = useQueryClient();
   const [attendance, setAttendance] = useState({});
   const [message, setMessage] = useState("");
 
-  useEffect(() => {
-    const fetchStudents = async () => {
-      try {
-        const res = await api.get("/students");
-        setStudents(res.data);
-      } catch (err) {
-        console.error(err);
-      }
-    };
-    fetchStudents();
-  }, []);
+  const { data: students = [], isLoading } = useQuery({
+    queryKey: ["students"],
+    queryFn: fetchStudents,
+    staleTime: Infinity, // stays fresh unless invalidated
+  });
+
+  const mutation = useMutation({
+    mutationFn: async (attendanceData) => {
+      return Promise.all(
+        attendanceData.map((entry) => api.post("/attendance", entry))
+      );
+    },
+    onSuccess: () => {
+      setMessage("✅ Attendance recorded successfully!");
+      setAttendance({});
+      queryClient.refetchQueries(["attendance"]); // refresh attendance list
+    },
+    onError: (err) => {
+      setMessage(`❌ ${err.response?.data?.msg || "Failed to record attendance"}`);
+    },
+  });
 
   const handleChange = (studentId, status) => {
     setAttendance({ ...attendance, [studentId]: status });
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    try {
-      // send individual requests for each student
-      await Promise.all(
-        students.map((student) =>
-          api.post("/attendance", {
-            student: student._id,
-            classLevel: student.classLevel,
-            stream: student.stream,
-            status: attendance[student._id],
-            date: new Date(),
-          })
-        )
-      );
-      setMessage("✅ Attendance recorded successfully!");
-      setAttendance({});
-    } catch (err) {
-      setMessage(`❌ ${err.response?.data?.msg || "Failed to record attendance"}`);
-    }
+    const attendanceData = students.map((student) => ({
+      student: student._id,
+      classLevel: student.classLevel,
+      stream: student.stream,
+      status: attendance[student._id],
+      date: new Date(),
+    }));
+    mutation.mutate(attendanceData);
   };
+
+  if (isLoading) return <p className="p-6">Loading students...</p>;
 
   return (
     <main className="p-6 bg-gray-950 text-white min-h-screen">
@@ -72,9 +81,10 @@ const StudentAttendanceForm = () => {
         ))}
         <button
           type="submit"
+          disabled={mutation.isLoading}
           className="bg-blue-600 hover:bg-blue-700 p-2 rounded font-semibold mt-3"
         >
-          Submit Attendance
+          {mutation.isLoading ? "Submitting..." : "Submit Attendance"}
         </button>
         {message && <p className="mt-2">{message}</p>}
       </form>

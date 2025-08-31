@@ -1,23 +1,25 @@
-// src/pages/exams/Exams.jsx
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import api from "../../api/axios";
 
+const fetchExams = async () => {
+  const res = await api.get("/exam");
+  return res.data;
+};
+
 const Exams = () => {
-  const [exams, setExams] = useState([]);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchExams = async () => {
-      try {
-        const res = await api.get("/exam"); // backend endpoint
-        setExams(res.data);
-      } catch (err) {
-        console.error(err);
-      }
-    };
-    fetchExams();
-  }, []);
+  const { data: exams = [], isLoading, isError } = useQuery({
+    queryKey: ["exams"],
+    queryFn: fetchExams,
+    staleTime: Infinity,
+    refetchOnWindowFocus: false,
+  });
+
+  if (isLoading) return <p className="p-6 text-gray-300">Loading exams...</p>;
+  if (isError) return <p className="p-6 text-red-400">Failed to load exams</p>;
 
   return (
     <main className="p-6 bg-gray-950 text-white min-h-screen">

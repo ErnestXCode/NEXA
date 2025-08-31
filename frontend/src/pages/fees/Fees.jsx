@@ -1,21 +1,23 @@
-import React, { useState, useEffect } from "react";
+// src/pages/fees/Fees.jsx
+import React from "react";
+import { useQuery } from "@tanstack/react-query";
 import api from "../../api/axios";
 
+const fetchStudents = async () => {
+  const res = await api.get("/students");
+  return res.data;
+};
 
 const Fees = () => {
-  const [students, setStudents] = useState([]);
+  const { data: students = [], isLoading, isError } = useQuery({
+    queryKey: ["students"],
+    queryFn: fetchStudents,
+    staleTime: Infinity, // data stays fresh until manually invalidated
+    cacheTime: Infinity,
+  });
 
-  useEffect(() => {
-    const fetchStudents = async () => {
-      try {
-        const res = await api.get("/students");
-        setStudents(res.data);
-      } catch (err) {
-        console.error(err);
-      }
-    };
-    fetchStudents();
-  }, []);
+  if (isLoading) return <p className="p-6 text-white">Loading...</p>;
+  if (isError) return <p className="p-6 text-red-500">❌ Error fetching students</p>;
 
   return (
     <main className="p-6 bg-gray-950 min-h-screen text-white">
@@ -31,15 +33,22 @@ const Fees = () => {
         <tbody>
           {students.length > 0 ? (
             students.map((s, i) => (
-              <tr key={s.admissionNumber} className={`${i % 2 === 0 ? "bg-gray-950" : "bg-gray-900"}`}>
-                <td className="p-2">{s.firstName} {s.lastName}</td>
+              <tr
+                key={s.admissionNumber}
+                className={i % 2 === 0 ? "bg-gray-950" : "bg-gray-900"}
+              >
+                <td className="p-2">
+                  {s.firstName} {s.lastName}
+                </td>
                 <td className="p-2">{s.classLevel}</td>
                 <td className="p-2">{s.feeBalance || "Ksh 0"}</td>
               </tr>
             ))
           ) : (
             <tr>
-              <td colSpan="3" className="text-center p-4 text-gray-400">No students found</td>
+              <td colSpan="3" className="text-center p-4 text-gray-400">
+                No students found
+              </td>
             </tr>
           )}
         </tbody>

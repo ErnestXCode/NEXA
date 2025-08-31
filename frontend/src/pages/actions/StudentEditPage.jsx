@@ -1,43 +1,47 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import api from "../../api/axios";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 const StudentEditPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [student, setStudent] = useState(null);
-  const [message, setMessage] = useState("");
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    const fetchStudent = async () => {
-      try {
-        const res = await api.get(`/students/${id}`);
-        setStudent(res.data);
-      } catch (err) {
-        console.error(err);
-        setMessage("❌ Error fetching student data");
-      }
-    };
-    fetchStudent();
-  }, [id]);
+  // Fetch student
+  const { data: student, isLoading, isError } = useQuery({
+    queryKey: ["student", id],
+    queryFn: async () => {
+      const res = await api.get(`/students/${id}`);
+      return res.data;
+    },
+  });
+
+  // Update student
+  const updateMutation = useMutation({
+    mutationFn: (updatedStudent) => api.put(`/students/${id}`, updatedStudent),
+    onSuccess: () => {
+      queryClient.refetchQueries(["students"]);
+      queryClient.refetchQueries(["student", id]);
+      navigate("/dashboard/students");
+    },
+  });
+
+  if (isLoading)
+    return <p className="text-white p-6">Loading student data...</p>;
+  if (isError) return <p className="text-red-500 p-6">❌ Error fetching student</p>;
 
   const handleChange = (e) => {
-    setStudent({ ...student, [e.target.name]: e.target.value });
+    queryClient.setQueryData(["student", id], {
+      ...student,
+      [e.target.name]: e.target.value,
+    });
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    try {
-      await api.put(`/students/${id}`, student);
-      setMessage("✅ Student updated successfully!");
-      setTimeout(() => navigate("/dashboard/students"), 1500);
-    } catch (err) {
-      console.error(err);
-      setMessage(`❌ ${err.response?.data?.msg || "Update failed"}`);
-    }
+    updateMutation.mutate(student);
   };
-
-  if (!student) return <p className="text-white p-6">Loading...</p>;
 
   return (
     <main className=" min-h-screen flex items-center justify-center bg-gray-950">
@@ -72,14 +76,16 @@ const StudentEditPage = () => {
             onChange={handleChange}
             className="w-full p-2 rounded bg-gray-800 text-white text-sm"
           >
-            <option value="" disabled>Select Gender</option>
+            <option value="" disabled>
+              Select Gender
+            </option>
             <option value="male">Male</option>
             <option value="female">Female</option>
           </select>
           <input
             type="date"
             name="dateOfBirth"
-            value={student.dateOfBirth.slice(0,10)}
+            value={student.dateOfBirth?.slice(0, 10) || ""}
             onChange={handleChange}
             className="w-full p-2 rounded bg-gray-800 text-white text-sm"
           />
@@ -119,16 +125,6 @@ const StudentEditPage = () => {
             Save Changes
           </button>
         </form>
-
-        {message && (
-          <p
-            className={`mt-3 text-sm ${
-              message.startsWith("✅") ? "text-green-400" : "text-red-500"
-            }`}
-          >
-            {message}
-          </p>
-        )}
       </div>
     </main>
   );

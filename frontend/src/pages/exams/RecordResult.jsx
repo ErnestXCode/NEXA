@@ -1,44 +1,61 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "../../api/axios";
 
+const fetchStudents = async () => {
+  const res = await api.get("/students");
+  return res.data;
+};
+
+const fetchExams = async () => {
+  const res = await api.get("/exam");
+  return res.data;
+};
+
 const RecordResult = () => {
-  const [students, setStudents] = useState([]);
-  const [exams, setExams] = useState([]);
+  const queryClient = useQueryClient();
   const [formData, setFormData] = useState({
     studentId: "",
     examId: "",
     subject: "",
     score: "",
-    grade: ""
+    grade: "",
   });
   const [message, setMessage] = useState("");
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const studentsRes = await api.get("/students");
-        const examsRes = await api.get("/exam");
-        setStudents(studentsRes.data);
-        setExams(examsRes.data);
-      } catch (err) {
-        console.error(err);
-      }
-    };
-    fetchData();
-  }, []);
+  const { data: students = [] } = useQuery({
+    queryKey: ["students"],
+    queryFn: fetchStudents,
+    staleTime: Infinity,
+    refetchOnWindowFocus: false,
+  });
+
+  const { data: exams = [] } = useQuery({
+    queryKey: ["exams"],
+    queryFn: fetchExams,
+    staleTime: Infinity,
+    refetchOnWindowFocus: false,
+  });
+
+  const recordResultMutation = useMutation({
+    mutationFn: (newResult) => api.post("/exam/record-result", newResult),
+    onSuccess: () => {
+      setMessage("✅ Result recorded successfully!");
+      setFormData({ studentId: "", examId: "", subject: "", score: "", grade: "" });
+      // if recording should update any list, invalidate here
+      queryClient.refetchQueries(["exams"]);
+    },
+    onError: (err) => {
+      setMessage(`❌ ${err.response?.data?.msg || "Failed to record result"}`);
+    },
+  });
 
   const handleChange = (e) =>
     setFormData({ ...formData, [e.target.name]: e.target.value });
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    try {
-      await api.post("/exam/record-result", formData);
-      setMessage("✅ Result recorded successfully!");
-      setFormData({ studentId: "", examId: "", subject: "", score: "", grade: "" });
-    } catch (err) {
-      setMessage(`❌ ${err.response?.data?.msg || "Failed to record result"}`);
-    }
+    recordResultMutation.mutate(formData);
   };
 
   return (
@@ -54,7 +71,9 @@ const RecordResult = () => {
         >
           <option value="">Select Student</option>
           {students.map((s) => (
-            <option key={s._id} value={s._id}>{s.firstName} {s.lastName}</option>
+            <option key={s._id} value={s._id}>
+              {s.firstName} {s.lastName}
+            </option>
           ))}
         </select>
 
@@ -67,7 +86,9 @@ const RecordResult = () => {
         >
           <option value="">Select Exam</option>
           {exams.map((e) => (
-            <option key={e._id} value={e._id}>{e.name}</option>
+            <option key={e._id} value={e._id}>
+              {e.name}
+            </option>
           ))}
         </select>
 
@@ -104,8 +125,9 @@ const RecordResult = () => {
         <button
           type="submit"
           className="bg-blue-600 hover:bg-blue-700 p-2 rounded font-semibold"
+          disabled={recordResultMutation.isLoading}
         >
-          Record Result
+          {recordResultMutation.isLoading ? "Recording..." : "Record Result"}
         </button>
         {message && <p className="mt-2">{message}</p>}
       </form>

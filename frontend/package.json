@@ -12,8 +12,12 @@
   "dependencies": {
     "@reduxjs/toolkit": "^2.8.2",
     "@tailwindcss/vite": "^4.1.12",
-    "@tanstack/react-query": "^5.85.5",
+    "@tanstack/query-sync-storage-persister": "^5.85.6",
+    "@tanstack/react-query": "^5.85.6",
+    "@tanstack/react-query-devtools": "^5.85.6",
+    "@tanstack/react-query-persist-client": "^5.85.6",
     "axios": "^1.11.0",
+    "jwt-decode": "^4.0.0",
     "papaparse": "^5.5.3",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",

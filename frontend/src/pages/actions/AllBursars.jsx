@@ -1,39 +1,47 @@
-import React, { useEffect, useState } from "react";
-import api from "../../api/axios";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import api from "../../api/axios";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+
+const fetchBursars = async () => {
+  const res = await api.get("/personel/bursar");
+  return res.data;
+};
+
+const deleteBursar = async (id) => {
+  await api.delete(`/personel/bursar/${id}`);
+};
 
 const AllBursars = () => {
-  const [bursars, setBursars] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [bursarToDelete, setBursarToDelete] = useState(null);
-  const navigate = useNavigate()
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    const fetchBursars = async () => {
-      try {
-        const res = await api.get("/personel/bursar");
-        setBursars(res.data);
-      } catch (err) {
-        console.error(err);
-      }
-    };
-    fetchBursars();
-  }, []);
+  // Query for fetching bursars
+  const { data: bursars = [], isLoading, isError } = useQuery({
+    queryKey: ["bursars"],
+    queryFn: fetchBursars,
+  });
+
+  // Mutation for deleting bursar
+  const deleteMutation = useMutation({
+    mutationFn: (id) => deleteBursar(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["bursars"]);
+      setShowModal(false);
+      setBursarToDelete(null);
+    },
+  });
 
   const confirmDelete = (bursar) => {
     setBursarToDelete(bursar);
     setShowModal(true);
   };
 
-  const handleDelete = async () => {
-    if (!bursarToDelete) return;
-    try {
-      await api.delete(`/personel/bursar/${bursarToDelete._id}`);
-      setBursars(bursars.filter((b) => b._id !== bursarToDelete._id));
-      setShowModal(false);
-      setBursarToDelete(null);
-    } catch (err) {
-      console.error(err);
+  const handleDelete = () => {
+    if (bursarToDelete) {
+      deleteMutation.mutate(bursarToDelete._id);
     }
   };
 
@@ -43,10 +51,24 @@ const AllBursars = () => {
   };
 
   const handleEdit = (id) => {
-    console.log("Edit bursar with ID:", id);
-    // navigate to edit page or open modal
-    navigate(`/dashboard/personnel/edit/${id}`)
+    navigate(`/dashboard/personnel/edit/${id}`);
   };
+
+  if (isLoading) {
+    return (
+      <main className="p-6 bg-gray-950 min-h-screen text-white">
+        <p>Loading bursars...</p>
+      </main>
+    );
+  }
+
+  if (isError) {
+    return (
+      <main className="p-6 bg-gray-950 min-h-screen text-white">
+        <p>❌ Failed to load bursars.</p>
+      </main>
+    );
+  }
 
   return (
     <main className="p-6 bg-gray-950 min-h-screen relative">
@@ -64,7 +86,9 @@ const AllBursars = () => {
             bursars.map((b, i) => (
               <tr
                 key={b._id || i}
-                className={`${i % 2 === 0 ? "bg-gray-950" : "bg-gray-900"} hover:bg-gray-850 transition`}
+                className={`${
+                  i % 2 === 0 ? "bg-gray-950" : "bg-gray-900"
+                } hover:bg-gray-850 transition`}
               >
                 <td className="p-2 text-white">{b.name}</td>
                 <td className="p-2 text-white">{b.email}</td>
@@ -98,11 +122,10 @@ const AllBursars = () => {
       {showModal && bursarToDelete && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
           <div className="bg-gray-900 rounded-lg p-6 w-80">
-            <h2 className="text-lg font-bold text-white mb-4">
-              Delete Bursar
-            </h2>
+            <h2 className="text-lg font-bold text-white mb-4">Delete Bursar</h2>
             <p className="text-gray-300 mb-6">
-              Are you sure you want to delete <span className="font-semibold">{bursarToDelete.name}</span>?
+              Are you sure you want to delete{" "}
+              <span className="font-semibold">{bursarToDelete.name}</span>?
             </p>
             <div className="flex justify-end gap-2">
               <button
@@ -113,9 +136,10 @@ const AllBursars = () => {
               </button>
               <button
                 onClick={handleDelete}
+                disabled={deleteMutation.isLoading}
                 className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-500 transition"
               >
-                Delete
+                {deleteMutation.isLoading ? "Deleting..." : "Delete"}
               </button>
             </div>
           </div>

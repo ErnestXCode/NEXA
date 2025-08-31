@@ -1,5 +1,6 @@
 // src/pages/communication/SendMessageForm.jsx
 import React, { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "../../api/axios";
 
 const SendMessageForm = () => {
@@ -7,16 +8,28 @@ const SendMessageForm = () => {
   const [body, setBody] = useState("");
   const [message, setMessage] = useState("");
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      await api.post("/communication", { subject, body });
+  const queryClient = useQueryClient();
+
+  const sendMessage = useMutation({
+    mutationFn: async (newMessage) => {
+      const res = await api.post("/communication", newMessage);
+      return res.data;
+    },
+    onSuccess: () => {
       setMessage("✅ Message sent successfully!");
       setSubject("");
       setBody("");
-    } catch (err) {
+      // refresh communication list
+      queryClient.refetchQueries(["messages"]);
+    },
+    onError: (err) => {
       setMessage(`❌ ${err.response?.data?.msg || "Failed to send message"}`);
-    }
+    },
+  });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    sendMessage.mutate({ subject, body });
   };
 
   return (
@@ -29,15 +42,21 @@ const SendMessageForm = () => {
           className="p-2 rounded bg-gray-900 text-white"
           value={subject}
           onChange={(e) => setSubject(e.target.value)}
+          required
         />
         <textarea
           placeholder="Message body"
           className="p-2 rounded bg-gray-900 text-white"
           value={body}
           onChange={(e) => setBody(e.target.value)}
+          required
         />
-        <button type="submit" className="bg-blue-600 hover:bg-blue-700 p-2 rounded font-semibold">
-          Send
+        <button
+          type="submit"
+          disabled={sendMessage.isLoading}
+          className="bg-blue-600 hover:bg-blue-700 p-2 rounded font-semibold disabled:opacity-50"
+        >
+          {sendMessage.isLoading ? "Sending..." : "Send"}
         </button>
         {message && <p>{message}</p>}
       </form>

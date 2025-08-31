@@ -1,21 +1,35 @@
 // src/pages/communication/Communication.jsx
-import React, { useEffect, useState } from "react";
+import React from "react";
+import { useQuery } from "@tanstack/react-query";
 import api from "../../api/axios";
 
-const Communication = () => {
-  const [messages, setMessages] = useState([]);
+const fetchMessages = async () => {
+  const res = await api.get("/communication");
+  return res.data;
+};
 
-  useEffect(() => {
-    const fetchMessages = async () => {
-      try {
-        const res = await api.get("/communication"); // backend endpoint
-        setMessages(res.data);
-      } catch (err) {
-        console.error(err);
-      }
-    };
-    fetchMessages();
-  }, []);
+const Communication = () => {
+  const { data: messages = [], isLoading, isError } = useQuery({
+    queryKey: ["messages"],
+    queryFn: fetchMessages,
+    staleTime: 1000 * 60 * 5, // keep fresh for 5 minutes
+  });
+
+  if (isLoading) {
+    return (
+      <main className="p-6 bg-gray-950 text-white min-h-screen">
+        <p>Loading messages...</p>
+      </main>
+    );
+  }
+
+  if (isError) {
+    return (
+      <main className="p-6 bg-gray-950 text-white min-h-screen">
+        <p className="text-red-500">❌ Failed to load messages</p>
+      </main>
+    );
+  }
 
   return (
     <main className="p-6 bg-gray-950 text-white min-h-screen">
@@ -31,7 +45,6 @@ const Communication = () => {
                 {msg.subject}{" "}
                 <span className="text-gray-400 text-sm">by {msg.sender}</span>
               </h2>
-
               <p>{msg.body}</p>
               <span className="text-gray-400 text-sm">
                 {new Date(msg.date).toLocaleString()}

@@ -1,39 +1,47 @@
-import React, { useEffect, useState } from "react";
-import api from "../../api/axios";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import api from "../../api/axios";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+
+const fetchStudents = async () => {
+  const res = await api.get("/students");
+  return res.data;
+};
+
+const deleteStudent = async (id) => {
+  await api.delete(`/students/${id}`);
+};
 
 const AllStudents = () => {
-  const [students, setStudents] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [studentToDelete, setStudentToDelete] = useState(null);
-  const navigate = useNavigate()
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    const fetchStudents = async () => {
-      try {
-        const res = await api.get("/students");
-        setStudents(res.data);
-      } catch (err) {
-        console.error(err);
-      }
-    };
-    fetchStudents();
-  }, []);
+  // Query for fetching students
+  const { data: students = [], isLoading, isError } = useQuery({
+    queryKey: ["students"],
+    queryFn: fetchStudents,
+  });
+
+  // Mutation for deleting student
+  const deleteMutation = useMutation({
+    mutationFn: (id) => deleteStudent(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["students"]);
+      setShowModal(false);
+      setStudentToDelete(null);
+    },
+  });
 
   const confirmDelete = (student) => {
     setStudentToDelete(student);
     setShowModal(true);
   };
 
-  const handleDelete = async () => {
-    if (!studentToDelete) return;
-    try {
-      await api.delete(`/students/${studentToDelete._id}`);
-      setStudents(students.filter((s) => s._id !== studentToDelete._id));
-      setShowModal(false);
-      setStudentToDelete(null);
-    } catch (err) {
-      console.error(err);
+  const handleDelete = () => {
+    if (studentToDelete) {
+      deleteMutation.mutate(studentToDelete._id);
     }
   };
 
@@ -43,10 +51,24 @@ const AllStudents = () => {
   };
 
   const handleEdit = (id) => {
-    console.log("Edit student with ID:", id);
-    // navigate to edit page or open modal
-    navigate(`/dashboard/students/edit/${id}`)
+    navigate(`/dashboard/students/edit/${id}`);
   };
+
+  if (isLoading) {
+    return (
+      <main className="p-6 bg-gray-950 min-h-screen text-white">
+        <p>Loading students...</p>
+      </main>
+    );
+  }
+
+  if (isError) {
+    return (
+      <main className="p-6 bg-gray-950 min-h-screen text-white">
+        <p>❌ Failed to load students.</p>
+      </main>
+    );
+  }
 
   return (
     <main className="p-6 bg-gray-950 min-h-screen relative">
@@ -69,10 +91,14 @@ const AllStudents = () => {
             students.map((s, i) => (
               <tr
                 key={s._id || i}
-                className={`${i % 2 === 0 ? "bg-gray-950" : "bg-gray-900"} hover:bg-gray-850 transition`}
+                className={`${
+                  i % 2 === 0 ? "bg-gray-950" : "bg-gray-900"
+                } hover:bg-gray-850 transition`}
               >
                 <td className="p-2 text-white">{s.admissionNumber}</td>
-                <td className="p-2 text-white">{s.firstName} {s.lastName}</td>
+                <td className="p-2 text-white">
+                  {s.firstName} {s.lastName}
+                </td>
                 <td className="p-2 text-white">{s.gender}</td>
                 <td className="p-2 text-white">{s.dateOfBirth}</td>
                 <td className="p-2 text-white">{s.classLevel}</td>
@@ -108,11 +134,13 @@ const AllStudents = () => {
       {showModal && studentToDelete && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
           <div className="bg-gray-900 rounded-lg p-6 w-80">
-            <h2 className="text-lg font-bold text-white mb-4">
-              Delete Student
-            </h2>
+            <h2 className="text-lg font-bold text-white mb-4">Delete Student</h2>
             <p className="text-gray-300 mb-6">
-              Are you sure you want to delete <span className="font-semibold">{studentToDelete.firstName} {studentToDelete.lastName}</span>?
+              Are you sure you want to delete{" "}
+              <span className="font-semibold">
+                {studentToDelete.firstName} {studentToDelete.lastName}
+              </span>
+              ?
             </p>
             <div className="flex justify-end gap-2">
               <button
@@ -123,9 +151,10 @@ const AllStudents = () => {
               </button>
               <button
                 onClick={handleDelete}
+                disabled={deleteMutation.isLoading}
                 className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-500 transition"
               >
-                Delete
+                {deleteMutation.isLoading ? "Deleting..." : "Delete"}
               </button>
             </div>
           </div>

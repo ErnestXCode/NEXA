@@ -1,9 +1,15 @@
 // src/pages/attendance/Attendance.jsx
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import api from "../../api/axios";
 
+const fetchAttendance = async (filter) => {
+  const query = new URLSearchParams(filter).toString();
+  const res = await api.get(`/attendance/get?${query}`);
+  return res.data;
+};
+
 const Attendance = () => {
-  const [attendance, setAttendance] = useState([]);
   const [filter, setFilter] = useState({
     status: "",
     classLevel: "",
@@ -11,19 +17,12 @@ const Attendance = () => {
     date: "",
   });
 
-  const fetchAttendance = async (queryParams = {}) => {
-    try {
-      const query = new URLSearchParams(queryParams).toString();
-      const res = await api.get(`/attendance/get?${query}`);
-      setAttendance(res.data);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  useEffect(() => {
-    fetchAttendance(); // fetch all initially
-  }, []);
+  const { data: attendance = [], refetch, isFetching } = useQuery({
+    queryKey: ["attendance", filter],
+    queryFn: () => fetchAttendance(filter),
+    staleTime: Infinity, // stays fresh until invalidated
+    keepPreviousData: true,
+  });
 
   const handleFilterChange = (e) => {
     setFilter({ ...filter, [e.target.name]: e.target.value });
@@ -31,7 +30,7 @@ const Attendance = () => {
 
   const handleFilterSubmit = (e) => {
     e.preventDefault();
-    fetchAttendance(filter);
+    refetch();
   };
 
   return (
@@ -78,7 +77,7 @@ const Attendance = () => {
           type="submit"
           className="bg-blue-600 hover:bg-blue-700 p-2 rounded font-semibold"
         >
-          Filter
+          {isFetching ? "Filtering..." : "Filter"}
         </button>
       </form>
 
