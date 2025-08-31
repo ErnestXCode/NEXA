@@ -19,6 +19,8 @@ import SendMessageForm from "./pages/communication/SendMessageForm";
 import ExamForm from "./pages/exams/ExamForm";
 import FeePaymentForm from "./pages/fees/FeePaymentForm";
 import RecordResult from "./pages/exams/RecordResult";
+import StudentEditPage from "./pages/actions/StudentEditPage";
+import PersonnelEditPage from "./pages/actions/PersonnelEditPage";
 
 function App() {
   return (
@@ -46,8 +48,10 @@ function App() {
 
               {/* Lists */}
               <Route path="students" element={<AllStudents />} />
+              <Route path="students/edit/:id" element={<StudentEditPage />} />
               <Route path="teachers" element={<AllTeachers />} />
               <Route path="bursars" element={<AllBursars />} />
+              <Route path="personnel/edit/:id" element={<PersonnelEditPage />} />
 
               <Route
                 path="attendance/mark"

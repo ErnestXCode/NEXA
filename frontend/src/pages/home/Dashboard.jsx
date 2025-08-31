@@ -1,48 +1,68 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { Link } from "react-router-dom";
-import api from "../../api/axios";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "../../redux/slices/authSlice";
+import { useQuery } from "@tanstack/react-query";
+import api from "../../api/axios";
 
 const Dashboard = () => {
   const currentUser = useSelector(selectCurrentUser);
 
-  const [teachers, setTeachers] = useState([]);
-  const [bursars, setBursars] = useState([]);
-  const [students, setStudents] = useState([]);
-  const [teachersLength, setTeachersLength] = useState(0);
-  const [bursarsLength, setBursarsLength] = useState(0);
-  const [studentsLength, setStudentsLength] = useState(0);
-  const [outstandingFees, setOutstandingFees] = useState(0);
-  const [recentActivities, setRecentActivities] = useState([]);
+  // Queries
+  const teachersQuery = useQuery({
+    queryKey: ["teachers"],
+    queryFn: () => api.get("/personel/teacher").then((res) => res.data),
+  });
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [teachersRes, bursarsRes, studentsRes] = await Promise.all([
-          api.get("/personel/teacher"),
-          api.get("/personel/bursar"),
-          api.get("/students"),
-        ]);
+  const bursarsQuery = useQuery({
+    queryKey: ["bursars"],
+    queryFn: () => api.get("/personel/bursar").then((res) => res.data),
+  });
 
-        setTeachers(teachersRes.data.slice(0, 3));
-        setBursars(bursarsRes.data.slice(0, 3));
-        setStudents(studentsRes.data.slice(0, 12));
-        setTeachersLength(teachersRes.data.length);
-        setBursarsLength(bursarsRes.data.length);
-        setStudentsLength(studentsRes.data.length);
+  const studentsQuery = useQuery({
+    queryKey: ["students"],
+    queryFn: () => api.get("/students").then((res) => res.data),
+  });
 
-        const feesRes = await api.get("/fees/outstanding");
-        setOutstandingFees(feesRes.data.totalOutstanding);
+  const feesQuery = useQuery({
+    queryKey: ["feesOutstanding"],
+    queryFn: () => api.get("/fees/outstanding").then((res) => res.data),
+  });
 
-        const activityRes = await api.get("/activity");
-        setRecentActivities(activityRes.data.slice(0, 5)); // latest 5
-      } catch (err) {
-        console.error("Error fetching dashboard data:", err);
-      }
-    };
-    fetchData();
-  }, []);
+  const activityQuery = useQuery({
+    queryKey: ["activities"],
+    queryFn: () => api.get("/activity").then((res) => res.data),
+  });
+
+  // Derived values (safely handle loading)
+  const teachers = teachersQuery.data?.slice(0, 3) || [];
+  const bursars = bursarsQuery.data?.slice(0, 3) || [];
+  const students = studentsQuery.data?.slice(0, 12) || [];
+  const teachersLength = teachersQuery.data?.length || 0;
+  const bursarsLength = bursarsQuery.data?.length || 0;
+  const studentsLength = studentsQuery.data?.length || 0;
+  const outstandingFees = feesQuery.data?.totalOutstanding || 0;
+  const recentActivities = activityQuery.data?.slice(0, 5) || [];
+
+  if (
+    teachersQuery.isLoading ||
+    bursarsQuery.isLoading ||
+    studentsQuery.isLoading ||
+    feesQuery.isLoading ||
+    activityQuery.isLoading
+  ) {
+    return <p className="p-6 text-gray-400">Loading dashboard...</p>;
+  }
+
+  if (
+    teachersQuery.isError ||
+    bursarsQuery.isError ||
+    studentsQuery.isError ||
+    feesQuery.isError ||
+    activityQuery.isError
+  ) {
+    return <p className="p-6 text-red-500">❌ Error loading dashboard data</p>;
+  }
 
   return (
     <main className="p-6 bg-gray-950 text-white min-h-screen space-y-8">
@@ -80,7 +100,7 @@ const Dashboard = () => {
           rowRender={(teacher) => [teacher.name, teacher.email]}
         />
 
-        {/* Students - span 2 rows */}
+        {/* Students */}
         <div className="lg:row-span-2">
           <ManagementTable
             title="Manage Students"
