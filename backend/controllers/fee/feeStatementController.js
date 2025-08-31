@@ -6,40 +6,47 @@ const sgMail = require("@sendgrid/mail");
 const twilio = require("twilio");
 
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-
 const client = twilio(process.env.TWILIO_SID, process.env.TWILIO_AUTH_TOKEN);
 
-// Generate PDF buffer
 const generateFeePDFBuffer = (student, term, payments, expectedAmount) => {
   const doc = new jsPDF();
   doc.setFontSize(16);
   doc.text(`${student.firstName} ${student.lastName} - ${term} Fee Statement`, 14, 20);
   doc.setFontSize(12);
-  const paid = payments.reduce((sum, f) => sum + f.amount, 0);
-  const balance = expectedAmount - paid;
+
+  const paid = payments
+    .filter(p => p.type === "payment")
+    .reduce((sum, f) => sum + f.amount, 0);
+
+  const adjustments = payments
+    .filter(p => p.type === "adjustment")
+    .reduce((sum, f) => sum + f.amount, 0);
+
+  const balance = expectedAmount - paid + adjustments;
 
   doc.text(`Class: ${student.classLevel}`, 14, 30);
   doc.text(`Expected Fee: KSh ${expectedAmount}`, 14, 37);
   doc.text(`Paid: KSh ${paid}`, 14, 44);
-  doc.text(`Balance: KSh ${balance}`, 14, 51);
+  doc.text(`Adjustments: KSh ${adjustments}`, 14, 51);
+  doc.text(`Balance: KSh ${balance}`, 14, 58);
 
   const tableData = payments.map(p => [
-    new Date(p.date).toLocaleDateString(),
+    new Date(p.createdAt).toLocaleDateString(),
     p.amount,
     p.type,
+    p.method, // include method
     p.note || "-"
   ]);
 
   doc.autoTable({
-    startY: 60,
-    head: [["Date", "Amount", "Type", "Note"]],
+    startY: 70,
+    head: [["Date", "Amount", "Type", "Method", "Note"]],
     body: tableData
   });
 
-  return doc.output("arraybuffer"); // returns PDF buffer
+  return doc.output("arraybuffer");
 };
 
-// Send statement via email/SMS
 const sendFeeStatement = async (req, res) => {
   try {
     const { studentId, term, sendEmail = true, sendSMS = false } = req.body;
@@ -52,7 +59,7 @@ const sendFeeStatement = async (req, res) => {
 
     const pdfBuffer = generateFeePDFBuffer(student, term, payments, expectedAmount);
 
-    // Send Email
+    // Email
     if (sendEmail && student.guardianEmail) {
       const msg = {
         to: student.guardianEmail,
@@ -71,11 +78,11 @@ const sendFeeStatement = async (req, res) => {
       await sgMail.send(msg);
     }
 
-    // Send SMS/WhatsApp
+    // SMS
     if (sendSMS && student.guardianPhone) {
       await client.messages.create({
         body: `Dear ${student.guardianName}, fee statement for ${term} has been sent to your email.`,
-        from: process.env.TWILIO_PHONE_NUMBER, // WhatsApp: "whatsapp:+14155238886"
+        from: process.env.TWILIO_PHONE_NUMBER,
         to: student.guardianPhone
       });
     }

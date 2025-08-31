@@ -1,8 +1,8 @@
 const express = require("express");
 const verifyJWT = require("../middleware/verifyJWT");
 const authorize = require("../middleware/authorize");
-const { addFee, getStudentFees } = require("../controllers/fee/feeController");
-const getOutstandingFees = require("../controllers/fee/outstandingFeeController");
+const { addFee, getStudentFees, getOutstandingFees, getAllFees } = require("../controllers/fee/feeController");
+
 const {
   sendFeeStatement,
 } = require("../controllers/fee/feeStatementController");
@@ -10,6 +10,7 @@ const router = express.Router();
 
 // Add payment / adjust fee (Bursar/Admin)
 router.post("/", verifyJWT, authorize(["bursar", "admin"]), addFee);
+router.get("/", verifyJWT, authorize(["bursar", "admin"]), getAllFees);
 
 router.get(
   "/outstanding",

@@ -79,11 +79,15 @@ const getAllStudents = async (req, res) => {
   try {
     const requester = req.user;
 
+    console.log('requester', requester)
+
     let query = {};
 
     if (requester.role !== "superadmin") {
       query.school = requester.school; // restrict to their school
     }
+    console.log('query', query)
+
 
     const students = await Student.find(query);
     res.status(200).json(students);

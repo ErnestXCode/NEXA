@@ -1,7 +1,8 @@
+// models/Student.js
 const mongoose = require("mongoose");
 
 const studentSchema = new mongoose.Schema({
-  admissionNumber: { type: String, required: true, unique: true },
+  admissionNumber: { type: String, required: true },
   firstName: { type: String, required: true },
   lastName: { type: String, required: true },
   gender: { type: String, enum: ["male", "female"], required: true },
@@ -17,12 +18,20 @@ const studentSchema = new mongoose.Schema({
   guardianEmail: { type: String },
   relationship: { type: String },
 
-  feeBalance: { type: Number, default: 0 },
-
   feeExpectations: [
     {
-      term: { type: String, enum: ["Term 1", "Term 2", "Term 3"] },
+      term: { type: String, enum: ["Term 1", "Term 2", "Term 3"], required: true },
       amount: { type: Number, default: 0 },
+    }
+  ],
+
+  payments: [
+    {
+      term: { type: String, enum: ["Term 1", "Term 2", "Term 3"], required: true },
+      amount: { type: Number, required: true },
+      date: { type: Date, default: Date.now },
+      type: { type: String, enum: ["cash", "mpesa", "card"], default: "cash" },
+      note: String,
     }
   ],
 

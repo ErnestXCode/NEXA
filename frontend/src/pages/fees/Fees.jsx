@@ -8,24 +8,47 @@ const fetchStudents = async () => {
   return res.data;
 };
 
-const Fees = ({ onNavigate, onSelectStudent }) => {
-  const { data: students = [], isLoading, isError } = useQuery({
+const fetchFees = async () => {
+  const res = await api.get("/fees"); // all fee records
+  return res.data;
+};
+
+const Fees = ({ onSelectStudent, onNavigate }) => {
+  const [selectedTerm, setSelectedTerm] = useState("Term 1");
+
+  const {
+    data: students = [],
+    isLoading: studentsLoading,
+  } = useQuery({
     queryKey: ["students"],
     queryFn: fetchStudents,
     staleTime: Infinity,
-    cacheTime: Infinity,
   });
 
-  const [selectedTerm, setSelectedTerm] = useState("Term 1");
+  const {
+    data: fees = [],
+    isLoading: feesLoading,
+    refetch: refetchFees,
+  } = useQuery({
+    queryKey: ["fees"],
+    queryFn: fetchFees,
+    staleTime: Infinity,
+  });
 
-  if (isLoading) return <p className="p-6 text-white">Loading...</p>;
-  if (isError) return <p className="p-6 text-red-500">❌ Error fetching students</p>;
+  if (studentsLoading || feesLoading) return <p className="p-6 text-white">Loading...</p>;
+
+  // Calculate total paid for a student in selected term
+  const getTermPaid = (studentId) => {
+    const studentFees = fees.filter(f => f.student === studentId && f.term === selectedTerm);
+    return studentFees.reduce((sum, f) => sum + f.amount, 0);
+  };
 
   const totalExpected = students.reduce(
     (sum, s) => sum + (s.feeExpectations?.find(f => f.term === selectedTerm)?.amount || 0),
     0
   );
-  const totalPaid = students.reduce((sum, s) => sum + (s.feeBalance || 0), 0);
+
+  const totalPaid = students.reduce((sum, s) => sum + getTermPaid(s._id), 0);
   const totalOutstanding = totalExpected - totalPaid;
   const percentageCollected = totalExpected ? (totalPaid / totalExpected) * 100 : 0;
 
@@ -65,10 +88,7 @@ const Fees = ({ onNavigate, onSelectStudent }) => {
       </div>
 
       <div className="w-full bg-gray-800 h-4 rounded mb-6">
-        <div
-          className="bg-blue-600 h-4 rounded"
-          style={{ width: `${percentageCollected}%` }}
-        />
+        <div className="bg-blue-600 h-4 rounded" style={{ width: `${percentageCollected}%` }} />
       </div>
 
       <table className="w-full text-sm bg-gray-900 rounded-lg overflow-hidden">
@@ -83,36 +103,29 @@ const Fees = ({ onNavigate, onSelectStudent }) => {
           </tr>
         </thead>
         <tbody>
-          {students.length > 0 ? (
-            students.map((s, i) => {
-              const expected = s.feeExpectations?.find(f => f.term === selectedTerm)?.amount || 0;
-              const paid = s.feeBalance || 0;
-              const balance = expected - paid;
-              return (
-                <tr key={s._id} className={i % 2 === 0 ? "bg-gray-950" : "bg-gray-900"}>
-                  <td className="p-2">{s.firstName} {s.lastName}</td>
-                  <td className="p-2">{s.classLevel}</td>
-                  <td className="p-2">{expected}</td>
-                  <td className="p-2">{paid}</td>
-                  <td className="p-2">{balance}</td>
-                  <td className="p-2">
-                    <button
-                      onClick={() => onSelectStudent(s._id)}
-                      className="bg-green-600 hover:bg-green-700 p-1 rounded"
-                    >
-                      Details
-                    </button>
-                  </td>
-                </tr>
-              );
-            })
-          ) : (
-            <tr>
-              <td colSpan="6" className="text-center p-4 text-gray-400">
-                No students found
-              </td>
-            </tr>
-          )}
+          {students.map((s, i) => {
+            const expected = s.feeExpectations?.find(f => f.term === selectedTerm)?.amount || 0;
+            const paid = getTermPaid(s._id);
+            const balance = expected - paid;
+
+            return (
+              <tr key={s._id} className={i % 2 === 0 ? "bg-gray-950" : "bg-gray-900"}>
+                <td className="p-2">{s.firstName} {s.lastName}</td>
+                <td className="p-2">{s.classLevel}</td>
+                <td className="p-2">{expected}</td>
+                <td className="p-2">{paid}</td>
+                <td className="p-2">{balance}</td>
+                <td className="p-2">
+                  <button
+                    onClick={() => onSelectStudent(s._id)}
+                    className="bg-green-600 hover:bg-green-700 p-1 rounded"
+                  >
+                    Details
+                  </button>
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </main>

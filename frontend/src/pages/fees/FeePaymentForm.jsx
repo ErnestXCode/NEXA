@@ -10,7 +10,7 @@ const fetchStudents = async () => {
 
 const FeePaymentForm = ({ onBack }) => {
   const queryClient = useQueryClient();
-  const { data: students = [] } = useQuery({
+  const { data: students = [], isLoading } = useQuery({
     queryKey: ["students"],
     queryFn: fetchStudents,
     staleTime: Infinity,
@@ -20,6 +20,7 @@ const FeePaymentForm = ({ onBack }) => {
   const [selectedStudent, setSelectedStudent] = useState("");
   const [amount, setAmount] = useState("");
   const [term, setTerm] = useState("Term 1");
+  const [paymentMethod, setPaymentMethod] = useState("cash"); // new
   const [message, setMessage] = useState("");
 
   const mutation = useMutation({
@@ -37,33 +38,50 @@ const FeePaymentForm = ({ onBack }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (!selectedStudent || !amount) {
+      setMessage("❌ Please select a student and enter an amount");
+      return;
+    }
+
     mutation.mutate({
       studentId: selectedStudent,
-      amount: Number(amount),
       term,
-      generateReceipt: true,
+      amount: Number(amount),
+      type: "payment", // backend expects 'payment' or 'adjustment'
+      method: paymentMethod, // optional: cash/mpesa/card
+      note: "",
     });
   };
 
+  if (isLoading) return <p className="p-6 text-white">Loading students...</p>;
+
   return (
-    <main className="p-6 bg-gray-950 text-white min-h-screen">
-      <h1 className="text-2xl font-bold mb-4">Record Fee Payment</h1>
-      <button
-        onClick={onBack}
-        className="mb-4 bg-gray-700 hover:bg-gray-600 p-2 rounded"
+    <main className="p-6 bg-gray-950 text-white min-h-screen flex justify-center">
+      <form
+        onSubmit={handleSubmit}
+        className="bg-gray-900 p-6 rounded-lg w-full max-w-md flex flex-col gap-4"
       >
-        ← Back
-      </button>
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4 w-96">
+        <h1 className="text-2xl font-bold mb-4">Record Fee Payment</h1>
+
+        <button
+          type="button"
+          onClick={onBack}
+          className="mb-4 bg-gray-700 hover:bg-gray-600 p-2 rounded"
+        >
+          ← Back
+        </button>
+
         <select
           value={selectedStudent}
           onChange={(e) => setSelectedStudent(e.target.value)}
-          className="p-2 rounded bg-gray-900 text-white"
+          className="p-2 rounded bg-gray-800 text-white"
         >
-          <option value="" disabled>Select student</option>
+          <option value="" disabled>
+            Select student
+          </option>
           {students.map((s) => (
             <option key={s._id} value={s._id}>
-              {s.firstName} {s.lastName} ({s.admissionNumber})
+              {s.firstName} {s.lastName} ({s.classLevel})
             </option>
           ))}
         </select>
@@ -71,7 +89,7 @@ const FeePaymentForm = ({ onBack }) => {
         <select
           value={term}
           onChange={(e) => setTerm(e.target.value)}
-          className="p-2 rounded bg-gray-900 text-white"
+          className="p-2 rounded bg-gray-800 text-white"
         >
           <option value="Term 1">Term 1</option>
           <option value="Term 2">Term 2</option>
@@ -81,10 +99,20 @@ const FeePaymentForm = ({ onBack }) => {
         <input
           type="number"
           placeholder="Amount"
-          className="p-2 rounded bg-gray-900 text-white"
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
+          className="p-2 rounded bg-gray-800 text-white"
         />
+
+        <select
+          value={paymentMethod}
+          onChange={(e) => setPaymentMethod(e.target.value)}
+          className="p-2 rounded bg-gray-800 text-white"
+        >
+          <option value="cash">Cash</option>
+          <option value="mpesa">MPESA</option>
+          <option value="card">Card</option>
+        </select>
 
         <button
           type="submit"
@@ -94,7 +122,15 @@ const FeePaymentForm = ({ onBack }) => {
           {mutation.isLoading ? "Recording..." : "Record Payment"}
         </button>
 
-        {message && <p>{message}</p>}
+        {message && (
+          <p
+            className={`mt-2 ${
+              message.startsWith("✅") ? "text-green-400" : "text-red-500"
+            }`}
+          >
+            {message}
+          </p>
+        )}
       </form>
     </main>
   );

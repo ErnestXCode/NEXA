@@ -8,9 +8,8 @@ const handleRegister = async (req, res) => {
   const { name, email, password } = content;
 
   const requester = req.user;
-  const requesterDoc = await User.findOne({ email: requester.email });
-  let role, schoolDoc;
-
+  let role, schoolDoc, requesterDoc
+  
   if (!requester) {
     // 🟢 Public first admin registration
     role = "admin";
@@ -24,6 +23,7 @@ const handleRegister = async (req, res) => {
     }
   } else {
     // 🟡 Admin creating teacher/bursar
+     requesterDoc = await User.findOne({ email: requester.email });
     role = content.role;
     if (!["teacher", "bursar"].includes(role))
       return res.status(400).json({ msg: "Invalid role" });

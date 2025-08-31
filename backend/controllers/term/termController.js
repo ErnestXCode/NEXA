@@ -6,6 +6,7 @@ const createTerm = async (req, res) => {
   try {
     const requester = req.user;
     const { name, startDate, endDate, classFees } = req.body;
+    console.log(req.body)
 
     // Save term
     const term = new Term({

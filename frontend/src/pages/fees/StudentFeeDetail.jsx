@@ -1,47 +1,34 @@
-// src/pages/fees/StudentFeeDetail.jsx
 import React, { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import api from "../../api/axios";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
 
-const fetchStudentFees = async (studentId) => {
-  const res = await api.get(`/fees/student/${studentId}`);
-  return res.data;
-};
-
-const fetchStudent = async (studentId) => {
-  const res = await api.get(`/students/${studentId}`);
-  return res.data;
-};
-
 const StudentFeeDetail = ({ studentId, onBack }) => {
   const [selectedTerm, setSelectedTerm] = useState("Term 1");
 
-  const { data: student, isLoading: studentLoading } = useQuery({
+  const { data: student = {}, isLoading: studentLoading } = useQuery({
     queryKey: ["student", studentId],
-    queryFn: () => fetchStudent(studentId),
+    queryFn: () => api.get(`/students/${studentId}`).then(res => res.data),
     staleTime: Infinity,
   });
 
   const { data: feeRecords = [], isLoading: feesLoading } = useQuery({
-    queryKey: ["studentFees", studentId],
-    queryFn: () => fetchStudentFees(studentId),
+    queryKey: ["studentFees", studentId, selectedTerm],
+    queryFn: () => api.get(`/fees/student/${studentId}?term=${selectedTerm}`).then(res => res.data),
     staleTime: Infinity,
   });
 
   const mutationSend = useMutation({
     mutationFn: (payload) => api.post("/fees/student/send-statement", payload),
     onSuccess: () => alert("✅ Statement sent successfully!"),
-    onError: (err) =>
-      alert(`❌ Failed to send statement: ${err.response?.data?.msg || err.message}`),
+    onError: (err) => alert(`❌ Failed to send statement: ${err.response?.data?.msg || err.message}`),
   });
 
   if (studentLoading || feesLoading) return <p className="p-6 text-white">Loading...</p>;
 
-  const termFees = student.feeExpectations?.find((f) => f.term === selectedTerm);
-  const termPayments = feeRecords.filter((f) => f.term === selectedTerm);
-  const paid = termPayments.reduce((sum, f) => sum + f.amount, 0);
+  const termFees = student.feeExpectations?.find(f => f.term === selectedTerm);
+  const paid = feeRecords.reduce((sum, f) => sum + f.amount, 0);
   const balance = (termFees?.amount || 0) - paid;
 
   const handleGeneratePDF = () => {
@@ -54,7 +41,7 @@ const StudentFeeDetail = ({ studentId, onBack }) => {
     doc.text(`Paid: KSh ${paid}`, 14, 44);
     doc.text(`Balance: KSh ${balance}`, 14, 51);
 
-    const tableData = termPayments.map((p) => [
+    const tableData = feeRecords.map(p => [
       new Date(p.date).toLocaleDateString(),
       p.amount,
       p.type,
@@ -72,9 +59,7 @@ const StudentFeeDetail = ({ studentId, onBack }) => {
 
   return (
     <main className="p-6 bg-gray-950 min-h-screen text-white">
-      <h1 className="text-2xl font-bold mb-4">
-        {student.firstName} {student.lastName} - Fee Details
-      </h1>
+      <h1 className="text-2xl font-bold mb-4">{student.firstName} {student.lastName} - Fee Details</h1>
 
       <button onClick={onBack} className="mb-4 bg-gray-700 hover:bg-gray-600 p-2 rounded">← Back</button>
 
@@ -82,8 +67,8 @@ const StudentFeeDetail = ({ studentId, onBack }) => {
         <label>Term:</label>
         <select
           value={selectedTerm}
-          onChange={(e) => setSelectedTerm(e.target.value)}
-          className="p-2 rounded bg-gray-900 text-white"
+          onChange={e => setSelectedTerm(e.target.value)}
+          className="p-2 rounded bg-gray-800 text-white"
         >
           <option value="Term 1">Term 1</option>
           <option value="Term 2">Term 2</option>
@@ -92,15 +77,9 @@ const StudentFeeDetail = ({ studentId, onBack }) => {
       </div>
 
       <div className="mb-6 flex gap-4">
-        <div className="bg-gray-800 p-4 rounded">
-          <p>Expected: KSh {termFees?.amount || 0}</p>
-        </div>
-        <div className="bg-gray-800 p-4 rounded">
-          <p>Paid: KSh {paid}</p>
-        </div>
-        <div className={`p-4 rounded ${balance === 0 ? "bg-green-700" : "bg-red-700"}`}>
-          <p>Balance: KSh {balance}</p>
-        </div>
+        <div className="bg-gray-800 p-4 rounded">Expected: KSh {termFees?.amount || 0}</div>
+        <div className="bg-gray-800 p-4 rounded">Paid: KSh {paid}</div>
+        <div className={`p-4 rounded ${balance === 0 ? "bg-green-700" : "bg-red-700"}`}>Balance: KSh {balance}</div>
       </div>
 
       <table className="w-full text-sm bg-gray-900 rounded-lg overflow-hidden mb-6">
@@ -113,44 +92,29 @@ const StudentFeeDetail = ({ studentId, onBack }) => {
           </tr>
         </thead>
         <tbody>
-          {termPayments.length > 0 ? (
-            termPayments.map((f, i) => (
-              <tr key={f._id} className={i % 2 === 0 ? "bg-gray-950" : "bg-gray-900"}>
-                <td className="p-2">{new Date(f.date).toLocaleDateString()}</td>
-                <td className="p-2">{f.amount}</td>
-                <td className="p-2">{f.type}</td>
-                <td className="p-2">{f.note || "-"}</td>
-              </tr>
-            ))
-          ) : (
+          {feeRecords.length > 0 ? feeRecords.map((f, i) => (
+            <tr key={f._id} className={i % 2 === 0 ? "bg-gray-950" : "bg-gray-900"}>
+              <td className="p-2">{new Date(f.date).toLocaleDateString()}</td>
+              <td className="p-2">{f.amount}</td>
+              <td className="p-2">{f.type}</td>
+              <td className="p-2">{f.note || "-"}</td>
+            </tr>
+          )) : (
             <tr>
-              <td colSpan="4" className="text-center p-4 text-gray-400">
-                No payments found for {selectedTerm}
-              </td>
+              <td colSpan="4" className="text-center p-4 text-gray-400">No payments found for {selectedTerm}</td>
             </tr>
           )}
         </tbody>
       </table>
 
       <div className="flex gap-4">
-        <button
-          onClick={handleGeneratePDF}
-          className="bg-blue-600 hover:bg-blue-700 p-2 rounded font-semibold"
-        >
+        <button onClick={handleGeneratePDF} className="bg-blue-600 hover:bg-blue-700 p-2 rounded font-semibold">
           Generate PDF Statement
         </button>
 
-        <button
-          onClick={() =>
-            mutationSend.mutate({
-              studentId,
-              term: selectedTerm,
-              sendEmail: true,
-              sendSMS: false,
-            })
-          }
-          className="bg-green-600 hover:bg-green-700 p-2 rounded font-semibold"
-        >
+        <button onClick={() =>
+          mutationSend.mutate({ studentId, term: selectedTerm, sendEmail: true, sendSMS: false })
+        } className="bg-green-600 hover:bg-green-700 p-2 rounded font-semibold">
           Send Statement to Parent
         </button>
       </div>
