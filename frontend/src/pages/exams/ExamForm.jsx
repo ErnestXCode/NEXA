@@ -3,11 +3,18 @@ import React, { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "../../api/axios";
 
+const allClasses = [
+  "PP1", "PP2", "Grade 1", "Grade 2", "Grade 3", "Grade 4",
+  "Grade 5", "Grade 6", "Form 1", "Form 2", "Form 3", "Form 4"
+];
+
 const ExamForm = () => {
   const [name, setName] = useState("");
-  const [classLevel, setClassLevel] = useState("");
+  const [term, setTerm] = useState("Term 1");
+  const [classes, setClasses] = useState([]);
+  const [subjects, setSubjects] = useState([]);
+  const [subjectInput, setSubjectInput] = useState("");
   const [date, setDate] = useState("");
-  const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
 
   const queryClient = useQueryClient();
@@ -20,10 +27,11 @@ const ExamForm = () => {
     onSuccess: () => {
       setMessage("✅ Exam created successfully!");
       setName("");
-      setClassLevel("");
+      setTerm("Term 1");
+      setClasses([]);
+      setSubjects([]);
+      setSubjectInput("");
       setDate("");
-      setSubject("");
-      // invalidate cached exams list so Exams.jsx refetches
       queryClient.refetchQueries(["exams"]);
     },
     onError: (err) => {
@@ -31,15 +39,31 @@ const ExamForm = () => {
     },
   });
 
+  const handleClassesChange = (e) => {
+    const selected = Array.from(e.target.selectedOptions).map(o => o.value);
+    setClasses(selected);
+  };
+
+  const handleAddSubject = () => {
+    if (subjectInput.trim() && !subjects.includes(subjectInput.trim())) {
+      setSubjects([...subjects, subjectInput.trim()]);
+      setSubjectInput("");
+    }
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    createExam.mutate({ name, classLevel, date, subject });
+    if (!classes.length || !subjects.length) {
+      setMessage("❌ Select at least one class and add at least one subject");
+      return;
+    }
+    createExam.mutate({ name, term, classes, subjects, date });
   };
 
   return (
     <main className="p-6 bg-gray-950 text-white min-h-screen">
       <h1 className="text-2xl font-bold mb-4">Create Exam</h1>
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4 w-96">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4 w-full max-w-md">
         <input
           type="text"
           placeholder="Exam Name"
@@ -48,14 +72,32 @@ const ExamForm = () => {
           onChange={(e) => setName(e.target.value)}
           required
         />
-        <input
-          type="text"
-          placeholder="Class"
-          className="p-2 rounded bg-gray-900 text-white"
-          value={classLevel}
-          onChange={(e) => setClassLevel(e.target.value)}
-          required
-        />
+
+        <select value={term} onChange={(e) => setTerm(e.target.value)} className="p-2 rounded bg-gray-900 text-white">
+          <option>Term 1</option>
+          <option>Term 2</option>
+          <option>Term 3</option>
+        </select>
+
+        <select multiple value={classes} onChange={handleClassesChange} className="p-2 rounded bg-gray-900 text-white h-32">
+          {allClasses.map((c) => <option key={c} value={c}>{c}</option>)}
+        </select>
+
+        <div className="flex gap-2">
+          <input
+            type="text"
+            placeholder="Add Subject"
+            className="p-2 rounded bg-gray-900 text-white flex-1"
+            value={subjectInput}
+            onChange={(e) => setSubjectInput(e.target.value)}
+          />
+          <button type="button" onClick={handleAddSubject} className="bg-blue-600 hover:bg-blue-700 p-2 rounded">Add</button>
+        </div>
+
+        {subjects.length > 0 && (
+          <p>Subjects: {subjects.join(", ")}</p>
+        )}
+
         <input
           type="date"
           className="p-2 rounded bg-gray-900 text-white"
@@ -63,14 +105,7 @@ const ExamForm = () => {
           onChange={(e) => setDate(e.target.value)}
           required
         />
-        <input
-          type="text"
-          placeholder="Subject"
-          className="p-2 rounded bg-gray-900 text-white"
-          value={subject}
-          onChange={(e) => setSubject(e.target.value)}
-          required
-        />
+
         <button
           type="submit"
           disabled={createExam.isLoading}

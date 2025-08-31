@@ -77,24 +77,58 @@ const deleteExam = async (req, res) => {
 // Record exam results for students
 const recordResult = async (req, res) => {
   try {
-    const { examId, studentId, score, grade } = req.body;
+    const { examId, studentId, results } = req.body;
+    // results = [{ subject: "Math", score: 80 }, { subject: "English", score: 70 }]
+
+    const exam = await Exam.findById(examId);
+    if (!exam) return res.status(404).json({ msg: "Exam not found" });
+
     const student = await Student.findById(studentId);
     if (!student) return res.status(404).json({ msg: "Student not found" });
 
+    let total = 0;
+    results.forEach(r => total += r.score);
+    const average = total / results.length;
+
+    const grade = average >= 80 ? "A" :
+                  average >= 70 ? "B" :
+                  average >= 60 ? "C" :
+                  average >= 50 ? "D" : "E";
+
     student.examResults.push({
-      examName: examId,
-      subject: req.body.subject,
-      date: new Date(),
-      score,
+      exam: examId,
+      term: exam.term,
+      results,
+      total,
+      average,
       grade,
     });
 
     await student.save();
-    res.status(200).json({ msg: "Result recorded successfully", student });
+
+    res.status(200).json({ msg: "Results recorded", student });
   } catch (err) {
     res.status(500).json({ msg: "Error recording result", error: err.message });
   }
 };
+
+
+const getReportCard = async (req, res) => {
+  try {
+    const { studentId, term } = req.params;
+    const student = await Student.findById(studentId)
+      .populate("examResults.exam");
+    if (!student) return res.status(404).json({ msg: "Student not found" });
+
+    const termResults = student.examResults.filter(r => r.term === term);
+
+    res.status(200).json({ student, termResults });
+  } catch (err) {
+    res.status(500).json({ msg: "Error fetching report card", error: err.message });
+  }
+};
+
+
 
 module.exports = {
   createExam,
@@ -102,5 +136,6 @@ module.exports = {
   getExamById,
   updateExam,
   deleteExam,
+  getReportCard,
   recordResult,
 };

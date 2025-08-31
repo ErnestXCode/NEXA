@@ -24,6 +24,7 @@ import PersonnelEditPage from "./pages/actions/PersonnelEditPage";
 import FeesModule from "./pages/fees/FeesModule";
 import SetupTermFees from "./pages/fees/SetupTermFees";
 import StudentFeeDetail from "./pages/fees/StudentFeeDetail";
+import AttendanceDashboard from "./pages/attendance/AttendanceDashboard";
 
 function App() {
   return (
@@ -42,7 +43,8 @@ function App() {
               <Route path="fees" element={<FeesModule />} />
 
               <Route path="exams" element={<Exams />} />
-              <Route path="attendance" element={<Attendance />} />
+              <Route path="attendance/hist" element={<Attendance />} />
+              <Route path="attendance" element={<AttendanceDashboard />} />
               <Route path="communication" element={<Communication />} />
               <Route path="settings" element={<Settings />} />
 

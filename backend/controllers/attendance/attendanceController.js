@@ -1,4 +1,5 @@
 const Attendance = require("../../models/Attendance");
+const Student = require("../../models/Student");
 const User = require("../../models/User");
 
 // Mark attendance
@@ -88,9 +89,66 @@ const getAttendance = async (req, res) => {
   }
 };
 
+const getHighAbsenteeism = async (req, res) => {
+  try {
+    const requester = req.user;
+
+    const query = {};
+    if (requester.role !== "superadmin") query.school = requester.school;
+
+    // Aggregate absences per student
+    const results = await Attendance.aggregate([
+      { $match: { ...query, status: "absent" } },
+      { $group: { _id: "$student", absences: { $sum: 1 } } },
+      { $match: { absences: { $gt: 3 } } },
+      { $sort: { absences: -1 } },
+    ]);
+
+    // Populate student details
+    const students = await Student.find({ _id: { $in: results.map(r => r._id) } })
+      .select("firstName lastName classLevel parentEmail parentPhone");
+
+    // Merge absence counts
+    const highAbsentees = students.map((s) => {
+      const count = results.find(r => r._id.toString() === s._id.toString()).absences;
+      return { ...s.toObject(), absences: count };
+    });
+
+    res.status(200).json(highAbsentees);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ msg: "Error fetching high absenteeism", error: err.message });
+  }
+};
+
+// 2️⃣ Notify parents of high absenteeism
+const notifyParents = async (req, res) => {
+  try {
+    const { students } = req.body; // array of students with parentEmail/parentPhone
+
+    if (!students || students.length === 0)
+      return res.status(400).json({ msg: "No students to notify" });
+
+    // TODO: integrate email/SMS sending here
+    students.forEach((s) => {
+      // Example pseudo-code:
+      // sendEmail(s.parentEmail, `Your child ${s.firstName} has ${s.absences} absences`);
+      // sendSMS(s.parentPhone, `Your child ${s.firstName} has ${s.absences} absences`);
+      console.log(`Notify ${s.parentEmail} / ${s.parentPhone}: ${s.firstName} - ${s.absences} absences`);
+    });
+
+    res.status(200).json({ msg: "Notifications sent successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ msg: "Error notifying parents", error: err.message });
+  }
+};
+
 module.exports = {
   markAttendance,
   getStudentAttendance,
+  getHighAbsenteeism, 
+  notifyParents,
   getClassAttendance,
   getAttendance,
 };
