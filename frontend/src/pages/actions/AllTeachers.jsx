@@ -33,12 +33,29 @@ const AllTeachers = () => {
   // Delete mutation
   const mutation = useMutation({
     mutationFn: deleteTeacher,
-    onSuccess: () => {
-      queryClient.invalidateQueries(["teachers"]);
-      setShowModal(false);
-      setTeacherToDelete(null);
-    },
-  });
+    onMutate: async (id) => {
+    await queryClient.cancelQueries({ queryKey: ["teachers"] });
+    const previousTeachers = queryClient.getQueryData(["teachers"]);
+    queryClient.setQueryData(["teachers"], (old = []) =>
+      old.filter((b) => b._id !== id)
+    );
+    return { previousTeachers };
+  },
+  onError: (err, id, context) => {
+    if (context?.previousTeachers) {
+      queryClient.setQueryData(["teachers"], context.previousTeachers);
+    }
+  },
+  onSuccess: () => {
+    // close modal
+    setShowModal(false);
+    setTeacherToDelete(null);
+  },
+  onSettled: () => {
+    // refetch to sync server and cache
+    queryClient.refetchQueries(["teachers"]);
+  },
+});
 
   const confirmDelete = (teacher) => {
     setTeacherToDelete(teacher);

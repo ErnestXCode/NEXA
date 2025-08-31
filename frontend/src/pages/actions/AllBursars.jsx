@@ -19,18 +19,40 @@ const AllBursars = () => {
   const queryClient = useQueryClient();
 
   // Query for fetching bursars
-  const { data: bursars = [], isLoading, isError } = useQuery({
+  const {
+    data: bursars = [],
+    isLoading,
+    isError,
+  } = useQuery({
     queryKey: ["bursars"],
     queryFn: fetchBursars,
   });
 
   // Mutation for deleting bursar
+  // Mutation for deleting bursar
   const deleteMutation = useMutation({
     mutationFn: (id) => deleteBursar(id),
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: ["bursars"] });
+      const previousBursars = queryClient.getQueryData(["bursars"]);
+      queryClient.setQueryData(["bursars"], (old = []) =>
+        old.filter((b) => b._id !== id)
+      );
+      return { previousBursars };
+    },
+    onError: (err, id, context) => {
+      if (context?.previousBursars) {
+        queryClient.setQueryData(["bursars"], context.previousBursars);
+      }
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries(["bursars"]);
+      // close modal
       setShowModal(false);
       setBursarToDelete(null);
+    },
+    onSettled: () => {
+      // refetch to sync server and cache
+      queryClient.refetchQueries(["bursars"]);
     },
   });
 

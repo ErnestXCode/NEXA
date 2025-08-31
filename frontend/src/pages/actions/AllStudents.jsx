@@ -19,20 +19,42 @@ const AllStudents = () => {
   const queryClient = useQueryClient();
 
   // Query for fetching students
-  const { data: students = [], isLoading, isError } = useQuery({
+  const {
+    data: students = [],
+    isLoading,
+    isError,
+  } = useQuery({
     queryKey: ["students"],
     queryFn: fetchStudents,
   });
 
   // Mutation for deleting student
-  const deleteMutation = useMutation({
-    mutationFn: (id) => deleteStudent(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries(["students"]);
-      setShowModal(false);
-      setStudentToDelete(null);
-    },
-  });
+ const deleteMutation = useMutation({
+  mutationFn: (id) => deleteStudent(id),
+  onMutate: async (id) => {
+    await queryClient.cancelQueries({ queryKey: ["students"] });
+    const previousStudents = queryClient.getQueryData(["students"]);
+    queryClient.setQueryData(["students"], (old = []) =>
+      old.filter((b) => b._id !== id)
+    );
+    return { previousStudents };
+  },
+  onError: (err, id, context) => {
+    if (context?.previousStudents) {
+      queryClient.setQueryData(["students"], context.previousStudents);
+    }
+  },
+  onSuccess: () => {
+    // close modal
+    setShowModal(false);
+    setStudentToDelete(null);
+  },
+  onSettled: () => {
+    // refetch to sync server and cache
+    queryClient.refetchQueries(["students"]);
+  },
+});
+
 
   const confirmDelete = (student) => {
     setStudentToDelete(student);
@@ -134,7 +156,9 @@ const AllStudents = () => {
       {showModal && studentToDelete && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
           <div className="bg-gray-900 rounded-lg p-6 w-80">
-            <h2 className="text-lg font-bold text-white mb-4">Delete Student</h2>
+            <h2 className="text-lg font-bold text-white mb-4">
+              Delete Student
+            </h2>
             <p className="text-gray-300 mb-6">
               Are you sure you want to delete{" "}
               <span className="font-semibold">

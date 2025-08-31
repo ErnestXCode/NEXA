@@ -63,6 +63,7 @@ const updateStudent = async (req, res) => {
 
 // Delete student
 const deleteStudent = async (req, res) => {
+  console.log('hit delete')
   try {
     const { id } = req.params;
     const deleted = await Student.findByIdAndDelete(id);

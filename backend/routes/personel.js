@@ -3,11 +3,13 @@ const {
   getAllBursars,
   getBursarById,
   updateBursar,
+  deleteBursar,
 } = require("../controllers/personel/bursar/bursarController");
 const {
   getAllTeachers,
   getTeacherById,
   updateTeacher,
+  deleteTeacher,
 } = require("../controllers/personel/teacher/teacherController");
 const verifyJWT = require("../middleware/verifyJWT");
 const authorize = require("../middleware/authorize");
@@ -26,11 +28,13 @@ router
 router
   .route("/bursar/:id")
   .get(verifyJWT, authorize(["superadmin", "admin"]), getBursarById)
-  .put(verifyJWT, authorize(["superadmin", "admin"]), updateBursar);
+  .put(verifyJWT, authorize(["superadmin", "admin"]), updateBursar)
+  .delete(verifyJWT, authorize(["superadmin", "admin"]), deleteBursar);
 router
   .route("/teacher/:id")
   .get(verifyJWT, authorize(["superadmin", "admin"]), getTeacherById)
-  .put(verifyJWT, authorize(["superadmin", "admin"]), updateTeacher);
+  .put(verifyJWT, authorize(["superadmin", "admin"]), updateTeacher)
+  .delete(verifyJWT, authorize(["superadmin", "admin"]), deleteTeacher);
 
 router.route("/id/:id").get(verifyJWT, getPersonnelById);
 router.route("/edit/:id").get(verifyJWT, updatePersonnel);

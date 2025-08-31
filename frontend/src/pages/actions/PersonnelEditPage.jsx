@@ -27,9 +27,8 @@ const PersonnelEditPage = () => {
     mutationFn: async (updatedData) => {
       return api.put(`/personel/edit/${id}`, updatedData);
     },
-    onSuccess: (updated) => {
+    onSuccess: () => {
       // update cache directly for this record
-      queryClient.setQueryData(["personnel", id], updated.data);
 
       // refresh lists
       queryClient.refetchQueries(["teachers"]);
