@@ -10,6 +10,7 @@ const fetchStudents = async () => {
 
 const fetchFees = async () => {
   const res = await api.get("/fees"); // all fee records
+  console.log('fees', res)
   return res.data;
 };
 
@@ -42,6 +43,9 @@ const Fees = ({ onSelectStudent, onNavigate }) => {
     const studentFees = fees.filter(f => f.student === studentId && f.term === selectedTerm);
     return studentFees.reduce((sum, f) => sum + f.amount, 0);
   };
+
+  // console.log('fees', fees)
+  // console.log('students', students)
 
   const totalExpected = students.reduce(
     (sum, s) => sum + (s.feeExpectations?.find(f => f.term === selectedTerm)?.amount || 0),

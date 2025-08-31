@@ -2,7 +2,6 @@ const Fee = require("../../models/Fee");
 const Student = require("../../models/Student");
 const User = require("../../models/User");
 
-
 const getAllFees = async (req, res) => {
   try {
     const requester = req.user;
@@ -13,9 +12,7 @@ const getAllFees = async (req, res) => {
     }
 
     const fees = await Fee.find(query)
-      .populate("student", "firstName lastName classLevel")
-      .populate("handledBy", "firstName lastName email")
-      .sort({ createdAt: -1 });
+    .sort({ createdAt: -1 });
 
     res.status(200).json(fees);
   } catch (err) {
@@ -44,9 +41,11 @@ const addFee = async (req, res) => {
     if (!student) return res.status(404).json({ msg: "Student not found" });
 
     // Check if term exists in student's feeExpectations
-    const termIndex = student.feeExpectations.findIndex(f => f.term === term);
+    const termIndex = student.feeExpectations.findIndex((f) => f.term === term);
     if (termIndex === -1)
-      return res.status(400).json({ msg: `Term ${term} not set up for student` });
+      return res
+        .status(400)
+        .json({ msg: `Term ${term} not set up for student` });
 
     // Initialize termBalances if not present
     if (!student.termBalances) student.termBalances = {};
@@ -69,7 +68,7 @@ const addFee = async (req, res) => {
       term,
       classLevel: student.classLevel,
       amount,
-      type,   // "payment" or "adjustment"
+      type, // "payment" or "adjustment"
       method, // "cash", "mpesa", "card"
       note,
       handledBy: requesterDoc._id,
@@ -79,7 +78,9 @@ const addFee = async (req, res) => {
 
     await feeRecord.save();
 
-    res.status(200).json({ msg: "Fee updated successfully", student, feeRecord });
+    res
+      .status(200)
+      .json({ msg: "Fee updated successfully", student, feeRecord });
   } catch (err) {
     console.error(err);
     res.status(500).json({ msg: "Error updating fee", error: err.message });
@@ -98,7 +99,9 @@ const getStudentFees = async (req, res) => {
     const records = await Fee.find(query).sort({ createdAt: -1 });
     res.status(200).json(records);
   } catch (err) {
-    res.status(500).json({ msg: "Error fetching fee history", error: err.message });
+    res
+      .status(500)
+      .json({ msg: "Error fetching fee history", error: err.message });
   }
 };
 
@@ -106,7 +109,8 @@ const getStudentFees = async (req, res) => {
 const getOutstandingFees = async (req, res) => {
   try {
     const { term, classLevel } = req.query;
-    const schoolQuery = req.user.role === "superadmin" ? {} : { school: req.user.school };
+    const schoolQuery =
+      req.user.role === "superadmin" ? {} : { school: req.user.school };
 
     let studentQuery = { ...schoolQuery };
     if (classLevel) studentQuery.classLevel = classLevel;
@@ -114,10 +118,11 @@ const getOutstandingFees = async (req, res) => {
     const students = await Student.find(studentQuery);
 
     let totalOutstanding = 0;
-    students.forEach(s => {
+    students.forEach((s) => {
       if (term) {
-        const termExp = s.feeExpectations.find(f => f.term === term);
-        const termBalance = (s.termBalances && s.termBalances[term]) || (termExp?.amount || 0);
+        const termExp = s.feeExpectations.find((f) => f.term === term);
+        const termBalance =
+          (s.termBalances && s.termBalances[term]) || termExp?.amount || 0;
         totalOutstanding += termBalance;
       } else {
         // sum across all terms
@@ -131,7 +136,9 @@ const getOutstandingFees = async (req, res) => {
 
     res.status(200).json({ totalOutstanding });
   } catch (err) {
-    res.status(500).json({ msg: "Error fetching outstanding fees", error: err.message });
+    res
+      .status(500)
+      .json({ msg: "Error fetching outstanding fees", error: err.message });
   }
 };
 

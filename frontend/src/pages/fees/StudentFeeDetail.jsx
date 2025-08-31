@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import api from "../../api/axios";
 import jsPDF from "jspdf";
-import "jspdf-autotable";
+import autoTable from "jspdf-autotable"; // corrected import
 
 const StudentFeeDetail = ({ studentId, onBack }) => {
   const [selectedTerm, setSelectedTerm] = useState("Term 1");
@@ -20,7 +20,7 @@ const StudentFeeDetail = ({ studentId, onBack }) => {
   });
 
   const mutationSend = useMutation({
-    mutationFn: (payload) => api.post("/fees/student/send-statement", payload),
+    mutationFn: (payload) => api.post("/fees/send-fee-statement", payload),
     onSuccess: () => alert("✅ Statement sent successfully!"),
     onError: (err) => alert(`❌ Failed to send statement: ${err.response?.data?.msg || err.message}`),
   });
@@ -48,7 +48,7 @@ const StudentFeeDetail = ({ studentId, onBack }) => {
       p.note || "-",
     ]);
 
-    doc.autoTable({
+    autoTable(doc, {
       startY: 60,
       head: [["Date", "Amount (KSh)", "Type", "Note"]],
       body: tableData,

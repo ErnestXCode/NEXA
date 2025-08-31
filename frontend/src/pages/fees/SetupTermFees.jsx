@@ -1,17 +1,22 @@
+// src/pages/fees/SetupTermFees.jsx
 import React, { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import api from "../../api/axios";
 
 const SetupTermFees = ({ onBack }) => {
   const [term, setTerm] = useState("Term 1");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [classFees, setClassFees] = useState([{ classLevel: "", amount: "" }]);
   const [message, setMessage] = useState("");
 
   const mutation = useMutation({
-    mutationFn: (data) => api.post("/students/setup-term-fees", data), // new backend route
+    mutationFn: (data) => api.post("/term", data),
     onSuccess: () => {
       setMessage("✅ Term fees setup successfully!");
       setClassFees([{ classLevel: "", amount: "" }]);
+      setStartDate("");
+      setEndDate("");
     },
     onError: (err) => {
       setMessage(`❌ ${err.response?.data?.msg || "Failed to setup term"}`);
@@ -28,7 +33,9 @@ const SetupTermFees = ({ onBack }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     mutation.mutate({
-      term,
+      name: term,
+      startDate,
+      endDate,
       classFees,
     });
   };
@@ -47,6 +54,9 @@ const SetupTermFees = ({ onBack }) => {
           <option value="Term 2">Term 2</option>
           <option value="Term 3">Term 3</option>
         </select>
+
+        <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="p-2 rounded bg-gray-800 text-white" />
+        <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="p-2 rounded bg-gray-800 text-white" />
 
         {classFees.map((cf, i) => (
           <div key={i} className="flex gap-2">
@@ -75,7 +85,9 @@ const SetupTermFees = ({ onBack }) => {
           Save Term
         </button>
 
-        {message && <p className={`mt-2 ${message.startsWith("✅") ? "text-green-400" : "text-red-500"}`}>{message}</p>}
+        {message && (
+          <p className={`mt-2 ${message.startsWith("✅") ? "text-green-400" : "text-red-500"}`}>{message}</p>
+        )}
       </form>
     </main>
   );
