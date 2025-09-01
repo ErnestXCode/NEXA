@@ -22,11 +22,10 @@ router.get(
 router.get(
   "/:id",
   verifyJWT,
-  authorize(["superadmin", "admin", "teacher"]),
-  getExamById
+  authorize(["superadmin", "admin", "teacher"])
 );
-router.put("/:id", verifyJWT, authorize(["admin", "teacher"]), updateExam);
-router.delete("/:id", verifyJWT, authorize(["admin", "teacher"]), deleteExam);
+// router.put("/:id", verifyJWT, authorize(["admin", "teacher"]), updateExam);
+// router.delete("/:id", verifyJWT, authorize(["admin", "teacher"]), deleteExam);
 
 // Record student results
 router.post(

@@ -1,7 +1,15 @@
 // src/pages/attendance/AttendanceDashboard.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer } from "recharts";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+  ResponsiveContainer,
+} from "recharts";
 import api from "../../api/axios";
 
 const fetchAttendance = async (startDate, endDate) => {
@@ -21,7 +29,7 @@ const AttendanceDashboard = () => {
   const today = new Date().toISOString().split("T")[0];
 
   // Fetch today attendance
-  const { data: todayAttendance = [], refetch: refetchToday } = useQuery({
+  const { data: todayAttendance = [] } = useQuery({
     queryKey: ["todayAttendance"],
     queryFn: () => fetchAttendance(today, today),
   });
@@ -53,7 +61,7 @@ const AttendanceDashboard = () => {
     notifyMutation.mutate();
   };
 
-  // Prepare line chart data
+  // Prepare line chart data including Late
   const chartData = [];
   for (let i = 6; i >= 0; i--) {
     const d = new Date();
@@ -64,12 +72,16 @@ const AttendanceDashboard = () => {
     );
     const present = dayRecords.filter((r) => r.status === "present").length;
     const absent = dayRecords.filter((r) => r.status === "absent").length;
-    chartData.push({ date: dateStr, present, absent });
+    const late = dayRecords.filter((r) => r.status === "late").length;
+    chartData.push({ date: dateStr, present, absent, late });
   }
 
   // Today counts
-  const presentCount = todayAttendance.filter((r) => r.status === "present").length;
-  const absentCount = todayAttendance.filter((r) => r.status === "absent").length;
+  const presentCount = todayAttendance.filter((r) => r.status === "present")
+    .length;
+  const absentCount = todayAttendance.filter((r) => r.status === "absent")
+    .length;
+  const lateCount = todayAttendance.filter((r) => r.status === "late").length;
 
   return (
     <main className="p-6 bg-gray-950 text-white min-h-screen">
@@ -85,11 +97,17 @@ const AttendanceDashboard = () => {
           <p className="text-gray-400">Absent Today</p>
           <p className="text-3xl font-bold">{absentCount}</p>
         </div>
+        <div className="bg-gray-900 p-4 rounded flex-1 text-center">
+          <p className="text-gray-400">Late Today</p>
+          <p className="text-3xl font-bold">{lateCount}</p>
+        </div>
       </div>
 
       {/* Line Chart */}
       <div className="bg-gray-900 p-4 rounded mb-6">
-        <h2 className="text-lg font-semibold mb-2">Attendance Trend (Last 7 Days)</h2>
+        <h2 className="text-lg font-semibold mb-2">
+          Attendance Trend (Last 7 Days)
+        </h2>
         <ResponsiveContainer width="100%" height={250}>
           <LineChart data={chartData}>
             <CartesianGrid stroke="#333" />
@@ -98,33 +116,43 @@ const AttendanceDashboard = () => {
             <Tooltip />
             <Line type="monotone" dataKey="present" stroke="#00ff00" />
             <Line type="monotone" dataKey="absent" stroke="#ff4d4d" />
+            <Line type="monotone" dataKey="late" stroke="#ffd700" /> {/* Gold color */}
           </LineChart>
         </ResponsiveContainer>
       </div>
 
       {/* High Absenteeism Table */}
       <div className="bg-gray-900 p-4 rounded mb-6">
-        <h2 className="text-lg font-semibold mb-2">High Absenteeism Students (&gt;3 absences)</h2>
+        <h2 className="text-lg font-semibold mb-2">
+          High Absenteeism Students (&gt;3 absences)
+        </h2>
         <table className="w-full text-sm">
           <thead className="bg-gray-800">
             <tr>
               <th className="py-2 px-3 text-left">Student</th>
               <th className="py-2 px-3 text-left">Class</th>
               <th className="py-2 px-3 text-left">Absences</th>
+              <th className="py-2 px-3 text-left">Late</th> {/* New column */}
             </tr>
           </thead>
           <tbody>
             {highAbsentees.length > 0 ? (
               highAbsentees.map((s, i) => (
-                <tr key={s._id} className={`${i % 2 === 0 ? "bg-gray-950" : "bg-gray-900"}`}>
-                  <td className="py-2 px-3">{s.firstName} {s.lastName}</td>
+                <tr
+                  key={s._id}
+                  className={`${i % 2 === 0 ? "bg-gray-950" : "bg-gray-900"}`}
+                >
+                  <td className="py-2 px-3">
+                    {s.firstName} {s.lastName}
+                  </td>
                   <td className="py-2 px-3">{s.classLevel}</td>
                   <td className="py-2 px-3">{s.absences}</td>
+                  <td className="py-2 px-3">{s.late || 0}</td> {/* Late count */}
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan="3" className="text-center py-4 text-gray-400">
+                <td colSpan="4" className="text-center py-4 text-gray-400">
                   No students with high absenteeism
                 </td>
               </tr>

@@ -1,4 +1,3 @@
-// models/Student.js
 const mongoose = require("mongoose");
 
 const studentSchema = new mongoose.Schema({
@@ -37,16 +36,21 @@ const studentSchema = new mongoose.Schema({
 
   examResults: [
     {
-      examName: String,
-      date: Date,
-      subject: String,
-      score: Number,
-      grade: String,
-    },
+      exam: { type: mongoose.Schema.Types.ObjectId, ref: "Exam" },
+      term: String,
+      subjects: [
+        {
+          name: String,
+          score: Number
+        }
+      ],
+      total: Number,
+      average: Number,
+      grade: String
+    }
   ],
 
   status: { type: String, enum: ["active", "suspended", "graduated", "transferred"], default: "active" },
 }, { timestamps: true });
 
-const Student = mongoose.model("Student", studentSchema);
-module.exports = Student;
+module.exports = mongoose.model("Student", studentSchema);
