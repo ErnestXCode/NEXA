@@ -12,7 +12,7 @@ const studentSchema = new mongoose.Schema({
   stream: { type: String },
   subjects: [{ type: String }],
 
-  guardian: { type: mongoose.Schema.Types.ObjectId, ref: "Parent" },
+  guardian: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
 
 
   guardianName: { type: String, required: true },

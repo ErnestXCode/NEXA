@@ -14,7 +14,7 @@ const handleBulkRegister = async (req, res) => {
   const createdUsers = [];
 
   for (const p of personnel) {
-    const { name, email, role, password } = p;
+    const { name, email, role, password, phoneNumber } = p;
 
     if (!name || !email || !role || !["teacher", "bursar"].includes(role)) {
       continue; // skip invalid rows
@@ -31,6 +31,7 @@ const handleBulkRegister = async (req, res) => {
       email,
       role,
       password,
+      phoneNumber,
       school: requester.school,
     });
 

@@ -1,3 +1,4 @@
+// src/pages/auth/Register.jsx
 import axios from "axios";
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
@@ -10,6 +11,7 @@ const initialState = {
   name: "",
   email: "",
   school: "",
+  phoneNumber: "", // <-- added phoneNumber
   password: "",
   confirmPass: "",
 };
@@ -66,10 +68,10 @@ const Register = () => {
           Create an Account
         </h2>
 
-        {["name", "email", "school"].map((field) => (
+        {["name", "email", "school", "phoneNumber"].map((field) => (
           <div key={field} className="flex flex-col">
             <label htmlFor={field} className="text-gray-300 font-medium">
-              {field.charAt(0).toUpperCase() + field.slice(1)}
+              {field === "phoneNumber" ? "Phone Number" : field.charAt(0).toUpperCase() + field.slice(1)}
             </label>
             <input
               type={field === "email" ? "email" : "text"}
@@ -78,7 +80,7 @@ const Register = () => {
               value={formData[field]}
               onChange={handleChange}
               className="bg-gray-800 text-white p-2 rounded-md focus:ring-2 focus:ring-gray-500"
-              placeholder={`Enter ${field}`}
+              placeholder={`Enter ${field === "phoneNumber" ? "phone number" : field}`}
             />
           </div>
         ))}

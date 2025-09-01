@@ -53,12 +53,14 @@ const PersonelForm = () => {
     setRegisterDetails(updated);
 
     setCanRegister(
-      updated.role &&
-        updated.name &&
-        updated.email &&
-        updated.password &&
-        updated.confirmPass === updated.password
-    );
+  updated.role &&
+  updated.name &&
+  updated.email &&
+  updated.phoneNumber &&   // <-- add this
+  updated.password &&
+  updated.confirmPass === updated.password
+);
+
   };
 
   // 🔥 subjects input (chip style)
@@ -111,6 +113,7 @@ const PersonelForm = () => {
       } else {
         // Single registration
         const { confirmPass, ...dataToSend } = registerDetails;
+        console.log(dataToSend)
         await addPersonnelMutation.mutateAsync({ single: dataToSend });
         setMessage("✅ Single personnel added!");
         setRegisterDetails(registerObj);
