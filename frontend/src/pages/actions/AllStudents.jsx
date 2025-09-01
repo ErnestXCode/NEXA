@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../api/axios";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -15,10 +15,11 @@ const deleteStudent = async (id) => {
 const AllStudents = () => {
   const [showModal, setShowModal] = useState(false);
   const [studentToDelete, setStudentToDelete] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  // Query for fetching students
+  // Fetch students
   const {
     data: students = [],
     isLoading,
@@ -28,33 +29,30 @@ const AllStudents = () => {
     queryFn: fetchStudents,
   });
 
-  // Mutation for deleting student
- const deleteMutation = useMutation({
-  mutationFn: (id) => deleteStudent(id),
-  onMutate: async (id) => {
-    await queryClient.cancelQueries({ queryKey: ["students"] });
-    const previousStudents = queryClient.getQueryData(["students"]);
-    queryClient.setQueryData(["students"], (old = []) =>
-      old.filter((b) => b._id !== id)
-    );
-    return { previousStudents };
-  },
-  onError: (err, id, context) => {
-    if (context?.previousStudents) {
-      queryClient.setQueryData(["students"], context.previousStudents);
-    }
-  },
-  onSuccess: () => {
-    // close modal
-    setShowModal(false);
-    setStudentToDelete(null);
-  },
-  onSettled: () => {
-    // refetch to sync server and cache
-    queryClient.refetchQueries(["students"]);
-  },
-});
-
+  // Delete mutation
+  const deleteMutation = useMutation({
+    mutationFn: (id) => deleteStudent(id),
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: ["students"] });
+      const previousStudents = queryClient.getQueryData(["students"]);
+      queryClient.setQueryData(["students"], (old = []) =>
+        old.filter((b) => b._id !== id)
+      );
+      return { previousStudents };
+    },
+    onError: (err, id, context) => {
+      if (context?.previousStudents) {
+        queryClient.setQueryData(["students"], context.previousStudents);
+      }
+    },
+    onSuccess: () => {
+      setShowModal(false);
+      setStudentToDelete(null);
+    },
+    onSettled: () => {
+      queryClient.refetchQueries(["students"]);
+    },
+  });
 
   const confirmDelete = (student) => {
     setStudentToDelete(student);
@@ -76,6 +74,24 @@ const AllStudents = () => {
     navigate(`/dashboard/students/edit/${id}`);
   };
 
+  // Filter students based on search term
+  const filteredStudents = useMemo(() => {
+    return students.filter((s) =>
+      `${s.firstName} ${s.lastName}`.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [students, searchTerm]);
+
+  // Format date to readable string
+  const formatDate = (dateString) => {
+    if (!dateString) return "-";
+    const date = new Date(dateString);
+    return date.toLocaleDateString(undefined, {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    }); // Example: "15 Sep 2005"
+  };
+
   if (isLoading) {
     return (
       <main className="p-6 bg-gray-950 min-h-screen text-white">
@@ -95,6 +111,18 @@ const AllStudents = () => {
   return (
     <main className="p-6 bg-gray-950 min-h-screen relative">
       <h1 className="text-2xl font-bold mb-4 text-white">All Students</h1>
+
+      {/* Search input */}
+      <div className="mb-4">
+        <input
+          type="text"
+          placeholder="Search by name..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full p-2 rounded bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+      </div>
+
       <table className="w-full text-sm bg-gray-900 rounded-lg overflow-hidden">
         <thead className="bg-gray-800">
           <tr>
@@ -109,8 +137,8 @@ const AllStudents = () => {
           </tr>
         </thead>
         <tbody>
-          {students.length > 0 ? (
-            students.map((s, i) => (
+          {filteredStudents.length > 0 ? (
+            filteredStudents.map((s, i) => (
               <tr
                 key={s._id || i}
                 className={`${
@@ -118,11 +146,9 @@ const AllStudents = () => {
                 } hover:bg-gray-850 transition`}
               >
                 <td className="p-2 text-white">{s.admissionNumber}</td>
-                <td className="p-2 text-white">
-                  {s.firstName} {s.lastName}
-                </td>
+                <td className="p-2 text-white">{s.firstName} {s.lastName}</td>
                 <td className="p-2 text-white">{s.gender}</td>
-                <td className="p-2 text-white">{s.dateOfBirth}</td>
+                <td className="p-2 text-white">{formatDate(s.dateOfBirth)}</td>
                 <td className="p-2 text-white">{s.classLevel}</td>
                 <td className="p-2 text-white">{s.guardianName}</td>
                 <td className="p-2 text-white">{s.guardianPhone}</td>
@@ -156,15 +182,10 @@ const AllStudents = () => {
       {showModal && studentToDelete && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
           <div className="bg-gray-900 rounded-lg p-6 w-80">
-            <h2 className="text-lg font-bold text-white mb-4">
-              Delete Student
-            </h2>
+            <h2 className="text-lg font-bold text-white mb-4">Delete Student</h2>
             <p className="text-gray-300 mb-6">
               Are you sure you want to delete{" "}
-              <span className="font-semibold">
-                {studentToDelete.firstName} {studentToDelete.lastName}
-              </span>
-              ?
+              <span className="font-semibold">{studentToDelete.firstName} {studentToDelete.lastName}</span>?
             </p>
             <div className="flex justify-end gap-2">
               <button

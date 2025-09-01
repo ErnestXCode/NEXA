@@ -1,38 +1,35 @@
 const Exam = require("../../models/Exam");
 const Student = require("../../models/Student");
 
-// Create exam (teacher/admin)
+// Create exam
 const createExam = async (req, res) => {
   try {
-    const { name, term, classes, date } = req.body;
+    const { type, term, date } = req.body;
     const school = req.user.school;
 
-    const exam = new Exam({ name, term, classes, date, school });
+    const exam = new Exam({ type, term, date, school });
     await exam.save();
-
     res.status(201).json(exam);
   } catch (err) {
     res.status(500).json({ msg: "Error creating exam", error: err.message });
   }
 };
 
-// Get all exams (school-scoped)
+// Get all exams
 const getAllExams = async (req, res) => {
   try {
     const school = req.user.school;
-    const exams = await Exam.find({ school });
+    const exams = await Exam.find({ school }).sort({ date: -1 });
     res.status(200).json(exams);
   } catch (err) {
     res.status(500).json({ msg: "Error fetching exams", error: err.message });
   }
 };
 
-// Record results (Excel-like table or CSV)
+// Record results
 const recordResult = async (req, res) => {
   try {
     const { examId, studentResults } = req.body;
-    // studentResults = [{ studentId, subjects: [{name, score}] }]
-
     const exam = await Exam.findById(examId);
     if (!exam) return res.status(404).json({ msg: "Exam not found" });
 
@@ -69,7 +66,7 @@ const recordResult = async (req, res) => {
   }
 };
 
-// Get student report card
+// Get report card
 const getReportCard = async (req, res) => {
   try {
     const { studentId, term } = req.params;

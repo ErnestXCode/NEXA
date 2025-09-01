@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../api/axios";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -15,10 +15,10 @@ const deleteBursar = async (id) => {
 const AllBursars = () => {
   const [showModal, setShowModal] = useState(false);
   const [bursarToDelete, setBursarToDelete] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  // Query for fetching bursars
   const {
     data: bursars = [],
     isLoading,
@@ -28,8 +28,6 @@ const AllBursars = () => {
     queryFn: fetchBursars,
   });
 
-  // Mutation for deleting bursar
-  // Mutation for deleting bursar
   const deleteMutation = useMutation({
     mutationFn: (id) => deleteBursar(id),
     onMutate: async (id) => {
@@ -46,12 +44,10 @@ const AllBursars = () => {
       }
     },
     onSuccess: () => {
-      // close modal
       setShowModal(false);
       setBursarToDelete(null);
     },
     onSettled: () => {
-      // refetch to sync server and cache
       queryClient.refetchQueries(["bursars"]);
     },
   });
@@ -76,6 +72,13 @@ const AllBursars = () => {
     navigate(`/dashboard/personnel/edit/${id}`);
   };
 
+  // Filter bursars by name
+  const filteredBursars = useMemo(() => {
+    return bursars.filter((b) =>
+      b.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [bursars, searchTerm]);
+
   if (isLoading) {
     return (
       <main className="p-6 bg-gray-950 min-h-screen text-white">
@@ -95,17 +98,30 @@ const AllBursars = () => {
   return (
     <main className="p-6 bg-gray-950 min-h-screen relative">
       <h1 className="text-2xl font-bold mb-4 text-white">All Bursars</h1>
+
+      {/* Search input */}
+      <div className="mb-4">
+        <input
+          type="text"
+          placeholder="Search by name..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full p-2 rounded bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+      </div>
+
       <table className="w-full text-sm bg-gray-900 rounded-lg overflow-hidden">
         <thead className="bg-gray-800">
           <tr>
             <th className="p-2 text-left text-white">Name</th>
             <th className="p-2 text-left text-white">Email</th>
+            <th className="p-2 text-left text-white">Phone</th>
             <th className="p-2 text-left text-white">Actions</th>
           </tr>
         </thead>
         <tbody>
-          {bursars.length > 0 ? (
-            bursars.map((b, i) => (
+          {filteredBursars.length > 0 ? (
+            filteredBursars.map((b, i) => (
               <tr
                 key={b._id || i}
                 className={`${
@@ -114,6 +130,7 @@ const AllBursars = () => {
               >
                 <td className="p-2 text-white">{b.name}</td>
                 <td className="p-2 text-white">{b.email}</td>
+                <td className="p-2 text-white">{b.phoneNumber}</td>
                 <td className="p-2 flex gap-2">
                   <button
                     onClick={() => handleEdit(b._id)}
@@ -132,7 +149,7 @@ const AllBursars = () => {
             ))
           ) : (
             <tr>
-              <td colSpan="3" className="text-center p-4 text-gray-400">
+              <td colSpan="4" className="text-center p-4 text-gray-400">
                 No bursars found.
               </td>
             </tr>
@@ -140,7 +157,7 @@ const AllBursars = () => {
         </tbody>
       </table>
 
-      {/* Modal */}
+      {/* Delete Modal */}
       {showModal && bursarToDelete && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
           <div className="bg-gray-900 rounded-lg p-6 w-80">

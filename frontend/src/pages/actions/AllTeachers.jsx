@@ -1,5 +1,5 @@
 // src/pages/personnel/AllTeachers.jsx
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "../../api/axios";
@@ -19,6 +19,7 @@ const AllTeachers = () => {
   const queryClient = useQueryClient();
   const [showModal, setShowModal] = useState(false);
   const [teacherToDelete, setTeacherToDelete] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
   const {
     data: teachers = [],
@@ -73,9 +74,27 @@ const AllTeachers = () => {
     navigate(`/dashboard/personnel/edit/${id}`);
   };
 
+  // Filter teachers by name
+  const filteredTeachers = useMemo(() => {
+    return teachers.filter((t) =>
+      t.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [teachers, searchTerm]);
+
   return (
     <main className="p-6 bg-gray-950 min-h-screen relative">
       <h1 className="text-2xl font-bold mb-4 text-white">All Teachers</h1>
+
+      {/* Search input */}
+      <div className="mb-4">
+        <input
+          type="text"
+          placeholder="Search by name..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full p-2 rounded bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+      </div>
 
       {isLoading && <p className="text-gray-400">Loading teachers...</p>}
       {isError && <p className="text-red-500">❌ Failed to fetch teachers</p>}
@@ -86,6 +105,7 @@ const AllTeachers = () => {
             <tr>
               <th className="p-2 text-left text-white">Name</th>
               <th className="p-2 text-left text-white">Email</th>
+              <th className="p-2 text-left text-white">Phone</th>
               <th className="p-2 text-left text-white">Subjects</th>
               <th className="p-2 text-left text-white">Class Teacher?</th>
               <th className="p-2 text-left text-white">Class Level</th>
@@ -93,8 +113,8 @@ const AllTeachers = () => {
             </tr>
           </thead>
           <tbody>
-            {teachers.length > 0 ? (
-              teachers.map((t, i) => (
+            {filteredTeachers.length > 0 ? (
+              filteredTeachers.map((t, i) => (
                 <tr
                   key={t._id || i}
                   className={`${
@@ -103,6 +123,7 @@ const AllTeachers = () => {
                 >
                   <td className="p-2 text-white">{t.name}</td>
                   <td className="p-2 text-white">{t.email}</td>
+                  <td className="p-2 text-white">{t.phoneNumber}</td>
                   <td className="p-2 text-white">
                     {t.subjects && t.subjects.length > 0
                       ? t.subjects.join(", ")
@@ -132,7 +153,7 @@ const AllTeachers = () => {
               ))
             ) : (
               <tr>
-                <td colSpan="6" className="text-center p-4 text-gray-400">
+                <td colSpan="7" className="text-center p-4 text-gray-400">
                   No teachers found.
                 </td>
               </tr>
