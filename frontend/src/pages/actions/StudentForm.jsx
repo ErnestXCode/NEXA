@@ -15,7 +15,7 @@ const studentObj = {
   guardianPhone: "",
 };
 
-const StudentForm = () => {
+const StudentForm = ({onNext}) => {
   const [student, setStudent] = useState(studentObj);
   const [file, setFile] = useState(null);
   const [message, setMessage] = useState("");
@@ -30,6 +30,7 @@ const StudentForm = () => {
       setMessage("✅ Student added successfully!");
       setStudent(studentObj);
       setFile(null);
+       if (onNext) onNext(); 
     },
     onError: (err) => {
       setMessage(`❌ ${err.response?.data?.msg || "Something went wrong"}`);
@@ -43,6 +44,7 @@ const StudentForm = () => {
       queryClient.refetchQueries(["students"]);
       setMessage("✅ Bulk upload successful!");
       setFile(null);
+       if (onNext) onNext(); 
     },
     onError: (err) => {
       setMessage(`❌ ${err.response?.data?.msg || "Something went wrong"}`);

@@ -27,6 +27,7 @@ import StudentFeeDetail from "./pages/fees/StudentFeeDetail";
 import AttendanceDashboard from "./pages/attendance/AttendanceDashboard";
 import ReportCard from "./pages/exams/ReportCard";
 import ParentForm from "./pages/actions/ParentForm";
+import SetupWizard from "./components/wizard/SetUpWizard";
 
 function App() {
   return (
@@ -57,6 +58,7 @@ function App() {
 
               {/* Lists */}
               <Route path="students" element={<AllStudents />} />
+              <Route path="setup" element={<SetupWizard />} />
               <Route path="students/edit/:id" element={<StudentEditPage />} />
               <Route path="teachers" element={<AllTeachers />} />
               <Route path="bursars" element={<AllBursars />} />

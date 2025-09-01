@@ -107,13 +107,14 @@ const Dashboard = () => {
           <ManagementTable
             title="Manage Teachers"
             data={teachers}
-            columns={["Name", "Email", "Subjects", "Class Teacher?", "Class Level"]}
+            columns={["Name", "Email", "Phone", "Subjects", "Class Teacher?", "Class Level"]}
             viewAllLink="/dashboard/teachers"
             addLink="/dashboard/createPersonel"
             addText="+ Add Teacher"
             rowRender={(teacher) => [
               teacher.name,
               teacher.email,
+              teacher.phoneNumber || "-",
               teacher.subjects && teacher.subjects.length > 0
                 ? teacher.subjects.join(", ")
                 : "-",
@@ -125,11 +126,15 @@ const Dashboard = () => {
           <ManagementTable
             title="Manage Bursars"
             data={bursars}
-            columns={["Name", "Email"]}
+            columns={["Name", "Email", "Phone"]}
             viewAllLink="/dashboard/bursars"
             addLink="/dashboard/createPersonel"
             addText="+ Add Bursar"
-            rowRender={(bursar) => [bursar.name, bursar.email]}
+            rowRender={(bursar) => [
+              bursar.name,
+              bursar.email,
+              bursar.phoneNumber || "-"
+            ]}
           />
         </div>
 

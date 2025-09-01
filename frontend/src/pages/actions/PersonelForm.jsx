@@ -17,7 +17,7 @@ const registerObj = {
   classLevel: "",
 };
 
-const PersonelForm = () => {
+const PersonelForm = ({onNext}) => {
   const [registerDetails, setRegisterDetails] = useState(registerObj);
   const [file, setFile] = useState(null);
   const [canRegister, setCanRegister] = useState(false);
@@ -40,6 +40,7 @@ const PersonelForm = () => {
     onSuccess: () => {
       queryClient.refetchQueries({ queryKey: ["teachers"], exact: true });
       queryClient.refetchQueries({ queryKey: ["bursars"], exact: true });
+       if (onNext) onNext(); 
     },
   });
 

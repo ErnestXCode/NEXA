@@ -82,14 +82,14 @@ const Fees = ({ onSelectStudent, onNavigate }) => {
 
   return (
     <main className="p-6 bg-gray-950 min-h-screen text-white">
-      <h1 className="text-2xl font-bold mb-4">Student Fees</h1>
+      <h1 className="text-2xl font-bold mb-6">Student Fees</h1>
 
       {/* Term selector + actions */}
-      <div className="mb-4 flex gap-4 items-center flex-wrap">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <select
           value={selectedTerm}
           onChange={(e) => setSelectedTerm(e.target.value)}
-          className="p-2 rounded bg-gray-900 text-white"
+          className="p-2 rounded bg-gray-900 text-white w-full"
         >
           <option value="Term 1">Term 1</option>
           <option value="Term 2">Term 2</option>
@@ -98,24 +98,25 @@ const Fees = ({ onSelectStudent, onNavigate }) => {
 
         <button
           onClick={() => onNavigate("payment")}
-          className="bg-blue-600 hover:bg-blue-700 p-2 rounded font-semibold"
+          className="bg-blue-600 hover:bg-blue-700 p-2 rounded font-semibold w-full"
         >
           Record Payment
         </button>
+
         <button
           onClick={() => onNavigate("setup")}
-          className="bg-gray-700 hover:bg-gray-600 p-2 rounded font-semibold"
+          className="bg-gray-700 hover:bg-gray-600 p-2 rounded font-semibold w-full"
         >
           Setup Term Fees
         </button>
       </div>
 
       {/* Filters */}
-      <div className="mb-4 flex gap-4 items-center flex-wrap">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 items-center">
         <select
           value={filterClass}
           onChange={(e) => setFilterClass(e.target.value)}
-          className="p-2 rounded bg-gray-900 text-white"
+          className="p-2 rounded bg-gray-900 text-white w-full"
         >
           <option value="">All Classes</option>
           {[...new Set(students.map((s) => s.classLevel))].map((cls) => (
@@ -125,30 +126,40 @@ const Fees = ({ onSelectStudent, onNavigate }) => {
           ))}
         </select>
 
-        <label className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            checked={onlyWithBalance}
-            onChange={(e) => setOnlyWithBalance(e.target.checked)}
-          />
-          Show Only With Balance
-        </label>
+        {/* Custom toggle for Only With Balance */}
+        <div className="flex items-center gap-2">
+          <span className="text-white font-semibold">Only With Balance</span>
+          <label className="relative inline-flex items-center cursor-pointer">
+            <input
+              type="checkbox"
+              checked={onlyWithBalance}
+              onChange={(e) => setOnlyWithBalance(e.target.checked)}
+              className="sr-only peer"
+            />
+            <div className="w-12 h-6 bg-gray-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer peer-checked:bg-blue-600 transition-all duration-300"></div>
+            <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow-md peer-checked:translate-x-6 transition-transform duration-300"></div>
+          </label>
+        </div>
 
         <input
           type="text"
           placeholder="Search by name"
           value={searchName}
           onChange={(e) => setSearchName(e.target.value)}
-          className="p-2 rounded bg-gray-900 text-white"
+          className="p-2 rounded bg-gray-900 text-white w-full"
         />
       </div>
 
       {/* Summary cards */}
-      <div className="mb-4 flex gap-4 flex-wrap">
-        <div className="bg-gray-800 p-4 rounded">Expected: KSh {totalExpected}</div>
-        <div className="bg-gray-800 p-4 rounded">Collected: KSh {totalPaid}</div>
-        <div className="bg-gray-800 p-4 rounded">
-          Outstanding: KSh {totalOutstanding}
+      <div className="flex flex-wrap gap-4 mb-6">
+        <div className="bg-gray-800 p-4 rounded flex-1 text-center">
+          <span className="font-semibold">Expected:</span> KSh {totalExpected}
+        </div>
+        <div className="bg-gray-800 p-4 rounded flex-1 text-center">
+          <span className="font-semibold">Collected:</span> KSh {totalPaid}
+        </div>
+        <div className="bg-gray-800 p-4 rounded flex-1 text-center">
+          <span className="font-semibold">Outstanding:</span> KSh {totalOutstanding}
         </div>
       </div>
 
@@ -185,9 +196,7 @@ const Fees = ({ onSelectStudent, onNavigate }) => {
                 key={s._id}
                 className={i % 2 === 0 ? "bg-gray-950" : "bg-gray-900"}
               >
-                <td className="p-2">
-                  {s.firstName} {s.lastName}
-                </td>
+                <td className="p-2">{s.firstName} {s.lastName}</td>
                 <td className="p-2">{s.classLevel}</td>
                 <td className="p-2">{expected}</td>
                 <td className="p-2">{paid}</td>
@@ -195,7 +204,7 @@ const Fees = ({ onSelectStudent, onNavigate }) => {
                 <td className="p-2">
                   <button
                     onClick={() => onSelectStudent(s._id)}
-                    className="bg-green-600 hover:bg-green-700 p-1 rounded"
+                    className="bg-green-800 hover:bg-green-700 p-1 rounded w-full text-center"
                   >
                     Details
                   </button>

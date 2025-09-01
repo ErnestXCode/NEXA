@@ -14,7 +14,7 @@ const initialParent = {
   children: [],
 };
 
-const ParentForm = () => {
+const ParentForm = ({ onNext }) => {
   const [parentDetails, setParentDetails] = useState(initialParent);
   const [canRegister, setCanRegister] = useState(false);
   const [message, setMessage] = useState("");
@@ -34,7 +34,9 @@ const ParentForm = () => {
   useEffect(() => {
     if (!studentSearch) return setFilteredStudents([]);
     const filtered = students.filter((s) =>
-      `${s.firstName} ${s.lastName}`.toLowerCase().includes(studentSearch.toLowerCase())
+      `${s.firstName} ${s.lastName}`
+        .toLowerCase()
+        .includes(studentSearch.toLowerCase())
     );
     setFilteredStudents(filtered);
   }, [studentSearch, students]);
@@ -45,10 +47,17 @@ const ParentForm = () => {
       if (data.bulk) {
         return api.post("/parents/bulk", { parents: data.bulk });
       } else {
-        return api.post("/auth/registerpersonel", { ...data.single, role: "parent" });
+        return api.post("/auth/registerpersonel", {
+          ...data.single,
+          role: "parent",
+        });
       }
     },
-    onSuccess: () => queryClient.refetchQueries({ queryKey: ["parents"], exact: true }),
+    onSuccess: () => {
+      queryClient.refetchQueries({ queryKey: ["parents"], exact: true });
+
+      if (onNext) onNext();
+    },
   });
 
   // Input change
@@ -69,7 +78,10 @@ const ParentForm = () => {
   // Children selection
   const addChild = (student) => {
     if (!parentDetails.children.includes(student._id)) {
-      setParentDetails((prev) => ({ ...prev, children: [...prev.children, student._id] }));
+      setParentDetails((prev) => ({
+        ...prev,
+        children: [...prev.children, student._id],
+      }));
     }
     setStudentSearch("");
     setFilteredStudents([]);
@@ -130,7 +142,9 @@ const ParentForm = () => {
           onSubmit={handleSubmit}
           className="bg-gray-900 p-6 rounded-lg shadow-lg flex flex-col gap-4"
         >
-          <h2 className="text-2xl font-bold text-white mb-2 text-center">Add Single Parent</h2>
+          <h2 className="text-2xl font-bold text-white mb-2 text-center">
+            Add Single Parent
+          </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -266,14 +280,18 @@ const ParentForm = () => {
           onSubmit={handleSubmit}
           className="bg-gray-900 p-6 rounded-lg shadow-lg flex flex-col gap-4"
         >
-          <h2 className="text-2xl font-bold text-white mb-2 text-center">Bulk Upload</h2>
+          <h2 className="text-2xl font-bold text-white mb-2 text-center">
+            Bulk Upload
+          </h2>
           <input
             type="file"
             accept=".csv,.xlsx,.xls"
             onChange={handleFileChange}
             className="p-2 rounded bg-gray-800 text-white"
           />
-          {file && <p className="text-gray-300 mt-2">Selected file: {file.name}</p>}
+          {file && (
+            <p className="text-gray-300 mt-2">Selected file: {file.name}</p>
+          )}
           <button
             type="submit"
             disabled={!file}
