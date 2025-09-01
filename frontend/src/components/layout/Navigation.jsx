@@ -77,6 +77,9 @@ const Navigation = () => {
               <NavLink end onClick={handleCloseSidenav} to="/dashboard/createStudent" className={navLinkClasses}>
                 Add Student
               </NavLink>
+              <NavLink end onClick={handleCloseSidenav} to="/dashboard/createParent" className={navLinkClasses}>
+                Add Parent
+              </NavLink>
             </div>
 
             {/* Lists */}

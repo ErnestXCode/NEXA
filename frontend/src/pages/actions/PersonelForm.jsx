@@ -1,3 +1,4 @@
+// src/pages/personnel/PersonelForm.jsx
 import React, { useState } from "react";
 import api from "../../api/axios";
 import Papa from "papaparse";
@@ -10,6 +11,10 @@ const registerObj = {
   email: "",
   password: "",
   confirmPass: "",
+  phoneNumber: "", // <-- added phoneNumber
+  subjects: [],
+  isClassTeacher: false,
+  classLevel: "",
 };
 
 const PersonelForm = () => {
@@ -17,9 +22,11 @@ const PersonelForm = () => {
   const [file, setFile] = useState(null);
   const [canRegister, setCanRegister] = useState(false);
   const [message, setMessage] = useState("");
+  const [showTeacherModal, setShowTeacherModal] = useState(false);
 
   const queryClient = useQueryClient();
 
+  // 🔥 mutation
   const addPersonnelMutation = useMutation({
     mutationFn: async (data) => {
       if (data.bulk) {
@@ -31,15 +38,20 @@ const PersonelForm = () => {
       }
     },
     onSuccess: () => {
-      // ✅ Invalidate both teachers and bursars
       queryClient.refetchQueries({ queryKey: ["teachers"], exact: true });
       queryClient.refetchQueries({ queryKey: ["bursars"], exact: true });
     },
   });
 
+  // 🔥 input change
   const handleChange = (e) => {
-    const updated = { ...registerDetails, [e.target.name]: e.target.value };
+    const { name, value, type, checked } = e.target;
+    let updated = { ...registerDetails };
+    if (type === "checkbox") updated[name] = checked;
+    else updated[name] = value;
+
     setRegisterDetails(updated);
+
     setCanRegister(
       updated.role &&
         updated.name &&
@@ -49,13 +61,35 @@ const PersonelForm = () => {
     );
   };
 
+  // 🔥 subjects input (chip style)
+  const handleSubjectKeyDown = (e) => {
+    if (e.key === "Enter" || e.key === "," || e.key === " ") {
+      e.preventDefault();
+      const value = e.target.value.trim();
+      if (value && !registerDetails.subjects.includes(value)) {
+        setRegisterDetails((prev) => ({
+          ...prev,
+          subjects: [...prev.subjects, value],
+        }));
+      }
+      e.target.value = "";
+    }
+  };
+
+  const removeSubject = (subj) => {
+    setRegisterDetails((prev) => ({
+      ...prev,
+      subjects: prev.subjects.filter((s) => s !== subj),
+    }));
+  };
+
   const handleFileChange = (e) => setFile(e.target.files[0]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       if (file) {
-        // BULK mode
+        // Bulk upload
         let parsedData = [];
         if (file.name.endsWith(".csv")) {
           parsedData = await new Promise((resolve) => {
@@ -68,19 +102,19 @@ const PersonelForm = () => {
         } else if (file.name.endsWith(".xlsx") || file.name.endsWith(".xls")) {
           const data = await file.arrayBuffer();
           const workbook = XLSX.read(data, { type: "array" });
-          const sheetName = workbook.SheetNames[0];
-          const sheet = workbook.Sheets[sheetName];
+          const sheet = workbook.Sheets[workbook.SheetNames[0]];
           parsedData = XLSX.utils.sheet_to_json(sheet);
         } else return alert("Unsupported file type");
 
         await addPersonnelMutation.mutateAsync({ bulk: parsedData });
         setMessage("✅ Bulk upload successful!");
       } else {
-        // SINGLE ENTRY mode
+        // Single registration
         const { confirmPass, ...dataToSend } = registerDetails;
         await addPersonnelMutation.mutateAsync({ single: dataToSend });
         setMessage("✅ Single personnel added!");
         setRegisterDetails(registerObj);
+        setShowTeacherModal(false);
       }
       setFile(null);
     } catch (err) {
@@ -99,9 +133,6 @@ const PersonelForm = () => {
           <h2 className="text-2xl font-bold text-white mb-2">
             Add Single Personnel
           </h2>
-          <p className="text-gray-400 mb-4">
-            Fill out the form below to add one person.
-          </p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -109,7 +140,10 @@ const PersonelForm = () => {
               <select
                 name="role"
                 value={registerDetails.role}
-                onChange={handleChange}
+                onChange={(e) => {
+                  handleChange(e);
+                  if (e.target.value === "teacher") setShowTeacherModal(true);
+                }}
                 className="p-2 rounded bg-gray-800 text-white w-full"
               >
                 <option value="" disabled>
@@ -135,6 +169,16 @@ const PersonelForm = () => {
               <input
                 name="email"
                 value={registerDetails.email}
+                onChange={handleChange}
+                className="p-2 rounded bg-gray-800 text-white w-full"
+              />
+            </div>
+
+            <div>
+              <label className="block mb-1">Phone Number</label>
+              <input
+                name="phoneNumber"
+                value={registerDetails.phoneNumber}
                 onChange={handleChange}
                 className="p-2 rounded bg-gray-800 text-white w-full"
               />
@@ -180,6 +224,16 @@ const PersonelForm = () => {
           >
             Add Personnel
           </button>
+
+          {message && (
+            <p
+              className={`${
+                message.startsWith("✅") ? "text-green-400" : "text-red-500"
+              } mt-3 text-center`}
+            >
+              {message}
+            </p>
+          )}
         </form>
 
         {/* --- Bulk Upload --- */}
@@ -188,21 +242,15 @@ const PersonelForm = () => {
           className="bg-gray-900 p-6 rounded-lg shadow-lg flex flex-col gap-4"
         >
           <h2 className="text-2xl font-bold text-white mb-2">Bulk Upload</h2>
-          <p className="text-gray-400 mb-4">
-            Upload CSV or Excel file to add multiple personnel at once.
-          </p>
-
           <input
             type="file"
             accept=".csv,.xlsx,.xls"
             onChange={handleFileChange}
             className="p-2 rounded bg-gray-800 text-white"
           />
-
           {file && (
             <p className="text-gray-300 mt-2">Selected file: {file.name}</p>
           )}
-
           <button
             type="submit"
             disabled={!file}
@@ -215,20 +263,79 @@ const PersonelForm = () => {
             Upload File
           </button>
         </form>
-
-        {/* --- Message --- */}
-        {message && (
-          <div className="md:col-span-2 text-center">
-            <p
-              className={`${
-                message.startsWith("✅") ? "text-green-400" : "text-red-500"
-              } text-lg font-medium`}
-            >
-              {message}
-            </p>
-          </div>
-        )}
       </div>
+
+      {/* --- Teacher Modal --- */}
+      {showTeacherModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+          <div className="bg-gray-900 p-6 rounded-lg w-full max-w-lg shadow-lg">
+            <h3 className="text-xl font-bold text-white mb-4">
+              Teacher Details
+            </h3>
+
+            {/* Subjects input */}
+            <label className="block text-gray-300 mb-2">Subjects</label>
+            <div className="flex flex-wrap gap-2 mb-3">
+              {registerDetails.subjects.map((subj, idx) => (
+                <span
+                  key={idx}
+                  className="bg-blue-600 text-white px-2 py-1 rounded-full text-sm flex items-center gap-1"
+                >
+                  {subj}
+                  <button
+                    type="button"
+                    onClick={() => removeSubject(subj)}
+                    className="ml-1 text-xs text-red-200 hover:text-red-400"
+                  >
+                    ✕
+                  </button>
+                </span>
+              ))}
+              <input
+                type="text"
+                onKeyDown={handleSubjectKeyDown}
+                placeholder="Type subject and press Enter"
+                className="flex-1 min-w-[120px] p-2 rounded bg-gray-700 text-white"
+              />
+            </div>
+
+            {/* Class teacher */}
+            <label className="flex items-center gap-2 mb-3 text-gray-300">
+              <input
+                type="checkbox"
+                name="isClassTeacher"
+                checked={registerDetails.isClassTeacher}
+                onChange={handleChange}
+              />
+              Is Class Teacher?
+            </label>
+
+            {registerDetails.isClassTeacher && (
+              <div className="mb-3">
+                <label className="block text-gray-300 mb-1">Class Level</label>
+                <input
+                  type="text"
+                  name="classLevel"
+                  value={registerDetails.classLevel}
+                  onChange={handleChange}
+                  className="p-2 rounded bg-gray-700 text-white w-full"
+                  placeholder="e.g., Grade 5"
+                />
+              </div>
+            )}
+
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setShowTeacherModal(false)}
+                className="px-4 py-2 rounded bg-gray-700 text-white hover:bg-gray-600"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 };

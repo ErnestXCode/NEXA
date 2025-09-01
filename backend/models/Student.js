@@ -12,6 +12,9 @@ const studentSchema = new mongoose.Schema({
   stream: { type: String },
   subjects: [{ type: String }],
 
+  guardian: { type: mongoose.Schema.Types.ObjectId, ref: "Parent" },
+
+
   guardianName: { type: String, required: true },
   guardianPhone: { type: String, required: true },
   guardianEmail: { type: String },

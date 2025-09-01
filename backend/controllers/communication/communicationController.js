@@ -1,81 +1,62 @@
-const Activity = require("../../models/Activity");
-const Message = require("../../models/Message");
 const User = require("../../models/User");
+const Message = require("../../models/Message");
+const sgMail = require("@sendgrid/mail");
 
-// Send message
+// ⚠️ set this in your .env: SENDGRID_API_KEY=xxxxx
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+
+// POST /communication
 const sendMessage = async (req, res) => {
   try {
-    const { subject, body, recipients, type } = req.body;
-    const sender = req.user;
+    const { subject, body, type } = req.body;
+    const sender = await User.findOne({email : req.user.email}) // from auth middleware
 
-    const senderDoc = await User.findOne({ email: sender.email });
-
-    if (!subject || !body || !recipients || recipients.length === 0) {
-      return res.status(400).json({ msg: "Subject, body, and recipients are required" });
+    if (!body) {
+      return res.status(400).json({ msg: "Message body required" });
     }
 
-    const newMessage = new Message({
+    // Save in DB (always, even emails, so there's a record)
+    const newMessage = await Message.create({
+      sender: sender._id,
       subject,
       body,
-      sender: senderDoc.name,
-      school: sender.school,
-      recipients,
       type,
-      status: "pending",
     });
 
-    const saved = await newMessage.save();
+    // If it's an email, trigger SendGrid
+    if (type === "email") {
+      try {
+        await sgMail.send({
+          to: process.env.TEST_EMAIL || "school@example.com", // you can pick recipient logic later
+          from: process.env.FROM_EMAIL || "noreply@schoolapp.com",
+          subject: subject || "School Communication",
+          text: body,
+        });
+      } catch (emailErr) {
+        console.error("Email send failed:", emailErr);
+      }
+    }
 
-    const newLog = new Activity({
-      type: "text",
-      description: `New broadcast by ${senderDoc.name} at ${saved.date} regarding ${saved.subject}`,
-      createdBy: senderDoc._id,
-      school: sender.school,
-    });
-
-    await newLog.save();
-
-    // TODO: implement async delivery via SMS/Email/WhatsApp and update status
-
-    res.status(201).json(saved);
+    res.status(201).json(newMessage);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ msg: "Error sending message", error: err.message });
+    res.status(500).json({ msg: "Failed to send message" });
   }
 };
 
-// Get all messages (school-scoped)
+// GET /communication?type=chat
 const getMessages = async (req, res) => {
   try {
-    const requester = req.user;
-    const query = requester.role === "superadmin" ? {} : { school: requester.school };
-
-    const messages = await Message.find(query).sort({ date: -1 });
-
-    res.status(200).json(messages);
+    const { type } = req.query;
+    const filter = type ? { type } : {};
+    const messages = await Message.find(filter)
+      .populate("sender", "name email role")
+      .sort({ createdAt: -1 });
+    res.json(messages);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ msg: "Error fetching messages", error: err.message });
+    res.status(500).json({ msg: "Failed to fetch messages" });
   }
 };
 
-// Resend failed message
-const resendMessage = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const message = await Message.findById(id);
-
-    if (!message) return res.status(404).json({ msg: "Message not found" });
-
-    // TODO: trigger delivery logic again, for now just mark as sent
-    message.status = "sent";
-    await message.save();
-
-    res.status(200).json(message);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ msg: "Error resending message", error: err.message });
-  }
-};
-
-module.exports = { sendMessage, getMessages, resendMessage };
+module.exports = { sendMessage, getMessages };

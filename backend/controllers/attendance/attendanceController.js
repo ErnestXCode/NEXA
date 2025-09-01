@@ -3,6 +3,7 @@ const Student = require("../../models/Student");
 const User = require("../../models/User");
 
 // Mark attendance
+// Mark attendance
 const markAttendance = async (req, res) => {
   try {
     const requester = req.user;
@@ -10,12 +11,30 @@ const markAttendance = async (req, res) => {
 
     const requesterDoc = await User.findOne({ email: requester.email });
 
+    const attendanceDate = new Date(date || new Date());
+    attendanceDate.setHours(0, 0, 0, 0); // normalize to start of day
+
+    // 🔒 Check if this class already has attendance for the day
+    const alreadyMarked = await Attendance.findOne({
+      classLevel,
+      stream,
+      school: requester.school,
+      date: { 
+        $gte: attendanceDate, 
+        $lt: new Date(attendanceDate.getTime() + 24 * 60 * 60 * 1000) 
+      }
+    });
+
+    if (alreadyMarked) {
+      return res.status(400).json({ msg: "Attendance already marked for this class today" });
+    }
+
     const attendance = new Attendance({
       student,
       classLevel,
       stream,
       status,
-      date: date || new Date(),
+      date: attendanceDate,
       markedBy: requesterDoc._id,
       school: requester.school,
     });
@@ -24,11 +43,10 @@ const markAttendance = async (req, res) => {
     res.status(201).json(saved);
   } catch (err) {
     console.log(err);
-    res
-      .status(500)
-      .json({ msg: "Error marking attendance", error: err.message });
+    res.status(500).json({ msg: "Error marking attendance", error: err.message });
   }
 };
+
 
 // Get attendance for a student
 const getStudentAttendance = async (req, res) => {

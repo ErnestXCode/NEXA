@@ -4,15 +4,18 @@ const User = require("../../models/User");
 const jwt = require("jsonwebtoken");
 
 const handleRegister = async (req, res) => {
+  console.log('hit register')
   const content = req.body;
-  const { name, email, password } = content;
+  const { name, email, password, role, children, phoneNumber } = content;
 
   const requester = req.user;
-  let role, schoolDoc, requesterDoc
-  
+  let assignedRole = role;
+  let schoolDoc = null;
+  let requesterDoc = null;
+
+  // Public first admin registration
   if (!requester) {
-    // 🟢 Public first admin registration
-    role = "admin";
+    assignedRole = "admin";
     const schoolName = content.school;
     if (!schoolName) return res.status(400).json({ msg: "School required" });
 
@@ -22,60 +25,83 @@ const handleRegister = async (req, res) => {
       await schoolDoc.save();
     }
   } else {
-    // 🟡 Admin creating teacher/bursar
-     requesterDoc = await User.findOne({ email: requester.email });
-    role = content.role;
-    if (!["teacher", "bursar"].includes(role))
+    // Admin creating staff/parent
+    requesterDoc = await User.findOne({email: requester.email});
+
+    if (!["teacher", "bursar", "parent"].includes(role))
       return res.status(400).json({ msg: "Invalid role" });
 
     schoolDoc = await School.findById(requester.school);
-    if (!schoolDoc)
-      return res.status(400).json({ msg: "School does not exist" });
+    if (!schoolDoc) return res.status(400).json({ msg: "School not found" });
   }
 
-  if (!name || !email || !password) {
+  if (!name || !email || !password, !phoneNumber) {
     return res.status(400).json({ msg: "All inputs are mandatory" });
   }
 
   const foundUser = await User.findOne({ email });
   if (foundUser) return res.status(401).json({ msg: "User Already Exists" });
 
-  // Always create the user
   const newUser = new User({
-    ...content,
-    role,
-    school: schoolDoc._id,
+    name,
+    email,
+    password,
+    role: assignedRole,
+    school: schoolDoc?._id,
+    phoneNumber
   });
+  console.log(phoneNumber)
+  // Teacher-specific
+  if (assignedRole === "teacher") {
+    newUser.subjects = content.subjects || [];
+    newUser.isClassTeacher = content.isClassTeacher || false;
+    newUser.classLevel = content.isClassTeacher ? content.classLevel || null : null;
+  }
+
+  // Parent-specific
+  if (assignedRole === "parent") {
+    if (!children || !Array.isArray(children) || children.length === 0) {
+      return res.status(400).json({ msg: "Parent must have at least one child" });
+    }
+    newUser.children = children; // array of student _ids
+  }
+
   await newUser.save();
 
-  if (role !== "admin") {
-    // 🟡 Admin creates staff → no tokens returned
+  // Log activity for staff creation
+  if (assignedRole !== "admin") {
     const newLog = new Activity({
       type: "personel",
-      description: `New personel ${newUser.name} registered`,
-      createdBy: requesterDoc._id,
-      school: requester.school,
+      description: `New personnel ${newUser.name} registered`,
+      createdBy: requesterDoc?._id,
+      school: requesterDoc?.school,
     });
-
     await newLog.save();
+
     return res.status(201).json({
-      msg: "Personnel created successfully",
+      msg: "User created successfully",
       user: {
         id: newUser._id,
         name: newUser.name,
+        phoneNumber: newUser.phoneNumber,
         email: newUser.email,
         role: newUser.role,
+        phoneNumber: newUser.phoneNumber,
+        subjects: newUser.subjects || [],
+        isClassTeacher: newUser.isClassTeacher || false,
+        classLevel: newUser.classLevel || null,
+        children: newUser.children || [],
       },
     });
   }
 
-  // 🟢 First Admin Register → issue tokens
+  // First admin registration → generate tokens
   const refreshToken = jwt.sign({ email }, process.env.REFRESH_SECRET, {
     expiresIn: "7d",
   });
 
   const accessToken = jwt.sign(
-    { email, role, school: schoolDoc._id },
+    { email, role: assignedRole, school: schoolDoc._id },
     process.env.ACCESS_SECRET,
     { expiresIn: "15m" }
   );
@@ -85,6 +111,7 @@ const handleRegister = async (req, res) => {
     createdAt: new Date(),
     deviceInfo: req.headers["user-agent"] || "unknown device",
   });
+
   await newUser.save();
 
   res
@@ -101,8 +128,10 @@ const handleRegister = async (req, res) => {
         id: newUser._id,
         name: newUser.name,
         email: newUser.email,
+        phoneNumber: newUser.phoneNumber,
         role: newUser.role,
         school: newUser.school,
+        children: newUser.children || [],
       },
     });
 };

@@ -25,6 +25,8 @@ import FeesModule from "./pages/fees/FeesModule";
 import SetupTermFees from "./pages/fees/SetupTermFees";
 import StudentFeeDetail from "./pages/fees/StudentFeeDetail";
 import AttendanceDashboard from "./pages/attendance/AttendanceDashboard";
+import ReportCard from "./pages/exams/ReportCard";
+import ParentForm from "./pages/actions/ParentForm";
 
 function App() {
   return (
@@ -51,6 +53,7 @@ function App() {
               {/* Forms */}
               <Route path="createPersonel" element={<PersonelForm />} />
               <Route path="createStudent" element={<StudentForm />} />
+              <Route path="createParent" element={<ParentForm />} />
 
               {/* Lists */}
               <Route path="students" element={<AllStudents />} />
@@ -70,6 +73,7 @@ function App() {
               <Route path="fees/detail" element={<StudentFeeDetail />} />
 
               <Route path="exams/record" element={<RecordResult />} />
+              <Route path="exams/report" element={<ReportCard />} />
             </Route>
           </Route>
         </Routes>

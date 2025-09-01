@@ -20,7 +20,6 @@ const AllTeachers = () => {
   const [showModal, setShowModal] = useState(false);
   const [teacherToDelete, setTeacherToDelete] = useState(null);
 
-  // Fetch teachers
   const {
     data: teachers = [],
     isLoading,
@@ -30,32 +29,29 @@ const AllTeachers = () => {
     queryFn: fetchTeachers,
   });
 
-  // Delete mutation
   const mutation = useMutation({
     mutationFn: deleteTeacher,
     onMutate: async (id) => {
-    await queryClient.cancelQueries({ queryKey: ["teachers"] });
-    const previousTeachers = queryClient.getQueryData(["teachers"]);
-    queryClient.setQueryData(["teachers"], (old = []) =>
-      old.filter((b) => b._id !== id)
-    );
-    return { previousTeachers };
-  },
-  onError: (err, id, context) => {
-    if (context?.previousTeachers) {
-      queryClient.setQueryData(["teachers"], context.previousTeachers);
-    }
-  },
-  onSuccess: () => {
-    // close modal
-    setShowModal(false);
-    setTeacherToDelete(null);
-  },
-  onSettled: () => {
-    // refetch to sync server and cache
-    queryClient.refetchQueries(["teachers"]);
-  },
-});
+      await queryClient.cancelQueries({ queryKey: ["teachers"] });
+      const previousTeachers = queryClient.getQueryData(["teachers"]);
+      queryClient.setQueryData(["teachers"], (old = []) =>
+        old.filter((b) => b._id !== id)
+      );
+      return { previousTeachers };
+    },
+    onError: (err, id, context) => {
+      if (context?.previousTeachers) {
+        queryClient.setQueryData(["teachers"], context.previousTeachers);
+      }
+    },
+    onSuccess: () => {
+      setShowModal(false);
+      setTeacherToDelete(null);
+    },
+    onSettled: () => {
+      queryClient.refetchQueries(["teachers"]);
+    },
+  });
 
   const confirmDelete = (teacher) => {
     setTeacherToDelete(teacher);
@@ -81,12 +77,8 @@ const AllTeachers = () => {
     <main className="p-6 bg-gray-950 min-h-screen relative">
       <h1 className="text-2xl font-bold mb-4 text-white">All Teachers</h1>
 
-      {isLoading && (
-        <p className="text-gray-400">Loading teachers...</p>
-      )}
-      {isError && (
-        <p className="text-red-500">❌ Failed to fetch teachers</p>
-      )}
+      {isLoading && <p className="text-gray-400">Loading teachers...</p>}
+      {isError && <p className="text-red-500">❌ Failed to fetch teachers</p>}
 
       {!isLoading && !isError && (
         <table className="w-full text-sm bg-gray-900 rounded-lg overflow-hidden">
@@ -94,6 +86,9 @@ const AllTeachers = () => {
             <tr>
               <th className="p-2 text-left text-white">Name</th>
               <th className="p-2 text-left text-white">Email</th>
+              <th className="p-2 text-left text-white">Subjects</th>
+              <th className="p-2 text-left text-white">Class Teacher?</th>
+              <th className="p-2 text-left text-white">Class Level</th>
               <th className="p-2 text-left text-white">Actions</th>
             </tr>
           </thead>
@@ -108,6 +103,17 @@ const AllTeachers = () => {
                 >
                   <td className="p-2 text-white">{t.name}</td>
                   <td className="p-2 text-white">{t.email}</td>
+                  <td className="p-2 text-white">
+                    {t.subjects && t.subjects.length > 0
+                      ? t.subjects.join(", ")
+                      : "-"}
+                  </td>
+                  <td className="p-2 text-white">
+                    {t.isClassTeacher ? "Yes" : "No"}
+                  </td>
+                  <td className="p-2 text-white">
+                    {t.isClassTeacher && t.classLevel ? t.classLevel : "-"}
+                  </td>
                   <td className="p-2 flex gap-2">
                     <button
                       onClick={() => handleEdit(t._id)}
@@ -126,7 +132,7 @@ const AllTeachers = () => {
               ))
             ) : (
               <tr>
-                <td colSpan="3" className="text-center p-4 text-gray-400">
+                <td colSpan="6" className="text-center p-4 text-gray-400">
                   No teachers found.
                 </td>
               </tr>
@@ -135,7 +141,7 @@ const AllTeachers = () => {
         </table>
       )}
 
-      {/* Modal */}
+      {/* Delete Modal */}
       {showModal && teacherToDelete && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
           <div className="bg-gray-900 rounded-lg p-6 w-80">

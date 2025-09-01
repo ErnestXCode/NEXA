@@ -17,6 +17,7 @@ const {
   getPersonnelById,
   updatePersonnel,
 } = require("../controllers/personel/personnelController");
+const { getAllParents, getParentById, updateParent, deleteParent } = require("../controllers/personel/parents/parentController");
 const router = express.Router();
 
 router
@@ -25,6 +26,14 @@ router
 router
   .route("/teacher")
   .get(verifyJWT, authorize(["superadmin", "admin"]), getAllTeachers);
+router
+  .route("/parent")
+  .get(verifyJWT, authorize(["superadmin", "admin"]), getAllParents);
+router
+  .route("/parent/:id")
+  .get(verifyJWT, authorize(["superadmin", "admin"]), getParentById)
+  .put(verifyJWT, authorize(["superadmin", "admin"]), updateParent)
+  .delete(verifyJWT, authorize(["superadmin", "admin"]), deleteParent);
 router
   .route("/bursar/:id")
   .get(verifyJWT, authorize(["superadmin", "admin"]), getBursarById)
@@ -37,6 +46,6 @@ router
   .delete(verifyJWT, authorize(["superadmin", "admin"]), deleteTeacher);
 
 router.route("/id/:id").get(verifyJWT, getPersonnelById);
-router.route("/edit/:id").get(verifyJWT, updatePersonnel);
+router.route("/edit/:id").put(verifyJWT, updatePersonnel);
 
 module.exports = router;

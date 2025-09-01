@@ -35,4 +35,11 @@ router.post(
   recordResult
 );
 
+router.post(
+  "/report-card/:studentId/:term",
+  verifyJWT,
+  authorize(["teacher", "admin"]),
+  recordResult
+);
+
 module.exports = router;
