@@ -6,8 +6,6 @@ import { store } from "../../redux/store";
 import api from "../../api/axios";
 import Dashboard from "./Dashboard";
 
-import React, { useState } from "react";
-import { Link, NavLink } from "react-router-dom";
 
 const Home = () => {
   const [sidenav, setSidenav] = useState(false);
