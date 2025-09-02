@@ -2,6 +2,9 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Register from "./pages/auth/Register";
 import Login from "./pages/auth/Login";
 import Home from "./pages/home/Home";
+import Features from "./pages/home/Features";
+import Contact from "./pages/home/Contact";
+import Pricing from "./pages/home/Pricing";
 import Fees from "./pages/fees/Fees";
 import Exams from "./pages/exams/Exams";
 import Attendance from "./pages/attendance/Attendance";
@@ -38,6 +41,9 @@ function App() {
         <Routes>
           {/* Public routes */}
           <Route path="/" element={<Home />} />
+          <Route path="/features" element={<Features />} />
+          <Route path="/pricing" element={<Pricing />} />
+          <Route path="/contact" element={<Contact />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
 
