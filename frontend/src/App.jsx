@@ -28,11 +28,13 @@ import AttendanceDashboard from "./pages/attendance/AttendanceDashboard";
 import ReportCard from "./pages/exams/ReportCard";
 import ParentForm from "./pages/actions/ParentForm";
 import SetupWizard from "./components/wizard/SetUpWizard";
+import SetupWizard from "./components/layout/Navigation";
 
 function App() {
   return (
     <div className="bg-gray-950 text-white min-h-screen">
       <BrowserRouter>
+        <Navigation />
         <Routes>
           {/* Public routes */}
           <Route path="/" element={<Home />} />
