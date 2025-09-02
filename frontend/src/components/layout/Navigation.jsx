@@ -113,9 +113,7 @@ const Navigation = () => {
               <NavLink end onClick={handleCloseSidenav} to="/dashboard/communication" className={navLinkClasses}>
                 Messages
               </NavLink>
-              <NavLink end onClick={handleCloseSidenav} to="/dashboard/communication/send" className={navLinkClasses}>
-                Send Message
-              </NavLink>
+              
             </div>
 
             {/* Exams */}
