@@ -37,7 +37,7 @@ function App() {
   return (
     <div className="bg-gray-950 text-white min-h-screen">
       <BrowserRouter>
-        <Navigation />
+       
         <Routes>
           {/* Public routes */}
           <Route path="/" element={<Home />} />
