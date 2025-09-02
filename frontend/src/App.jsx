@@ -28,7 +28,7 @@ import AttendanceDashboard from "./pages/attendance/AttendanceDashboard";
 import ReportCard from "./pages/exams/ReportCard";
 import ParentForm from "./pages/actions/ParentForm";
 import SetupWizard from "./components/wizard/SetUpWizard";
-import SetupWizard from "./components/layout/Navigation";
+import Navigation from "./components/layout/Navigation";
 
 function App() {
   return (
