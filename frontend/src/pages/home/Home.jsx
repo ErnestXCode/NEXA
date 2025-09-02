@@ -35,38 +35,16 @@ const Home = () => {
         </div>
 
         <nav className="p-6 space-y-4">
-          <Link to="/dashboard" className="block hover:text-gray-300">
-            Dashboard
+          <Link to="/features" className="block hover:text-gray-300">
+            Features
           </Link>
-          <Link to="/fees" className="block hover:text-gray-300">
-            Fees
+          <Link to="/pricing" className="block hover:text-gray-300">
+            Pricing
           </Link>
-          <Link to="/exams" className="block hover:text-gray-300">
-            Exams
+          <Link to="/contact" className="block hover:text-gray-300">
+            Contact
           </Link>
-          <Link to="/attendance" className="block hover:text-gray-300">
-            Attendance
-          </Link>
-          <Link to="/communication" className="block hover:text-gray-300">
-            Communication
-          </Link>
-
-          <div className="border-t border-gray-700 pt-4">
-            <Link to="/settings" className="block hover:text-gray-300 font-semibold">
-              Settings
-            </Link>
-            <ul className="ml-4 mt-2 space-y-2 text-sm text-gray-400">
-              <li>
-                <Link to="/settings/school-setup">School Setup</Link>
-              </li>
-              <li>
-                <Link to="/settings/classes">Classes</Link>
-              </li>
-              <li>
-                <Link to="/settings/users">Users</Link>
-              </li>
-            </ul>
-          </div>
+         
         </nav>
       </div>
 
