@@ -31,10 +31,10 @@ const Home = () => {
           <nav className="flex justify-between items-center px-8 py-4 bg-gray-900">
             <h1 className="text-2xl font-bold">Nexa</h1>
             <ul className="flex gap-6 text-gray-300">
-              <li className="hover:text-white cursor-pointer">Home</li>
-              <li className="hover:text-white cursor-pointer">Features</li>
-              <li className="hover:text-white cursor-pointer">Pricing</li>
-              <li className="hover:text-white cursor-pointer">Contact</li>
+              <NavLink to='/' className="hover:text-white cursor-pointer">Home</NavLink>
+              <NavLink to='/features' className="hover:text-white cursor-pointer">Features</NavLink>
+              <NavLink to='/pricing' className="hover:text-white cursor-pointer">Pricing</NavLink>
+              <NavLink to='/contact' className="hover:text-white cursor-pointer">Contact</NavLink>
             </ul>
 
             <Link
