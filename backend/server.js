@@ -1,10 +1,13 @@
+const dotenv = require("dotenv");
+dotenv.config();
+
 const express = require("express");
 const cookieParser = require("cookie-parser");
-const dotenv = require("dotenv");
 const cors = require("cors");
 const connectDB = require("./config/connectDB");
 
-dotenv.config();
+console.log('mongo-----------------------------',process.env.MONGO_URI)
+
 
 const app = express();
 
