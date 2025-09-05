@@ -1,6 +1,22 @@
 const Exam = require("../../models/Exam");
 const Student = require("../../models/Student");
 const School = require("../../models/School");
+const User = require("../../models/User");
+
+/**
+ * Helper: compute grade & remark from school's grading system given average
+ */
+function computeGrade(average, gradingSystem) {
+  if (!Array.isArray(gradingSystem) || gradingSystem.length === 0) {
+    gradingSystem = School.defaultGradingSystem();
+  }
+  for (let g of gradingSystem) {
+    if (average >= g.min && average <= g.max) {
+      return { grade: g.grade, remark: g.remark || "" };
+    }
+  }
+  return { grade: "N/A", remark: "" };
+}
 
 // Create exam (whole school)
 const createExam = async (req, res) => {
@@ -32,13 +48,18 @@ const getAllExams = async (req, res) => {
   }
 };
 
-// Record results for students
+/**
+ * Upsert results for many students.
+ * Accepts: { examId, studentResults: [{ studentId, subjects: [{name, score}] }, ...] }
+ * For each student, this will upsert a single entry in student.examResults for that exam.
+ */
 const recordResult = async (req, res) => {
   try {
     const { examId, studentResults } = req.body;
-
     if (!examId || !Array.isArray(studentResults)) {
-      return res.status(400).json({ msg: "Exam ID and student results are required" });
+      return res
+        .status(400)
+        .json({ msg: "Exam ID and student results are required" });
     }
 
     const exam = await Exam.findById(examId);
@@ -48,83 +69,142 @@ const recordResult = async (req, res) => {
     if (!school) return res.status(404).json({ msg: "School not found" });
 
     const gradingSystem =
-      school.gradingSystem && school.gradingSystem.length > 0
+      Array.isArray(school.gradingSystem) && school.gradingSystem.length
         ? school.gradingSystem
         : School.defaultGradingSystem();
 
     const updatedStudents = [];
 
-    for (let s of studentResults) {
-      const student = await Student.findById(s.studentId);
+    for (let entry of studentResults) {
+      const { studentId, subjects } = entry;
+      if (!studentId || !Array.isArray(subjects)) continue;
+
+      const student = await Student.findById(studentId);
       if (!student) continue;
 
-      const total = s.subjects.reduce((acc, sub) => acc + sub.score, 0);
-      const average = s.subjects.length > 0 ? total / s.subjects.length : 0;
+      // Find existing examResults index for this exam
+      const idx = student.examResults
+        ? student.examResults.findIndex(
+            (er) => er.exam?.toString() === examId.toString()
+          )
+        : -1;
 
-      // Apply school's grading system
-      let grade = "N/A";
-      let remark = "";
-      for (let g of gradingSystem) {
-        if (average >= g.min && average <= g.max) {
-          grade = g.grade;
-          remark = g.remark || "";
-          break;
-        }
-      }
+      // Build subjects array (ensure numbers)
+      const cleanSubjects = subjects.map((s) => ({
+        name: s.name,
+        score: typeof s.score === "number" ? s.score : Number(s.score || 0),
+      }));
 
-      student.examResults.push({
+      const total = cleanSubjects.reduce((acc, s) => acc + (s.score || 0), 0);
+      const average =
+        cleanSubjects.length > 0 ? total / cleanSubjects.length : 0;
+      const { grade, remark } = computeGrade(average, gradingSystem);
+
+      const examResultObj = {
         exam: exam._id,
         term: exam.term,
-        subjects: s.subjects,
+        subjects: cleanSubjects,
         total,
         average,
         grade,
         remark,
-      });
+      };
+
+      if (idx >= 0) {
+        // Update existing
+        student.examResults[idx] = {
+          ...(student.examResults[idx].toObject
+            ? student.examResults[idx].toObject()
+            : student.examResults[idx]),
+          ...examResultObj,
+        };
+      } else {
+        // Push new
+        student.examResults = student.examResults || [];
+        student.examResults.push(examResultObj);
+      }
 
       await student.save();
+
       updatedStudents.push({
         id: student._id,
         name: `${student.firstName} ${student.lastName}`,
+        average,
         grade,
         remark,
-        average,
       });
     }
 
     res.status(200).json({ msg: "Results recorded", updatedStudents });
   } catch (err) {
-    res.status(500).json({ msg: "Error recording results", error: err.message });
+    console.error(err);
+    res
+      .status(500)
+      .json({ msg: "Error recording results", error: err.message });
   }
 };
 
-// Get student report card by term
-const getReportCard = async (req, res) => {
+/**
+ * GET existing saved results for an exam + classLevel
+ * Query params: examId, classLevel, subject (optional)
+ * Returns:
+ *  { students: [ { _id, firstName, lastName, classLevel, savedSubjects: [{name,score}], total, average, grade } ], subjects: school.subjects }
+ */
+const getResultsForExamClass = async (req, res) => {
   try {
-    const { studentId, term } = req.params;
+    const { examId, classLevel, subject } = req.query;
+    if (!examId || !classLevel) {
+      return res
+        .status(400)
+        .json({ msg: "examId and classLevel are required" });
+    }
 
-    const student = await Student.findById(studentId).populate("examResults.exam");
-    if (!student) return res.status(404).json({ msg: "Student not found" });
+    const exam = await Exam.findById(examId);
+    if (!exam) return res.status(404).json({ msg: "Exam not found" });
 
-    const termResults = student.examResults.filter((r) => r.term === term);
+    const school = await School.findById(exam.school);
+    if (!school) return res.status(404).json({ msg: "School not found" });
 
-    res.status(200).json({
-      student: {
-        id: student._id,
-        name: `${student.firstName} ${student.lastName}`,
-        classLevel: student.classLevel,
-        stream: student.stream,
-      },
-      termResults,
+    // get students in class
+    const students = await Student.find({ school: school._id, classLevel });
+
+    // Build results
+    const results = students.map((s) => {
+      const er = (s.examResults || []).find(
+        (r) => r.exam?.toString() === examId.toString()
+      );
+
+      let savedSubjects = [];
+      if (er) {
+        savedSubjects = Array.isArray(er.subjects)
+          ? er.subjects.map((ss) => ({ name: ss.name, score: ss.score }))
+          : [];
+        if (subject) {
+          savedSubjects = savedSubjects.filter((x) => x.name === subject);
+        }
+      }
+
+      return {
+        studentId: s._id,
+        subjects: savedSubjects,
+        total: er ? er.total : null,
+        average: er ? er.average : null,
+        grade: er ? er.grade : null,
+        remark: er ? er.remark : null,
+      };
     });
+
+    res.json(results);
   } catch (err) {
-    res.status(500).json({ msg: "Error fetching report card", error: err.message });
+    console.error(err);
+    res.status(500).json({ msg: "Server error", error: err.message });
   }
-}
+};
+
 
 module.exports = {
   createExam,
   getAllExams,
   recordResult,
-  getReportCard,
+  getResultsForExamClass,
 };

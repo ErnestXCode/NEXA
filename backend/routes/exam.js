@@ -4,39 +4,27 @@ const {
   createExam,
   getAllExams,
   recordResult,
+  getResultsForExamClass
 } = require("../controllers/exam/examController");
 const verifyJWT = require("../middleware/verifyJWT");
 const router = express.Router();
 
 // Admin & Teacher can manage exams
-router.post("/", verifyJWT, authorize(["admin", "teacher"]), createExam);
+// Create exam
+router.post("/", verifyJWT, authorize(["admin"]), createExam);
+
+// Get all exams
+router.get("/", verifyJWT, authorize(["superadmin", "admin", "teacher"]), getAllExams);
+
+// Record results (bulk upsert)
+router.post("/results", verifyJWT, authorize(["teacher", "admin"]), recordResult);
+
+// Fetch saved results for exam + class
 router.get(
-  "/",
-  verifyJWT,
-  authorize(["superadmin", "admin", "teacher"]),
-  getAllExams
-);
-// router.get(
-//   "/:id",
-//   verifyJWT,
-//   authorize(["superadmin", "admin", "teacher"])
-// );
-// router.put("/:id", verifyJWT, authorize(["admin", "teacher"]), updateExam);
-// router.delete("/:id", verifyJWT, authorize(["admin", "teacher"]), deleteExam);
-
-// Record student results
-router.post(
-  "/record-result",
+  "/results/:examId/:classLevel",
   verifyJWT,
   authorize(["teacher", "admin"]),
-  recordResult
-);
-
-router.post(
-  "/report-card/:studentId/:term",
-  verifyJWT,
-  authorize(["teacher", "admin"]),
-  recordResult
+  getResultsForExamClass
 );
 
 module.exports = router;

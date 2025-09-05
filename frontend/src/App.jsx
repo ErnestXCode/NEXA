@@ -5,9 +5,6 @@ import Home from "./pages/home/Home";
 import Features from "./pages/home/Features";
 import Contact from "./pages/home/Contact";
 import Pricing from "./pages/home/Pricing";
-import Fees from "./pages/fees/Fees";
-import Exams from "./pages/exams/Exams";
-import Attendance from "./pages/attendance/Attendance";
 import Communication from "./pages/communication/Communication";
 import Settings from "./pages/settings/Settings";
 import Dashboard from "./pages/home/Dashboard";
@@ -17,21 +14,16 @@ import StudentForm from "./pages/actions/StudentForm";
 import AllTeachers from "./pages/actions/AllTeachers";
 import AllBursars from "./pages/actions/AllBursars";
 import AllStudents from "./pages/actions/AllStudents";
-import StudentAttendanceForm from "./pages/attendance/StudentAttendanceForm";
 import SendMessageForm from "./pages/communication/SendMessageForm";
-import ExamForm from "./pages/exams/ExamForm";
 import FeePaymentForm from "./pages/fees/FeePaymentForm";
-import RecordResult from "./pages/exams/RecordResult";
 import StudentEditPage from "./pages/actions/StudentEditPage";
 import PersonnelEditPage from "./pages/actions/PersonnelEditPage";
 import FeesModule from "./pages/fees/FeesModule";
 import SetupTermFees from "./pages/fees/SetupTermFees";
 import StudentFeeDetail from "./pages/fees/StudentFeeDetail";
 import AttendanceDashboard from "./pages/attendance/AttendanceDashboard";
-import ReportCard from "./pages/exams/ReportCard";
 import ParentForm from "./pages/actions/ParentForm";
 import SetupWizard from "./components/wizard/SetUpWizard";
-import Navigation from "./components/layout/Navigation";
 import AttendancePage from "./pages/attendance/AttendancePage";
 import ExamsPage from "./pages/exams/ExamsPage";
 import RecordResultsPage from "./pages/exams/RecordResultsPage";
@@ -56,11 +48,17 @@ function App() {
             <Route path="/dashboard">
               <Route index element={<Dashboard />} />
               <Route path="fees" element={<FeesModule />} />
+              <Route path="fees/record" element={<FeePaymentForm />} />
+              <Route path="fees/term" element={<SetupTermFees />} />
+              <Route path="fees/detail" element={<StudentFeeDetail />} />
 
-              <Route path="exams" element={<ExamsPage />} />
-              <Route path="attendance/mark" element={<AttendancePage />} />
+
               <Route path="attendance" element={<AttendanceDashboard />} />
+              <Route path="attendance/mark" element={<AttendancePage />} />
+              
+
               <Route path="communication" element={<Communication />} />
+              <Route path="communication/send" element={<SendMessageForm />} />
               <Route path="settings" element={<Settings />} />
 
               {/* Forms */}
@@ -70,22 +68,16 @@ function App() {
 
               {/* Lists */}
               <Route path="students" element={<AllStudents />} />
-              <Route path="setup" element={<SetupWizard />} />
               <Route path="students/edit/:id" element={<StudentEditPage />} />
+
+              <Route path="setup" element={<SetupWizard />} />
+
               <Route path="teachers" element={<AllTeachers />} />
               <Route path="bursars" element={<AllBursars />} />
               <Route path="personnel/edit/:id" element={<PersonnelEditPage />} />
 
-              <Route
-                path="attendance/mark"
-                element={<StudentAttendanceForm />}
-              />
-              <Route path="communication/send" element={<SendMessageForm />} />
-              <Route path="exams/create" element={<ExamForm />} />
-              <Route path="fees/record" element={<FeePaymentForm />} />
-              <Route path="fees/term" element={<SetupTermFees />} />
-              <Route path="fees/detail" element={<StudentFeeDetail />} />
 
+              <Route path="exams" element={<ExamsPage />} />
               <Route path="exams/record" element={<RecordResultsPage />} />
               <Route path="exams/report" element={<ReportCardPage />} />
             </Route>

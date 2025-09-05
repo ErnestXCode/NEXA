@@ -158,15 +158,27 @@ const getAllStudents = async (req, res) => {
       .json({ msg: "Error fetching students", error: err.message });
   }
 };
-getStudentsWithSubjects = async (req, res) => {
+const getStudentsWithSubjects = async (req, res) => {
   try {
     const school = await School.findById(req.user.school);
-    const students = await Student.find({ school: req.user.school });
+    if (!school) {
+      return res.status(404).json({ msg: "School not found" });
+    }
 
-    res.json({
-      subjects: school.subjects,
-      students,
-    });
+    const students = await Student.find({ school: req.user.school });
+    const requesterDoc = await User.findOne({ email: req.user.email });
+
+    let subjects = school.subjects;
+
+    // 🔒 If teacher, restrict to their subjects
+    if (req.user.role === "teacher") {
+      const teacher = await User.findById(requesterDoc._id);
+      if (teacher && teacher.subjects.length > 0) {
+        subjects = teacher.subjects;
+      }
+    }
+
+    res.json({ students, subjects });
   } catch (err) {
     res
       .status(500)
