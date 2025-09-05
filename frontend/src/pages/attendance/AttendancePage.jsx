@@ -1,0 +1,157 @@
+import React, { useState, useEffect } from "react";
+import api from "../../api/axios";
+
+const AttendancePage = () => {
+  const [students, setStudents] = useState([]);
+  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [records, setRecords] = useState({});
+  const [notifyParents, setNotifyParents] = useState(false);
+
+  useEffect(() => {
+    const fetchStudents = async () => {
+      try {
+        const res = await api.get("/attendance", { params: { date } });
+        setStudents(res.data);
+
+        const initialRecords = Object.fromEntries(
+          res.data.map(s => [
+            s._id,
+            { status: s.attendance?.status || "present", reason: s.attendance?.reason || "" }
+          ])
+        );
+        setRecords(initialRecords);
+      } catch (err) {
+        console.error("Error fetching students", err);
+      }
+    };
+    fetchStudents();
+  }, [date]);
+
+  const handleChange = (studentId, field, value) => {
+    setRecords(prev => ({ ...prev, [studentId]: { ...prev[studentId], [field]: value } }));
+  };
+
+  const handleSubmit = async () => {
+    try {
+      const payload = {
+        classLevel: students[0]?.classLevel,
+        date,
+        records: Object.entries(records).map(([studentId, data]) => ({
+          studentId,
+          status: data.status || "present",
+          reason: data.reason || "",
+        })),
+        notifyParents,
+      };
+
+      await api.post("/attendance", payload);
+      alert("Attendance saved ✅");
+    } catch (err) {
+      console.error("Error saving attendance", err);
+      alert("Error saving attendance");
+    }
+  };
+
+  return (
+    <main className="p-6 bg-gray-950 min-h-screen text-white">
+      <h1 className="text-2xl font-bold mb-4">Mark Attendance</h1>
+
+      <div className="flex flex-wrap items-center gap-4 mb-6">
+        <input
+          type="date"
+          value={date}
+          onChange={(e) => setDate(e.target.value)}
+          className="p-2 rounded bg-gray-800"
+        />
+        <button
+          onClick={() =>
+            setRecords(
+              Object.fromEntries(
+                students.map(s => [s._id, { status: "present", reason: "" }])
+              )
+            )
+          }
+          className="bg-green-600 hover:bg-green-700 p-2 rounded"
+        >
+          Mark All Present
+        </button>
+        <button
+          onClick={handleSubmit}
+          className="bg-blue-600 hover:bg-blue-700 p-2 rounded"
+        >
+          Save Attendance
+        </button>
+        <label className="flex items-center space-x-2">
+          <input
+            type="checkbox"
+            checked={notifyParents}
+            onChange={(e) => setNotifyParents(e.target.checked)}
+            className="accent-blue-500"
+          />
+          <span>Notify Parents</span>
+        </label>
+      </div>
+
+      <div className="bg-gray-900 rounded-lg shadow overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead className="bg-gray-800">
+            <tr>
+              <th className="py-3 px-4 text-left">Student</th>
+              <th className="py-3 px-4 text-left">Class</th>
+              <th className="py-3 px-4 text-left"></th>
+              <th className="py-3 px-4 text-left">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {students.length > 0 ? (
+              students.map((s, i) => {
+                const showReason = records[s._id]?.status === "absent" || records[s._id]?.status === "late";
+                return (
+                  <tr
+                    key={s._id}
+                    className={`${i % 2 === 0 ? "bg-gray-950" : "bg-gray-900"} hover:bg-gray-800 transition`}
+                  >
+                    <td className="py-2 px-4">{s.firstName} {s.lastName}</td>
+                    <td className="py-2 px-4">{s.classLevel}</td>
+
+                    <td className="py-2 px-2 w-32 relative">
+                      {showReason && (
+                        <input
+                          type="text"
+                          value={records[s._id]?.reason || ""}
+                          onChange={(e) => handleChange(s._id, "reason", e.target.value)}
+                          placeholder="Reason"
+                          className="absolute inset-0 w-full border rounded px-2 py-1 bg-gray-800 text-white"
+                        />
+                      )}
+                    </td>
+
+                    <td className="py-2 px-2">
+                      <select
+                        value={records[s._id]?.status}
+                        onChange={(e) => handleChange(s._id, "status", e.target.value)}
+                        className="border rounded px-2 py-1 bg-gray-800 text-white"
+                      >
+                        <option value="present">Present</option>
+                        <option value="absent">Absent</option>
+                        <option value="late">Late</option>
+                      </select>
+                    </td>
+                  </tr>
+                );
+              })
+            ) : (
+              <tr>
+                <td colSpan="4" className="text-center py-6 text-gray-400">
+                  No students found.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </main>
+  );
+};
+
+export default AttendancePage;

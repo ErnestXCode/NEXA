@@ -13,7 +13,8 @@ const handleRegister = async (req, res) => {
   let schoolDoc = null;
   let requesterDoc = null;
 
-  // Public first admin registration
+
+    // Public first admin registration
   if (!requester) {
     assignedRole = "admin";
     const schoolName = content.school;
@@ -21,12 +22,22 @@ const handleRegister = async (req, res) => {
 
     schoolDoc = await School.findOne({ name: schoolName });
     if (!schoolDoc) {
-      schoolDoc = new School({ name: schoolName });
+      schoolDoc = new School({
+        name: schoolName,
+        gradingSystem: School.defaultGradingSystem(),
+        classLevels: School.defaultCBCLevels(), // can be updated later via settings
+        modules: {
+          exams: true,
+          attendance: true,
+          feeTracking: true,
+          communication: true,
+        }
+      });
       await schoolDoc.save();
     }
   } else {
     // Admin creating staff/parent
-    requesterDoc = await User.findOne({email: requester.email});
+    requesterDoc = await User.findOne({ email: requester.email });
 
     if (!["teacher", "bursar", "parent"].includes(role))
       return res.status(400).json({ msg: "Invalid role" });
@@ -34,6 +45,7 @@ const handleRegister = async (req, res) => {
     schoolDoc = await School.findById(requester.school);
     if (!schoolDoc) return res.status(400).json({ msg: "School not found" });
   }
+
 
   if (!name || !email || !password, !phoneNumber) {
     return res.status(400).json({ msg: "All inputs are mandatory" });

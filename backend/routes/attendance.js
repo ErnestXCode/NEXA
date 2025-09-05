@@ -1,33 +1,14 @@
 const express = require("express");
-const {
-  markAttendance,
-  getStudentAttendance,
-  getClassAttendance,
-  getAttendance,
-} = require("../controllers/attendance/attendanceController");
+
 const authorize = require("../middleware/authorize");
 const verifyJWT = require("../middleware/verifyJWT");
+const controller = require('../controllers/attendance/attendanceController')
+
 const router = express.Router();
+router.post("/", verifyJWT, controller.saveAttendance);
+router.get("/", verifyJWT, controller.getAttendanceByDate);
+router.get("/range", verifyJWT, controller.getStatsByRange);
+router.get("/absentees", verifyJWT, controller.getAbsenteeListRange);
 
-// Mark attendance (Teacher/Admin)
-router.post("/", verifyJWT, authorize(["teacher", "admin"]), markAttendance);
-
-router.get("/get", verifyJWT, authorize(["teacher", "admin"]), getAttendance);
-
-// Get attendance for a student
-router.get(
-  "/student/:studentId",
-  verifyJWT,
-  authorize(["superadmin", "admin", "teacher", "bursar"]),
-  getStudentAttendance
-);
-
-// Get attendance by class
-router.get(
-  "/class",
-  verifyJWT,
-  authorize(["superadmin", "admin", "teacher"]),
-  getClassAttendance
-);
 
 module.exports = router;

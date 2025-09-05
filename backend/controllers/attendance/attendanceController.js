@@ -1,172 +1,151 @@
 const Attendance = require("../../models/Attendance");
 const Student = require("../../models/Student");
 const User = require("../../models/User");
+const notificationService = require("../../services/notificationService");
 
-// Mark attendance
-// Mark attendance
-const markAttendance = async (req, res) => {
+// Save or update attendance
+exports.saveAttendance = async (req, res) => {
   try {
-    const requester = req.user;
-    const { student, classLevel, stream, status, date } = req.body;
+    const { classLevel, date, records, notifyParents } = req.body;
+    const requester = await User.findOne({ email: req.user.email });
+    const markedBy = requester._id;
 
-    const requesterDoc = await User.findOne({ email: requester.email });
-
-    const attendanceDate = new Date(date || new Date());
-    attendanceDate.setHours(0, 0, 0, 0); // normalize to start of day
-
-    // 🔒 Check if this class already has attendance for the day
-    const alreadyMarked = await Attendance.findOne({
-      classLevel,
-      stream,
-      school: requester.school,
-      date: { 
-        $gte: attendanceDate, 
-        $lt: new Date(attendanceDate.getTime() + 24 * 60 * 60 * 1000) 
-      }
-    });
-
-    if (alreadyMarked) {
-      return res.status(400).json({ msg: "Attendance already marked for this class today" });
+    let attendanceClassLevel = classLevel;
+    if (requester.role === "teacher" && requester.isClassTeacher) {
+      attendanceClassLevel = requester.classLevel;
+    } else if (!["admin", "superadmin"].includes(requester.role)) {
+      return res.status(403).json({ msg: "Unauthorized" });
     }
 
-    const attendance = new Attendance({
-      student,
-      classLevel,
-      stream,
-      status,
-      date: attendanceDate,
-      markedBy: requesterDoc._id,
-      school: requester.school,
+    const attendanceDate = date ? new Date(date) : new Date();
+    attendanceDate.setHours(0, 0, 0, 0); // normalize date to start of day
+    const results = [];
+
+    for (const record of records) {
+      const { studentId, status, reason } = record;
+
+      if (requester.role === "teacher" && requester.isClassTeacher) {
+        const student = await Student.findById(studentId);
+        if (!student || student.classLevel !== requester.classLevel) continue;
+      }
+
+      const doc = await Attendance.findOneAndUpdate(
+        { student: studentId, date: attendanceDate },
+        { student: studentId, classLevel: attendanceClassLevel, date: attendanceDate, status, reason, markedBy },
+        { upsert: true, new: true }
+      );
+      results.push(doc);
+
+      if (notifyParents && status === "absent") {
+        const student = await Student.findById(studentId).populate("guardian");
+        if (student?.guardian) {
+          notificationService.notifyParent(student.guardian, student, attendanceDate);
+        }
+      }
+    }
+
+    res.json({ msg: "Attendance saved", results });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ msg: "Server error" });
+  }
+};
+
+// Get attendance for a specific date
+exports.getAttendanceByDate = async (req, res) => {
+  try {
+    const { date } = req.query;
+    const requester = await User.findOne({ email: req.user.email });
+
+    const filterDate = date ? new Date(date) : new Date();
+    filterDate.setHours(0, 0, 0, 0);
+    const nextDay = new Date(filterDate);
+    nextDay.setHours(23, 59, 59, 999);
+
+    const attendanceRecords = await Attendance.find({
+      date: { $gte: filterDate, $lte: nextDay }
     });
 
-    const saved = await attendance.save();
-    res.status(201).json(saved);
+    const studentFilter = {};
+    if (requester.role === "teacher" && requester.isClassTeacher) {
+      studentFilter.classLevel = requester.classLevel;
+    }
+    const students = await Student.find(studentFilter);
+
+    const data = students.map(s => {
+      const record = attendanceRecords.find(r => r.student.toString() === s._id.toString());
+      return {
+        ...s.toObject(),
+        attendance: record ? { status: record.status, reason: record.reason } : { status: "present", reason: "" }
+      };
+    });
+
+    res.json(data);
   } catch (err) {
-    console.log(err);
-    res.status(500).json({ msg: "Error marking attendance", error: err.message });
+    console.error(err);
+    res.status(500).json({ msg: "Server error" });
   }
 };
 
-
-// Get attendance for a student
-const getStudentAttendance = async (req, res) => {
+// Get stats for any date range
+exports.getStatsByRange = async (req, res) => {
   try {
-    const { studentId } = req.params;
-    const requester = req.user;
-    const query = { student: studentId };
+    const { startDate, endDate } = req.query;
+    const requester = await User.findOne({ email: req.user.email });
 
-    if (requester.role !== "superadmin") query.school = requester.school;
+    const start = new Date(startDate);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(endDate);
+    end.setHours(23, 59, 59, 999);
 
-    const records = await Attendance.find(query);
-    res.status(200).json(records);
-  } catch (err) {
-    res
-      .status(500)
-      .json({ msg: "Error fetching attendance", error: err.message });
-  }
-};
+    const filter = { date: { $gte: start, $lte: end } };
+    if (requester.role === "teacher" && requester.isClassTeacher) {
+      filter.classLevel = requester.classLevel;
+    }
 
-// Get attendance by class
-const getClassAttendance = async (req, res) => {
-  try {
-    const { classLevel, stream } = req.query;
-    const requester = req.user;
-    const query = { classLevel };
-    if (stream) query.stream = stream;
-    if (requester.role !== "superadmin") query.school = requester.school;
-
-    const records = await Attendance.find(query);
-    res.status(200).json(records);
-  } catch (err) {
-    res
-      .status(500)
-      .json({ msg: "Error fetching class attendance", error: err.message });
-  }
-};
-
-// General getAttendance - flexible query (student, class, date)
-const getAttendance = async (req, res) => {
-  try {
-    const requester = req.user;
-    const { studentId, classLevel, stream, date, status } = req.query;
-
-    const query = {};
-    if (studentId) query.student = studentId;
-    if (classLevel) query.classLevel = classLevel;
-    if (status) query.status = status;
-    if (stream) query.stream = stream;
-    if (date) query.date = new Date(date);
-    if (requester.role !== "superadmin") query.school = requester.school;
-
-    const records = await Attendance.find(query).populate("student", "firstName lastName classLevel");
-    res.status(200).json(records);
-  } catch (err) {
-    res
-      .status(500)
-      .json({ msg: "Error fetching attendance", error: err.message });
-  }
-};
-
-const getHighAbsenteeism = async (req, res) => {
-  try {
-    const requester = req.user;
-
-    const query = {};
-    if (requester.role !== "superadmin") query.school = requester.school;
-
-    // Aggregate absences per student
-    const results = await Attendance.aggregate([
-      { $match: { ...query, status: "absent" } },
-      { $group: { _id: "$student", absences: { $sum: 1 } } },
-      { $match: { absences: { $gt: 3 } } },
-      { $sort: { absences: -1 } },
+    const records = await Attendance.aggregate([
+      { $match: filter },
+      {
+        $group: {
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$date" } },
+          present: { $sum: { $cond: [{ $eq: ["$status", "present"] }, 1, 0] } },
+          absent: { $sum: { $cond: [{ $eq: ["$status", "absent"] }, 1, 0] } },
+          late: { $sum: { $cond: [{ $eq: ["$status", "late"] }, 1, 0] } },
+        },
+      },
+      { $sort: { _id: 1 } },
     ]);
 
-    // Populate student details
-    const students = await Student.find({ _id: { $in: results.map(r => r._id) } })
-      .select("firstName lastName classLevel parentEmail parentPhone");
-
-    // Merge absence counts
-    const highAbsentees = students.map((s) => {
-      const count = results.find(r => r._id.toString() === s._id.toString()).absences;
-      return { ...s.toObject(), absences: count };
-    });
-
-    res.status(200).json(highAbsentees);
+    res.json(records);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ msg: "Error fetching high absenteeism", error: err.message });
+    res.status(500).json({ msg: "Server error" });
   }
 };
 
-// 2️⃣ Notify parents of high absenteeism
-const notifyParents = async (req, res) => {
+// Get chronic absentees over past N days
+exports.getAbsenteeListRange = async (req, res) => {
   try {
-    const { students } = req.body; // array of students with parentEmail/parentPhone
+    const { days = 7 } = req.query;
+    const since = new Date();
+    since.setDate(since.getDate() - (days - 1));
+    since.setHours(0, 0, 0, 0);
 
-    if (!students || students.length === 0)
-      return res.status(400).json({ msg: "No students to notify" });
+    const requester = await User.findOne({ email: req.user.email });
+    const filter = { status: "absent", date: { $gte: since } };
+    if (requester.role === "teacher" && requester.isClassTeacher) {
+      filter.classLevel = requester.classLevel;
+    }
 
-    // TODO: integrate email/SMS sending here
-    students.forEach((s) => {
-      // Example pseudo-code:
-      // sendEmail(s.parentEmail, `Your child ${s.firstName} has ${s.absences} absences`);
-      // sendSMS(s.parentPhone, `Your child ${s.firstName} has ${s.absences} absences`);
-      console.log(`Notify ${s.parentEmail} / ${s.parentPhone}: ${s.firstName} - ${s.absences} absences`);
-    });
+    const students = await Attendance.aggregate([
+      { $match: filter },
+      { $group: { _id: "$student", count: { $sum: 1 } } },
+      { $match: { count: { $gt: 3 } } },
+    ]);
 
-    res.status(200).json({ msg: "Notifications sent successfully" });
+    res.json(students);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ msg: "Error notifying parents", error: err.message });
+    res.status(500).json({ msg: "Server error" });
   }
-};
-
-module.exports = {
-  markAttendance,
-  getStudentAttendance,
-  getHighAbsenteeism, 
-  notifyParents,
-  getClassAttendance,
-  getAttendance,
 };

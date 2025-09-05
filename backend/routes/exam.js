@@ -3,9 +3,6 @@ const authorize = require("../middleware/authorize");
 const {
   createExam,
   getAllExams,
-  getExamById,
-  updateExam,
-  deleteExam,
   recordResult,
 } = require("../controllers/exam/examController");
 const verifyJWT = require("../middleware/verifyJWT");
@@ -19,11 +16,11 @@ router.get(
   authorize(["superadmin", "admin", "teacher"]),
   getAllExams
 );
-router.get(
-  "/:id",
-  verifyJWT,
-  authorize(["superadmin", "admin", "teacher"])
-);
+// router.get(
+//   "/:id",
+//   verifyJWT,
+//   authorize(["superadmin", "admin", "teacher"])
+// );
 // router.put("/:id", verifyJWT, authorize(["admin", "teacher"]), updateExam);
 // router.delete("/:id", verifyJWT, authorize(["admin", "teacher"]), deleteExam);
 

@@ -32,6 +32,10 @@ import ReportCard from "./pages/exams/ReportCard";
 import ParentForm from "./pages/actions/ParentForm";
 import SetupWizard from "./components/wizard/SetUpWizard";
 import Navigation from "./components/layout/Navigation";
+import AttendancePage from "./pages/attendance/AttendancePage";
+import ExamsPage from "./pages/exams/ExamsPage";
+import RecordResultsPage from "./pages/exams/RecordResultsPage";
+import ReportCardPage from "./pages/exams/ReportCardPage";
 
 function App() {
   return (
@@ -53,8 +57,8 @@ function App() {
               <Route index element={<Dashboard />} />
               <Route path="fees" element={<FeesModule />} />
 
-              <Route path="exams" element={<Exams />} />
-              <Route path="attendance/hist" element={<Attendance />} />
+              <Route path="exams" element={<ExamsPage />} />
+              <Route path="attendance/mark" element={<AttendancePage />} />
               <Route path="attendance" element={<AttendanceDashboard />} />
               <Route path="communication" element={<Communication />} />
               <Route path="settings" element={<Settings />} />
@@ -82,8 +86,8 @@ function App() {
               <Route path="fees/term" element={<SetupTermFees />} />
               <Route path="fees/detail" element={<StudentFeeDetail />} />
 
-              <Route path="exams/record" element={<RecordResult />} />
-              <Route path="exams/report" element={<ReportCard />} />
+              <Route path="exams/record" element={<RecordResultsPage />} />
+              <Route path="exams/report" element={<ReportCardPage />} />
             </Route>
           </Route>
         </Routes>

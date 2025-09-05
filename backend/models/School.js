@@ -1,35 +1,50 @@
 const mongoose = require("mongoose");
 
 const gradeScaleSchema = new mongoose.Schema({
-  min: { type: Number, required: true },  // e.g., 80
-  max: { type: Number, required: true },  // e.g., 100
-  grade: { type: String, required: true }, // e.g., "A"
-  remark: { type: String } // e.g., "Excellent"
+  min: { type: Number, required: true },
+  max: { type: Number, required: true },
+  grade: { type: String, required: true },
+  remark: { type: String }
 });
 
 const classLevelSchema = new mongoose.Schema({
-  name: { type: String, required: true },  // e.g., "Grade 1" or "Form 2"
-  streams: [{ type: String }]              // e.g., ["North", "South"] or ["A", "B"]
+  name: { type: String, required: true },  // e.g., "Grade 1"
+  streams: [{ type: String }]              // e.g., ["North", "South"]
 });
 
-const schoolSchema = new mongoose.Schema({
-  name: { type: String, required: true, unique: true },
-  address: { type: String },
-  phone: { type: String },
-  email: { type: String },
+const schoolSchema = new mongoose.Schema(
+  {
+    name: { type: String, required: true, unique: true },
+    address: { type: String },
+    phone: { type: String },
+    email: { type: String },
 
-  // --- Academic structure ---
-  classLevels: [classLevelSchema], // all grades + streams
-  gradingSystem: [gradeScaleSchema], // default is Kenyan system
+    // --- Academic structure ---
+    classLevels: {
+      type: [classLevelSchema],
+      default: () => School.defaultCBCLevels(),
+    },
+    gradingSystem: {
+      type: [gradeScaleSchema],
+      default: () => School.defaultGradingSystem(),
+    },
 
-  // --- Optional extras ---
-  modules: {
-    exams: { type: Boolean, default: true },
-    attendance: { type: Boolean, default: true },
-    feeTracking: { type: Boolean, default: true },
-    communication: { type: Boolean, default: true }
-  }
-}, { timestamps: true });
+    // ✅ Subjects offered in the school (same for all levels, for now)
+    subjects: {
+      type: [String],
+      default: () => School.defaultSubjects(),
+    },
+
+    // --- Optional extras ---
+    modules: {
+      exams: { type: Boolean, default: true },
+      attendance: { type: Boolean, default: true },
+      feeTracking: { type: Boolean, default: true },
+      communication: { type: Boolean, default: true }
+    }
+  },
+  { timestamps: true }
+);
 
 // Kenyan default grading system
 schoolSchema.statics.defaultGradingSystem = function () {
@@ -48,4 +63,39 @@ schoolSchema.statics.defaultGradingSystem = function () {
   ];
 };
 
-module.exports = mongoose.model("School", schoolSchema);
+// CBC default class levels
+schoolSchema.statics.defaultCBCLevels = function () {
+  return [
+    { name: "Pre-Primary 1 (PP1)", streams: [] },
+    { name: "Pre-Primary 2 (PP2)", streams: [] },
+    { name: "Grade 1", streams: [] },
+    { name: "Grade 2", streams: [] },
+    { name: "Grade 3", streams: [] },
+    { name: "Grade 4", streams: [] },
+    { name: "Grade 5", streams: [] },
+    { name: "Grade 6", streams: [] },
+    { name: "Grade 7 (JSS1)", streams: [] },
+    { name: "Grade 8 (JSS2)", streams: [] },
+    { name: "Grade 9 (JSS3)", streams: [] },
+    { name: "Senior 1", streams: [] },
+    { name: "Senior 2", streams: [] },
+    { name: "Senior 3", streams: [] }
+  ];
+};
+
+// ✅ Default subjects
+schoolSchema.statics.defaultSubjects = function () {
+  return [
+    "Mathematics",
+    "English",
+    "Kiswahili",
+    "Science",
+    "Social Studies",
+    "Religious Education",
+    "Creative Arts",
+    "Physical Education"
+  ];
+};
+
+const School = mongoose.model("School", schoolSchema);
+module.exports = School;

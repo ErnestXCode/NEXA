@@ -22,28 +22,28 @@ const router = express.Router();
 
 router
   .route("/bursar")
-  .get(verifyJWT, authorize(["superadmin", "admin"]), getAllBursars);
+  .get(verifyJWT,  getAllBursars);
 router
   .route("/teacher")
-  .get(verifyJWT, authorize(["superadmin", "admin"]), getAllTeachers);
+  .get(verifyJWT,  getAllTeachers);
 router
   .route("/parent")
-  .get(verifyJWT, authorize(["superadmin", "admin"]), getAllParents);
+  .get(verifyJWT,  getAllParents);
 router
   .route("/parent/:id")
-  .get(verifyJWT, authorize(["superadmin", "admin"]), getParentById)
-  .put(verifyJWT, authorize(["superadmin", "admin"]), updateParent)
-  .delete(verifyJWT, authorize(["superadmin", "admin"]), deleteParent);
+  .get(verifyJWT,  getParentById)
+  .put(verifyJWT,  updateParent)
+  .delete(verifyJWT,  deleteParent);
 router
   .route("/bursar/:id")
-  .get(verifyJWT, authorize(["superadmin", "admin"]), getBursarById)
-  .put(verifyJWT, authorize(["superadmin", "admin"]), updateBursar)
-  .delete(verifyJWT, authorize(["superadmin", "admin"]), deleteBursar);
+  .get(verifyJWT,  getBursarById)
+  .put(verifyJWT,  updateBursar)
+  .delete(verifyJWT,  deleteBursar);
 router
   .route("/teacher/:id")
-  .get(verifyJWT, authorize(["superadmin", "admin"]), getTeacherById)
-  .put(verifyJWT, authorize(["superadmin", "admin"]), updateTeacher)
-  .delete(verifyJWT, authorize(["superadmin", "admin"]), deleteTeacher);
+  .get(verifyJWT,  getTeacherById)
+  .put(verifyJWT,  updateTeacher)
+  .delete(verifyJWT,  deleteTeacher);
 
 router.route("/id/:id").get(verifyJWT, getPersonnelById);
 router.route("/edit/:id").put(verifyJWT, updatePersonnel);

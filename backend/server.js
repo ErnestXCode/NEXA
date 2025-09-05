@@ -29,7 +29,7 @@ app.use(cors(corsOptions));
 app.use(cookieParser());
 
 app.use("/api/attendance", require("./routes/attendance"));
-app.use("/api/exam", require("./routes/exam"));
+app.use("/api/exams", require("./routes/exam"));
 app.use("/api/auth", require("./routes/auth"));
 app.use("/api/fees", require("./routes/fees"));
 app.use("/api/personel", require("./routes/personel"));
