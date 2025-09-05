@@ -39,6 +39,7 @@ const RecordResultsPage = () => {
   useEffect(() => {
     const fetchResults = async () => {
       if (!examId || !selectedClass) return;
+      console.log(examId, selectedClass)
       try {
         const res = await api.get(
           `/exams/results/${examId}/${encodeURIComponent(selectedClass)}`
