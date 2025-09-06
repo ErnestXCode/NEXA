@@ -1,8 +1,37 @@
 // src/pages/landing/Pricing.jsx
 import React from "react";
+import { NavLink, Link } from "react-router-dom";
+
 
 const Pricing = () => {
   return (
+    <>
+     <nav className="flex justify-between items-center px-6 py-4 bg-gray-900">
+              <div className="flex items-center gap-4">
+                
+                <h1 className="text-2xl font-bold">Nexa</h1>
+              </div>
+              <ul className="hidden md:flex gap-6 text-gray-300">
+                <NavLink to="/" className="hover:text-white">
+                  Home
+                </NavLink>
+                <NavLink to="/features" className="hover:text-white">
+                  Features
+                </NavLink>
+                <NavLink to="/pricing" className="hover:text-white">
+                  Pricing
+                </NavLink>
+                <NavLink to="/contact" className="hover:text-white">
+                  Contact
+                </NavLink>
+              </ul>
+              <Link
+                to="/register"
+                className="px-4 py-2 bg-white font-semibold text-black rounded-lg hover:bg-gray-200"
+              >
+                Sign Up
+              </Link>
+            </nav>
     <main className="min-h-screen bg-black text-gray-100">
       {/* Header */}
       <section className="py-20 text-center bg-gray-900">
@@ -71,6 +100,7 @@ const Pricing = () => {
         ))}
       </section>
     </main>
+    </>
   );
 };
 

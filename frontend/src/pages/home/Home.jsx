@@ -13,45 +13,10 @@ const Home = () => {
   const toggleSidebar = () => setSidenav(!sidenav);
 
   return (
-    <main className="flex">
-      {/* Sidebar */}
-      {sidenav && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-30 md:hidden"
-          onClick={toggleSidebar}
-        />
-      )}
+   
+  <>
 
-      <div
-        className={`fixed top-0 left-0 h-full w-64 bg-gray-900 text-white transform z-40 transition-transform duration-300 ease-in-out ${
-          sidenav ? "translate-x-0" : "-translate-x-full"
-        } md:translate-x-0 md:static md:block`}
-      >
-        <div className="p-4 flex justify-between items-center md:hidden">
-          <h2 className="text-lg font-bold">Menu</h2>
-          <button onClick={toggleSidebar} className="text-white text-xl font-bold">
-            ✕
-          </button>
-        </div>
-
-        <nav className="p-6 space-y-4">
-          <Link to="/features" className="block hover:text-gray-300">
-            Features
-          </Link>
-          <Link to="/pricing" className="block hover:text-gray-300">
-            Pricing
-          </Link>
-          <Link to="/contact" className="block hover:text-gray-300">
-            Contact
-          </Link>
-         
-        </nav>
-      </div>
-
-      {/* Main Content */}
-      <div className="flex-1 min-h-screen bg-black text-gray-100">
-        {/* Navbar */}
-        <nav className="flex justify-between items-center px-6 py-4 bg-gray-900 md:ml-64">
+        <nav className="flex justify-between items-center px-6 py-4 bg-gray-900">
           <div className="flex items-center gap-4">
             <button className="md:hidden text-white text-2xl" onClick={toggleSidebar}>
               ☰
@@ -81,7 +46,7 @@ const Home = () => {
         </nav>
 
         {/* Hero Section */}
-        <section className="flex flex-col items-center justify-center text-center py-20 bg-black px-4 md:ml-64">
+        <section className="flex flex-col items-center justify-center text-center py-20 bg-black px-4 ">
           <h1 className="text-5xl font-bold mb-4 text-white">Welcome to Nexa</h1>
           <p className="text-lg max-w-2xl mb-8 text-gray-400">
             Nexa is the next-generation platform that simplifies your workflow,
@@ -97,7 +62,7 @@ const Home = () => {
         </section>
 
         {/* Features Section */}
-        <section className="py-20 bg-gray-900 px-4 md:ml-64">
+        <section className="py-20 bg-gray-900 px-4 ">
           <div className="max-w-6xl mx-auto text-center">
             <h2 className="text-3xl font-semibold mb-12 text-white">Why Choose Nexa?</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
@@ -127,7 +92,7 @@ const Home = () => {
         </section>
 
         {/* Testimonials */}
-        <section className="py-20 bg-black px-4 md:ml-64">
+        <section className="py-20 bg-black px-4 ">
           <div className="max-w-6xl mx-auto text-center">
             <h2 className="text-3xl font-semibold mb-12 text-white">What Our Users Say</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -150,7 +115,7 @@ const Home = () => {
         </section>
 
         {/* CTA Section */}
-        <section className="py-20 bg-gray-900 text-white text-center px-4 md:ml-64">
+        <section className="py-20 bg-gray-900 text-white text-center px-4 ">
           <h2 className="text-3xl font-semibold mb-6">Ready to get started?</h2>
           <p className="mb-8 text-gray-400">Join the growing community of schools using Nexa.</p>
           <Link
@@ -162,11 +127,11 @@ const Home = () => {
         </section>
 
         {/* Footer */}
-        <footer className="py-6 bg-black text-gray-500 text-center border-t border-gray-800 md:ml-64">
+        <footer className="py-6 bg-black text-gray-500 text-center border-t border-gray-800 ">
           <p>© {new Date().getFullYear()} Nexa. All rights reserved.</p>
         </footer>
-      </div>
-    </main>
+      
+    </>
   );
 };
 
