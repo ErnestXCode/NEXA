@@ -114,80 +114,120 @@ const StudentForm = ({ onNext }) => {
         onSubmit={handleSubmit}
         className="bg-gray-900 p-6 rounded-lg w-full max-w-3xl grid gap-4 grid-cols-1 md:grid-cols-2"
       >
-        <h1 className="text-2xl font-bold text-white col-span-2">Add Student</h1>
+        <h1 className="text-2xl font-bold text-white col-span-2">
+          Add Student
+        </h1>
 
-        {/* Single Entry Inputs */}
-        <input
-          placeholder="Admission Number"
-          name="admissionNumber"
-          value={student.admissionNumber}
-          onChange={handleChange}
-          className="p-2 rounded bg-gray-800 text-white col-span-1"
-        />
-        <input
-          placeholder="First Name"
-          name="firstName"
-          value={student.firstName}
-          onChange={handleChange}
-          className="p-2 rounded bg-gray-800 text-white col-span-1"
-        />
-        <input
-          placeholder="Last Name"
-          name="lastName"
-          value={student.lastName}
-          onChange={handleChange}
-          className="p-2 rounded bg-gray-800 text-white col-span-1"
-        />
-        <select
-          name="gender"
-          value={student.gender}
-          onChange={handleChange}
-          className="p-2 rounded bg-gray-800 text-white col-span-1"
-        >
-          <option value="" disabled>
-            Select Gender
-          </option>
-          <option value="male">Male</option>
-          <option value="female">Female</option>
-        </select>
-        <input
-          type="date"
-          name="dateOfBirth"
-          value={student.dateOfBirth}
-          onChange={handleChange}
-          className="p-2 rounded bg-gray-800 text-white col-span-1"
-        />
-        <input
-          placeholder="Class"
-          name="classLevel"
-          value={student.classLevel}
-          onChange={handleChange}
-          className="p-2 rounded bg-gray-800 text-white col-span-1"
-        />
-        <input
-          placeholder="Guardian Name"
-          name="guardianName"
-          value={student.guardianName}
-          onChange={handleChange}
-          className="p-2 rounded bg-gray-800 text-white col-span-1"
-        />
-        <input
-          placeholder="Guardian Phone"
-          name="guardianPhone"
-          value={student.guardianPhone}
-          onChange={handleChange}
-          className="p-2 rounded bg-gray-800 text-white col-span-1"
-        />
+        {/* Single Entry Inputs with labels */}
+        <div className="col-span-1 flex flex-col">
+          <label className="text-gray-300 text-sm mb-1">Admission Number</label>
+          <input
+            placeholder="e.g. 12345"
+            name="admissionNumber"
+            value={student.admissionNumber}
+            onChange={handleChange}
+            className="p-2 rounded bg-gray-800 text-white"
+          />
+        </div>
+
+        <div className="col-span-1 flex flex-col">
+          <label className="text-gray-300 text-sm mb-1">First Name</label>
+          <input
+            placeholder="e.g. John"
+            name="firstName"
+            value={student.firstName}
+            onChange={handleChange}
+            className="p-2 rounded bg-gray-800 text-white"
+          />
+        </div>
+
+        <div className="col-span-1 flex flex-col">
+          <label className="text-gray-300 text-sm mb-1">Last Name</label>
+          <input
+            placeholder="e.g. Doe"
+            name="lastName"
+            value={student.lastName}
+            onChange={handleChange}
+            className="p-2 rounded bg-gray-800 text-white"
+          />
+        </div>
+
+        <div className="col-span-1 flex flex-col">
+          <label className="text-gray-300 text-sm mb-1">Gender</label>
+          <select
+            name="gender"
+            value={student.gender}
+            onChange={handleChange}
+            className="p-2 rounded bg-gray-800 text-white"
+          >
+            <option value="" disabled>
+              Select Gender
+            </option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+          </select>
+        </div>
+
+        <div className="col-span-1 flex flex-col">
+          <label className="text-gray-300 text-sm mb-1">Date of Birth</label>
+          <input
+            type="date"
+            name="dateOfBirth"
+            value={student.dateOfBirth}
+            onChange={handleChange}
+            max={new Date().toISOString().split("T")[0]} // no future dates
+            className="p-2 rounded bg-gray-800 text-white"
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            Please select the student's birthday
+          </p>
+        </div>
+
+        <div className="col-span-1 flex flex-col">
+          <label className="text-gray-300 text-sm mb-1">Class Level</label>
+          <input
+            placeholder="e.g. Grade 4"
+            name="classLevel"
+            value={student.classLevel}
+            onChange={handleChange}
+            className="p-2 rounded bg-gray-800 text-white"
+          />
+        </div>
+
+        <div className="col-span-1 flex flex-col">
+          <label className="text-gray-300 text-sm mb-1">Guardian Name</label>
+          <input
+            placeholder="e.g. Mary Doe"
+            name="guardianName"
+            value={student.guardianName}
+            onChange={handleChange}
+            className="p-2 rounded bg-gray-800 text-white"
+          />
+        </div>
+
+        <div className="col-span-1 flex flex-col">
+          <label className="text-gray-300 text-sm mb-1">Guardian Phone</label>
+          <input
+            placeholder="e.g. 0712345678"
+            name="guardianPhone"
+            value={student.guardianPhone}
+            onChange={handleChange}
+            className="p-2 rounded bg-gray-800 text-white"
+          />
+        </div>
 
         {/* Bulk upload */}
         <div className="col-span-2">
           <p className="text-gray-400 text-sm mb-1">
             Expected columns for CSV / Excel: <br />
             <strong>
-              admissionNumber, firstName, lastName, gender, dateOfBirth, classLevel, guardianName, guardianPhone
+              admissionNumber, firstName, lastName, gender, dateOfBirth,
+              classLevel, guardianName, guardianPhone
             </strong>
           </p>
-          <label className="block mb-1">Or upload CSV / Excel for bulk</label>
+          <label className="block text-gray-300 text-sm mb-1">
+            Or upload CSV / Excel for bulk
+          </label>
           <input
             type="file"
             accept=".csv,.xlsx,.xls"

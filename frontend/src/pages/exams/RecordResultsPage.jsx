@@ -196,14 +196,14 @@ const RecordResultsPage = () => {
           <table className="min-w-full border border-gray-700 rounded-lg">
             <thead>
               <tr className="bg-gray-800">
-                <th className="p-2">Student</th>
+                <th className="p-2 text-left">Student</th>
                 {selectedSubject
-                  ? <th className="p-2">{selectedSubject}</th>
+                  ? <th className="p-2 text-left">{selectedSubject}</th>
                   : subjects.map((subj) => (
-                      <th key={subj} className="p-2">{subj}</th>
+                      <th key={subj} className="p-2 text-left">{subj}</th>
                     ))}
-                <th className="p-2">Average</th>
-                <th className="p-2">Grade</th>
+                <th className="p-2 text-left">Average</th>
+                <th className="p-2 text-left">Grade</th>
               </tr>
             </thead>
             <tbody>

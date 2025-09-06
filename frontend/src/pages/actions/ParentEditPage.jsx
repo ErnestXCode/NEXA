@@ -35,7 +35,7 @@ const ParentEditPage = () => {
     onSuccess: () => {
       queryClient.refetchQueries(["parents"]);
       queryClient.refetchQueries(["parent", id]);
-      navigate("/dashboard/personnel/parents");
+      navigate("/dashboard/parents");
     },
   });
 
