@@ -144,7 +144,7 @@ const getAllStudents = async (req, res) => {
     if (requester.role === "teacher" && requesterDoc.isClassTeacher) {
       query.classLevel = requesterDoc.classLevel;
       query.school = requester.school;
-    } else if (!["admin", "superadmin"].includes(requester.role)) {
+    } else if (!["admin", "superadmin", 'bursar'].includes(requester.role)) {
       return res.status(403).json({ msg: "Unauthorized" });
     } else {
       query.school = requester.school;

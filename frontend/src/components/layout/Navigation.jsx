@@ -27,6 +27,12 @@ const Navigation = () => {
       isActive ? "bg-gray-800" : ""
     }`;
 
+  const role = currentUser?.role;
+
+  const isSuperAdminOrAdmin = role === "superadmin" || role === "admin";
+  const isTeacher = role === "teacher";
+  const isBursar = role === "bursar";
+
   return (
     <nav className="p-4 flex justify-between items-center bg-gray-900 text-white sticky top-0 z-20">
       <h1 className="font-semibold text-lg">
@@ -65,7 +71,7 @@ const Navigation = () => {
           </div>
 
           <div className="flex flex-col gap-3 text-white">
-            {/* Dashboard */}
+            {/* Dashboard - everyone */}
             <NavLink
               end
               onClick={handleCloseSidenav}
@@ -75,178 +81,224 @@ const Navigation = () => {
               Dashboard
             </NavLink>
 
-            {/* Forms */}
-            <div className="mt-4">
-              <h3 className="text-gray-400 uppercase text-xs mb-2">Forms</h3>
-              <NavLink
-                end
-                onClick={handleCloseSidenav}
-                to="/dashboard/createPersonel"
-                className={navLinkClasses}
-              >
-                Add Teacher/Bursar
-              </NavLink>
-              <NavLink
-                end
-                onClick={handleCloseSidenav}
-                to="/dashboard/createStudent"
-                className={navLinkClasses}
-              >
-                Add Student
-              </NavLink>
-              <NavLink
-                end
-                onClick={handleCloseSidenav}
-                to="/dashboard/createParent"
-                className={navLinkClasses}
-              >
-                Add Parent
-              </NavLink>
-            </div>
-
-            {/* Lists */}
-            <div className="mt-4">
-              <h3 className="text-gray-400 uppercase text-xs mb-2">Lists</h3>
-              <NavLink
-                end
-                onClick={handleCloseSidenav}
-                to="/dashboard/teachers"
-                className={navLinkClasses}
-              >
-                All Teachers
-              </NavLink>
-              <NavLink
-                end
-                onClick={handleCloseSidenav}
-                to="/dashboard/bursars"
-                className={navLinkClasses}
-              >
-                All Bursars
-              </NavLink>
-              <NavLink
-                end
-                onClick={handleCloseSidenav}
-                to="/dashboard/students"
-                className={navLinkClasses}
-              >
-                All Students
-              </NavLink>
-              <NavLink
-                end
-                onClick={handleCloseSidenav}
-                to="/dashboard/schools"
-                className={navLinkClasses}
-              >
-                All Schools
-              </NavLink>
-            </div>
-
-            {/* Attendance */}
-            <div className="mt-4">
-              <h3 className="text-gray-400 uppercase text-xs mb-2">
-                Attendance
-              </h3>
-              <NavLink
-                end
-                onClick={handleCloseSidenav}
-                to="/dashboard/attendance"
-                className={navLinkClasses}
-              >
-                View Attendance
-              </NavLink>
-              <NavLink
-                end
-                onClick={handleCloseSidenav}
-                to="/dashboard/attendance/mark"
-                className={navLinkClasses}
-              >
-                Mark Attendance
-              </NavLink>
-            </div>
-
-            {/* Communication */}
-            <div className="mt-4">
-              <h3 className="text-gray-400 uppercase text-xs mb-2">
-                Communication
-              </h3>
-              <NavLink
-                end
-                onClick={handleCloseSidenav}
-                to="/dashboard/communication"
-                className={navLinkClasses}
-              >
-                Messages
-              </NavLink>
-            </div>
-
-            {/* Exams */}
-            <div className="mt-4">
-              <h3 className="text-gray-400 uppercase text-xs mb-2">Exams</h3>
-              <NavLink
-                end
-                onClick={handleCloseSidenav}
-                to="/dashboard/exams"
-                className={navLinkClasses}
-              >
-                Exams
-              </NavLink>
-
-              <NavLink
-                end
-                onClick={handleCloseSidenav}
-                to="/dashboard/exams/record"
-                className={navLinkClasses}
-              >
-                Record Results
-              </NavLink>
-            </div>
-
-            {/* Fees */}
-            <div className="mt-4">
-              <h3 className="text-gray-400 uppercase text-xs mb-2">Fees</h3>
-              <NavLink
-                end
-                onClick={handleCloseSidenav}
-                to="/dashboard/fees"
-                className={navLinkClasses}
-              >
-                Fees
-              </NavLink>
-              {/* <NavLink
-                end
-                onClick={handleCloseSidenav}
-                to="/dashboard/fees/set-expectation"
-                className={navLinkClasses}
-              >
-                Set Expectations
-              </NavLink> */}
-              <NavLink
-                end
-                onClick={handleCloseSidenav}
-                to="/dashboard/fees/add"
-                className={navLinkClasses}
-              >
-                Record Payment
-              </NavLink>
-              {/* <NavLink
-                end
-                onClick={handleCloseSidenav}
-                to="/dashboard/fees/send-statement"
-                className={navLinkClasses}
-              >
-                Send Statement
-              </NavLink> */}
-            </div>
-
-            {/* Settings */}
+            {/* Communication - everyone */}
             <NavLink
               end
               onClick={handleCloseSidenav}
-              to="/dashboard/settings"
-              className={`${navLinkClasses} mt-4`}
+              to="/dashboard/communication"
+              className={navLinkClasses}
             >
-              Settings
+              Messages
             </NavLink>
+
+            {/* Admin/Superadmin: everything */}
+            {isSuperAdminOrAdmin && (
+              <>
+                <div className="mt-4">
+                  <h3 className="text-gray-400 uppercase text-xs mb-2">Forms</h3>
+                  <NavLink
+                    end
+                    onClick={handleCloseSidenav}
+                    to="/dashboard/createPersonel"
+                    className={navLinkClasses}
+                  >
+                    Add Teacher/Bursar
+                  </NavLink>
+                  <NavLink
+                    end
+                    onClick={handleCloseSidenav}
+                    to="/dashboard/createStudent"
+                    className={navLinkClasses}
+                  >
+                    Add Student
+                  </NavLink>
+                  <NavLink
+                    end
+                    onClick={handleCloseSidenav}
+                    to="/dashboard/createParent"
+                    className={navLinkClasses}
+                  >
+                    Add Parent
+                  </NavLink>
+                </div>
+
+                <div className="mt-4">
+                  <h3 className="text-gray-400 uppercase text-xs mb-2">Lists</h3>
+                  <NavLink
+                    end
+                    onClick={handleCloseSidenav}
+                    to="/dashboard/teachers"
+                    className={navLinkClasses}
+                  >
+                    All Teachers
+                  </NavLink>
+                  <NavLink
+                    end
+                    onClick={handleCloseSidenav}
+                    to="/dashboard/bursars"
+                    className={navLinkClasses}
+                  >
+                    All Bursars
+                  </NavLink>
+                  <NavLink
+                    end
+                    onClick={handleCloseSidenav}
+                    to="/dashboard/students"
+                    className={navLinkClasses}
+                  >
+                    All Students
+                  </NavLink>
+                  <NavLink
+                    end
+                    onClick={handleCloseSidenav}
+                    to="/dashboard/parents"
+                    className={navLinkClasses}
+                  >
+                    All Parents
+                  </NavLink>
+                  <NavLink
+                    end
+                    onClick={handleCloseSidenav}
+                    to="/dashboard/schools"
+                    className={navLinkClasses}
+                  >
+                    All Schools
+                  </NavLink>
+                </div>
+
+                {/* Attendance */}
+                <div className="mt-4">
+                  <h3 className="text-gray-400 uppercase text-xs mb-2">Attendance</h3>
+                  <NavLink
+                    end
+                    onClick={handleCloseSidenav}
+                    to="/dashboard/attendance"
+                    className={navLinkClasses}
+                  >
+                    View Attendance
+                  </NavLink>
+                  <NavLink
+                    end
+                    onClick={handleCloseSidenav}
+                    to="/dashboard/attendance/mark"
+                    className={navLinkClasses}
+                  >
+                    Mark Attendance
+                  </NavLink>
+                </div>
+
+                {/* Exams */}
+                <div className="mt-4">
+                  <h3 className="text-gray-400 uppercase text-xs mb-2">Exams</h3>
+                  <NavLink
+                    end
+                    onClick={handleCloseSidenav}
+                    to="/dashboard/exams"
+                    className={navLinkClasses}
+                  >
+                    Exams
+                  </NavLink>
+                  <NavLink
+                    end
+                    onClick={handleCloseSidenav}
+                    to="/dashboard/exams/record"
+                    className={navLinkClasses}
+                  >
+                    Record Results
+                  </NavLink>
+                </div>
+
+                {/* Fees */}
+                <div className="mt-4">
+                  <h3 className="text-gray-400 uppercase text-xs mb-2">Fees</h3>
+                  <NavLink
+                    end
+                    onClick={handleCloseSidenav}
+                    to="/dashboard/fees"
+                    className={navLinkClasses}
+                  >
+                    Fees
+                  </NavLink>
+                  <NavLink
+                    end
+                    onClick={handleCloseSidenav}
+                    to="/dashboard/fees/add"
+                    className={navLinkClasses}
+                  >
+                    Record Payment
+                  </NavLink>
+                </div>
+
+                <NavLink
+                  end
+                  onClick={handleCloseSidenav}
+                  to="/dashboard/settings"
+                  className={`${navLinkClasses} mt-4`}
+                >
+                  Settings
+                </NavLink>
+              </>
+            )}
+
+            {/* Teacher: Record Results + Attendance only */}
+            {isTeacher && !isSuperAdminOrAdmin && (
+              <>
+                <div className="mt-4">
+                  <h3 className="text-gray-400 uppercase text-xs mb-2">Attendance</h3>
+                  <NavLink
+                    end
+                    onClick={handleCloseSidenav}
+                    to="/dashboard/attendance"
+                    className={navLinkClasses}
+                  >
+                    View Attendance
+                  </NavLink>
+                  <NavLink
+                    end
+                    onClick={handleCloseSidenav}
+                    to="/dashboard/attendance/mark"
+                    className={navLinkClasses}
+                  >
+                    Mark Attendance
+                  </NavLink>
+                </div>
+
+                <div className="mt-4">
+                  <h3 className="text-gray-400 uppercase text-xs mb-2">Exams</h3>
+                  <NavLink
+                    end
+                    onClick={handleCloseSidenav}
+                    to="/dashboard/exams/record"
+                    className={navLinkClasses}
+                  >
+                    Record Results
+                  </NavLink>
+                </div>
+              </>
+            )}
+
+            {/* Bursar: Fees only */}
+            {isBursar && !isSuperAdminOrAdmin && (
+              <div className="mt-4">
+                <h3 className="text-gray-400 uppercase text-xs mb-2">Fees</h3>
+                <NavLink
+                  end
+                  onClick={handleCloseSidenav}
+                  to="/dashboard/fees"
+                  className={navLinkClasses}
+                >
+                  Fees
+                </NavLink>
+                <NavLink
+                  end
+                  onClick={handleCloseSidenav}
+                  to="/dashboard/fees/add"
+                  className={navLinkClasses}
+                >
+                  Record Payment
+                </NavLink>
+              </div>
+            )}
           </div>
         </div>
       )}

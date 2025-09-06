@@ -1,68 +1,48 @@
-// controllers/parentController.js
-const User = require("../../models/User");
-const Student = require("../../models/Student");
-const School = require("../../models/School");
-const Activity = require("../../models/Activity");
+const bcrypt = require("bcrypt");
+const Student = require("../../../models/Student");
+const User = require("../../../models/User");
 
-const handleBulkParentRegister = async (req, res) => {
-  const requester = req.user;
-  const parents = req.body.parents; // array from frontend
+exports.bulkCreateParents = async (req, res) => {
+  try {
+    const { parents } = req.body;
+    const requester = req.user
+    if (!parents || !Array.isArray(parents)) {
+      return res.status(400).json({ msg: "Invalid parents data" });
+    }
 
-  if (!Array.isArray(parents) || parents.length === 0) {
-    return res.status(400).json({ msg: "No parent data provided" });
+    const createdParents = [];
+
+    for (let p of parents) {
+      // Skip if no required fields
+      if (!p.name || !p.email || !p.password) continue;
+
+      // Hash password
+      
+
+      // Ensure children IDs exist
+      let children = [];
+      if (p.children && Array.isArray(p.children)) {
+        const validChildren = await Student.find({ _id: { $in: p.children } });
+        children = validChildren.map((s) => s._id);
+      }
+
+      const parent = new User({
+        name: p.name,
+        email: p.email,
+        password: p.password,
+        phoneNumber: p.phoneNumber,
+        school: requester.school,
+        role: 'parent',
+        children,
+      });
+
+      await parent.save();
+      createdParents.push(parent);
+    }
+
+    res.status(201).json({ msg: "Bulk parents created", createdParents });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ msg: "Server error" });
   }
-
-  const createdParents = [];
-
-  for (const p of parents) {
-    const { name, email, password, phoneNumber, children = [] } = p;
-
-    // Validate required fields
-    if (!name || !email || !password || !phoneNumber) continue;
-
-    // Skip if user already exists
-    const exists = await User.findOne({ email });
-    if (exists) continue;
-
-    // Ensure the school exists
-    const schoolDoc = await School.findById(requester.school);
-    if (!schoolDoc) continue;
-
-    // Filter children that actually exist in this school
-    const validChildren = await Student.find({
-      _id: { $in: children },
-      school: requester.school,
-    }).select("_id");
-
-    const newParent = new User({
-      name,
-      email,
-      password,
-      phoneNumber,
-      role: "parent",
-      school: requester.school,
-      children: validChildren.map(c => c._id),
-    });
-
-    await newParent.save();
-
-    // Log activity
-    const log = new Activity({
-      type: "parent",
-      description: `New parent ${name} registered via bulk upload`,
-      createdBy: requester._id,
-      school: requester.school,
-    });
-    await log.save();
-
-    createdParents.push({ name, email, children: validChildren.map(c => c._id) });
-  }
-
-  res.status(201).json({
-    msg: "Bulk parent upload completed",
-    createdCount: createdParents.length,
-    parents: createdParents,
-  });
 };
-
-module.exports = handleBulkParentRegister;

@@ -6,6 +6,7 @@ const verifyJWT = require("../middleware/verifyJWT");
 const handleLogout = require("../controllers/auth/logoutController");
 const authorize = require("../middleware/authorize");
 const handleBulkRegister = require("../controllers/auth/bulkRegisterController");
+const { bulkCreateParents } = require("../controllers/personel/parents/bulkParentController");
 
 const router = express.Router();
 
@@ -25,6 +26,11 @@ router.post(
   verifyJWT,
   authorize(["admin", "superadmin"]),
   handleBulkRegister
+);
+router.post(
+  "/registerparent/bulk",
+  verifyJWT,
+  bulkCreateParents
 );
 
 module.exports = router;

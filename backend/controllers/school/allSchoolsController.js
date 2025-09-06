@@ -22,12 +22,14 @@ const getMySchool = async (req, res) => {
 const getSchoolById = async (req, res) => {
   try {
     const school = await School.findById(req.params.id);
+    console.log('hit schhool id')
     if (!school) return res.status(404).json({ msg: "School not found" });
     res.status(200).json(school);
   } catch (err) {
     res.status(500).json({ msg: "Error fetching school", error: err.message });
   }
 };
+
 
 // Create a school (superadmin only)
 const createSchool = async (req, res) => {

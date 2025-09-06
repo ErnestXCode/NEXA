@@ -9,6 +9,7 @@ const getParentById = async (req, res) => {
       path: "children",
       select: "firstName lastName classLevel admissionNumber",
     });
+    console.log(parent)
 
     if (!parent || parent.role !== "parent")
       return res.status(404).json({ msg: "Parent not found" });

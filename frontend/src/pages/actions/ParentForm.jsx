@@ -24,13 +24,13 @@ const ParentForm = ({ onNext }) => {
 
   const queryClient = useQueryClient();
 
-  // Fetch students
+  // Fetch all students
   const { data: students = [] } = useQuery({
     queryKey: ["studentsForParent"],
     queryFn: () => api.get("/students").then((res) => res.data),
   });
 
-  // Filter students based on search input
+  // Filter students based on search
   useEffect(() => {
     if (!studentSearch) return setFilteredStudents([]);
     const filtered = students.filter((s) =>
@@ -45,7 +45,7 @@ const ParentForm = ({ onNext }) => {
   const addParentMutation = useMutation({
     mutationFn: async (data) => {
       if (data.bulk) {
-        return api.post("/parents/bulk", { parents: data.bulk });
+        return api.post("/auth/registerparent/bulk", { parents: data.bulk });
       } else {
         return api.post("/auth/registerpersonel", {
           ...data.single,
@@ -55,7 +55,6 @@ const ParentForm = ({ onNext }) => {
     },
     onSuccess: () => {
       queryClient.refetchQueries({ queryKey: ["parents"], exact: true });
-
       if (onNext) onNext();
     },
   });
@@ -94,10 +93,40 @@ const ParentForm = ({ onNext }) => {
     }));
   };
 
-  // File change for bulk
+  // File change
   const handleFileChange = (e) => setFile(e.target.files[0]);
 
-  // Submit (single or bulk)
+  // Normalize bulk row using student full names
+  const normalizeParentRow = (row, students) => {
+    const normalized = { ...row };
+    normalized.name = normalized.name?.trim() || "";
+    normalized.email = normalized.email?.trim() || "";
+    normalized.phoneNumber = normalized.phoneNumber?.trim() || "";
+    normalized.password = normalized.password?.trim() || "";
+
+    if (normalized.children) {
+      normalized.children = normalized.children
+        .split(",")
+        .map((c) => c.trim())
+        .filter(Boolean)
+        .map((childName) => {
+          // match by full name: "firstName lastName"
+          const student = students.find(
+            (s) =>
+              `${s.firstName} ${s.lastName}`.toLowerCase() ===
+              childName.toLowerCase()
+          );
+          return student?._id;
+        })
+        .filter(Boolean);
+    } else {
+      normalized.children = [];
+    }
+
+    return normalized;
+  };
+
+  // Submit handler
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -119,6 +148,9 @@ const ParentForm = ({ onNext }) => {
           parsedData = XLSX.utils.sheet_to_json(sheet);
         } else return alert("Unsupported file type");
 
+        // Normalize rows
+        parsedData = parsedData.map((row) => normalizeParentRow(row, students));
+
         await addParentMutation.mutateAsync({ bulk: parsedData });
         setMessage("✅ Bulk upload successful!");
         setFile(null);
@@ -137,7 +169,7 @@ const ParentForm = ({ onNext }) => {
   return (
     <main className="p-6 bg-gray-950 min-h-screen flex justify-center items-start">
       <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* --- Single Entry --- */}
+        {/* Single Entry */}
         <form
           onSubmit={handleSubmit}
           className="bg-gray-900 p-6 rounded-lg shadow-lg flex flex-col gap-4"
@@ -188,7 +220,7 @@ const ParentForm = ({ onNext }) => {
               />
             </div>
 
-            <div>
+            <div className="md:col-span-2">
               <label className="block mb-1">Confirm Password</label>
               <input
                 type="password"
@@ -205,7 +237,7 @@ const ParentForm = ({ onNext }) => {
               />
             </div>
 
-            {/* Children selection spans full width */}
+            {/* Children */}
             <div className="md:col-span-2">
               <label className="block mb-1">Children</label>
               <input
@@ -275,7 +307,7 @@ const ParentForm = ({ onNext }) => {
           )}
         </form>
 
-        {/* --- Bulk Upload --- */}
+        {/* Bulk Upload */}
         <form
           onSubmit={handleSubmit}
           className="bg-gray-900 p-6 rounded-lg shadow-lg flex flex-col gap-4"
@@ -283,15 +315,31 @@ const ParentForm = ({ onNext }) => {
           <h2 className="text-2xl font-bold text-white mb-2 text-center">
             Bulk Upload
           </h2>
+
+          {/* Hint */}
+          <div className="bg-gray-800 p-3 rounded mb-3 text-gray-300 text-sm">
+            <p>Expected headers for bulk upload:</p>
+            <ul className="list-disc list-inside">
+              <li>name</li>
+              <li>email</li>
+              <li>phoneNumber</li>
+              <li>password</li>
+              <li>children (comma-separated student full names)</li>
+            </ul>
+            <p>Notes:</p>
+            <ul className="list-disc list-inside">
+              <li>Child names must match students exactly: e.g., "Kamau Njogu"</li>
+              <li>If a child cannot be found, it will be ignored</li>
+            </ul>
+          </div>
+
           <input
             type="file"
             accept=".csv,.xlsx,.xls"
             onChange={handleFileChange}
             className="p-2 rounded bg-gray-800 text-white"
           />
-          {file && (
-            <p className="text-gray-300 mt-2">Selected file: {file.name}</p>
-          )}
+          {file && <p className="text-gray-300 mt-2">Selected file: {file.name}</p>}
           <button
             type="submit"
             disabled={!file}

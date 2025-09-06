@@ -17,6 +17,7 @@ import AllStudents from "./pages/actions/AllStudents";
 import SendMessageForm from "./pages/communication/SendMessageForm";
 import StudentEditPage from "./pages/actions/StudentEditPage";
 import PersonnelEditPage from "./pages/actions/PersonnelEditPage";
+import ParentEditPage from "./pages/actions/ParentEditPage";
 import AttendanceDashboard from "./pages/attendance/AttendanceDashboard";
 import ParentForm from "./pages/actions/ParentForm";
 import SetupWizard from "./components/wizard/SetUpWizard";
@@ -30,18 +31,18 @@ import StudentFeesPage from "./pages/fees/StudentFeesPage";
 import SendFeeStatementPage from "./pages/fees/SendFeeStatementPage";
 import SetFeeExpectationPage from "./pages/fees/SetFeeExpectationPage";
 
-
 import { useParams } from "react-router-dom";
 import FeeHistory from "./pages/fees/FeeHistory";
 import AllSchools from "./pages/actions/AllSchools";
+import AllParents from "./pages/actions/AllParents";
+import SchoolEditPage from "./pages/actions/SchoolEditPage";
+import SchoolSettings from "./pages/settings/SchoolSettings";
 const FeeHistoryWrapper = () => {
   const { studentId } = useParams();
   return <FeeHistory studentId={studentId} />;
 };
 
 function App() {
-
-  
   return (
     <div className="bg-gray-950 text-white min-h-screen">
       <BrowserRouter>
@@ -68,17 +69,22 @@ function App() {
                 path="fees/send-statement"
                 element={<SendFeeStatementPage />}
               />
-              <Route path="fees/set-expectation" element={<SetFeeExpectationPage />} />
-              <Route path="fees/history/:studentId" element={<FeeHistoryWrapper />} />
+              <Route
+                path="fees/set-expectation"
+                element={<SetFeeExpectationPage />}
+              />
+              <Route
+                path="fees/history/:studentId"
+                element={<FeeHistoryWrapper />}
+              />
 
               <Route path="attendance" element={<AttendanceDashboard />} />
               <Route path="attendance/mark" element={<AttendancePage />} />
 
               <Route path="communication" element={<Communication />} />
               <Route path="communication/send" element={<SendMessageForm />} />
-              <Route path="settings" element={<Settings />} />
+              <Route path="settings" element={<SchoolSettings />} />
 
-              <Route path="schools" element={<AllSchools />} />
 
               {/* Forms */}
               <Route path="createPersonel" element={<PersonelForm />} />
@@ -93,9 +99,19 @@ function App() {
 
               <Route path="teachers" element={<AllTeachers />} />
               <Route path="bursars" element={<AllBursars />} />
+              <Route path="parents" element={<AllParents />} />
               <Route
                 path="personnel/edit/:id"
                 element={<PersonnelEditPage />}
+              />
+              <Route
+                path="personnel/edit-parent/:id"
+                element={<ParentEditPage />}
+              />
+              <Route path="schools" element={<AllSchools />} />
+              <Route
+                path="schools/edit-school/:id"
+                element={<SchoolEditPage />}
               />
 
               <Route path="exams" element={<ExamsPage />} />

@@ -30,10 +30,10 @@ const Dashboard = () => {
     queryFn: () => api.get("/personel/parent").then((res) => res.data),
   });
 
-  // const feesQuery = useQuery({
-  //   queryKey: ["feesOutstanding"],
-  //   queryFn: () => api.get("/fees/outstanding").then((res) => res.data),
-  // });
+  const schoolsQuery = useQuery({
+    queryKey: ["schools"],
+    queryFn: () => api.get("/schools").then((res) => res.data),
+  });
 
   const activityQuery = useQuery({
     queryKey: ["activities"],
@@ -45,50 +45,48 @@ const Dashboard = () => {
   const bursars = bursarsQuery.data?.slice(0, 3) || [];
   const students = studentsQuery.data?.slice(0, 3) || [];
   const parents = parentsQuery.data?.slice(0, 3) || [];
+  const schools = schoolsQuery.data?.slice(0, 3) || [];
 
   const teachersLength = teachersQuery.data?.length || 0;
   const bursarsLength = bursarsQuery.data?.length || 0;
   const studentsLength = studentsQuery.data?.length || 0;
   const parentsLength = parentsQuery.data?.length || 0;
+  const schoolsLength = schoolsQuery.data?.length || 0;
 
-  // const outstandingFees = feesQuery.data?.totalOutstanding || 0;
   const recentActivities = activityQuery.data?.slice(0, 5) || [];
 
-  // feesQuery.isLoading ||
   if (
     teachersQuery.isLoading ||
     bursarsQuery.isLoading ||
     studentsQuery.isLoading ||
     parentsQuery.isLoading ||
+    schoolsQuery.isLoading ||
     activityQuery.isLoading
   ) {
     return <p className="p-6 text-gray-400">Loading dashboard...</p>;
   }
-  // feesQuery.isError ||
 
   if (
     teachersQuery.isError ||
     bursarsQuery.isError ||
     studentsQuery.isError ||
     parentsQuery.isError ||
+    schoolsQuery.isError ||
     activityQuery.isError
   ) {
     return <p className="p-6 text-red-500">❌ Error loading dashboard data</p>;
   }
 
-  // {
-  //   label: "Outstanding Fees",
-  //   value: `Ksh ${outstandingFees.toLocaleString()}`,
-  // },
   return (
     <main className="p-6 bg-gray-950 text-white min-h-screen space-y-8">
       {/* Top Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-6">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-6">
         {[
           { label: "Students", value: studentsLength },
           { label: "Teachers", value: teachersLength },
           { label: "Bursars", value: bursarsLength },
           { label: "Parents", value: parentsLength },
+          { label: "Schools", value: schoolsLength },
         ].map((card, i) => (
           <div
             key={i}
@@ -107,10 +105,18 @@ const Dashboard = () => {
           <ManagementTable
             title="Manage Teachers"
             data={teachers}
-            columns={["Name", "Email", "Phone", "Subjects", "Class Teacher?", "Class Level"]}
+            columns={[
+              "Name",
+              "Email",
+              "Phone",
+              "Subjects",
+              "Class Teacher?",
+              "Class Level",
+            ]}
             viewAllLink="/dashboard/teachers"
             addLink="/dashboard/createPersonel"
             addText="+ Add Teacher"
+            minHeight="min-h-[350px]"
             rowRender={(teacher) => [
               teacher.name,
               teacher.email,
@@ -119,7 +125,9 @@ const Dashboard = () => {
                 ? teacher.subjects.join(", ")
                 : "-",
               teacher.isClassTeacher ? "Yes" : "No",
-              teacher.isClassTeacher && teacher.classLevel ? teacher.classLevel : "-",
+              teacher.isClassTeacher && teacher.classLevel
+                ? teacher.classLevel
+                : "-",
             ]}
           />
 
@@ -130,10 +138,11 @@ const Dashboard = () => {
             viewAllLink="/dashboard/bursars"
             addLink="/dashboard/createPersonel"
             addText="+ Add Bursar"
+            minHeight="min-h-[300px]"
             rowRender={(bursar) => [
               bursar.name,
               bursar.email,
-              bursar.phoneNumber || "-"
+              bursar.phoneNumber || "-",
             ]}
           />
         </div>
@@ -147,6 +156,7 @@ const Dashboard = () => {
             viewAllLink="/dashboard/students"
             addLink="/dashboard/createStudent"
             addText="+ Add Student"
+            minHeight="min-h-[350px]"
             rowRender={(student) => [
               student.admissionNumber,
               `${student.firstName} ${student.lastName}`,
@@ -163,7 +173,27 @@ const Dashboard = () => {
             viewAllLink="/dashboard/parents"
             addLink="/dashboard/createParent"
             addText="+ Add Parent"
+            minHeight="min-h-[300px]"
             rowRender={(parent) => [parent.name, parent.email, parent.phone]}
+          />
+        </div>
+
+        {/* School Table spans both columns */}
+        <div className="col-span-2">
+          <ManagementTable
+            title="Manage Schools"
+            data={schools}
+            columns={["Name", "Email", "Phone", "Location"]}
+            viewAllLink="/dashboard/schools"
+            addLink="/dashboard/createSchool"
+            addText="+ Add School"
+            minHeight="min-h-[300px]"
+            rowRender={(school) => [
+              school.name,
+              school.email || "-",
+              school.phone || "-",
+              school.location || "-",
+            ]}
           />
         </div>
       </div>
@@ -195,9 +225,20 @@ const Dashboard = () => {
 
 export default Dashboard;
 
-// Reusable Management Table Component
-const ManagementTable = ({ title, data, columns, viewAllLink, addLink, addText, rowRender }) => (
-  <section className="bg-gray-900 p-6 rounded-lg shadow-lg border border-gray-800">
+// Reusable Management Table Component with fixed height
+const ManagementTable = ({
+  title,
+  data,
+  columns,
+  viewAllLink,
+  addLink,
+  addText,
+  rowRender,
+  minHeight,
+}) => (
+  <section
+    className={`bg-gray-900 p-6 rounded-lg shadow-lg border border-gray-800 ${minHeight}`}
+  >
     <h2 className="text-xl font-bold mb-4">{title}</h2>
     <div className="flex justify-between items-center mb-4">
       <Link
@@ -215,7 +256,10 @@ const ManagementTable = ({ title, data, columns, viewAllLink, addLink, addText, 
         <thead className="bg-gray-800">
           <tr>
             {columns.map((col, i) => (
-              <th key={i} className="py-3 px-4 text-left border-b border-gray-700">
+              <th
+                key={i}
+                className="py-3 px-4 text-left border-b border-gray-700"
+              >
                 {col}
               </th>
             ))}
@@ -224,15 +268,25 @@ const ManagementTable = ({ title, data, columns, viewAllLink, addLink, addText, 
         <tbody>
           {data.length > 0 ? (
             data.map((row, i) => (
-              <tr key={i} className={`${i % 2 === 0 ? "bg-gray-950" : "bg-gray-900"} hover:bg-gray-850 transition`}>
+              <tr
+                key={i}
+                className={`${
+                  i % 2 === 0 ? "bg-gray-950" : "bg-gray-900"
+                } hover:bg-gray-850 transition`}
+              >
                 {rowRender(row).map((val, j) => (
-                  <td key={j} className="py-2 px-4 border-b border-gray-800">{val}</td>
+                  <td key={j} className="py-2 px-4 border-b border-gray-800">
+                    {val}
+                  </td>
                 ))}
               </tr>
             ))
           ) : (
             <tr>
-              <td colSpan={columns.length} className="text-center py-6 text-gray-400">
+              <td
+                colSpan={columns.length}
+                className="text-center py-6 text-gray-400"
+              >
                 No records found.
               </td>
             </tr>

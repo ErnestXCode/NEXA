@@ -29,6 +29,7 @@ router
 router
   .route("/parent")
   .get(verifyJWT,  getAllParents);
+
 router
   .route("/parent/:id")
   .get(verifyJWT,  getParentById)

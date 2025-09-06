@@ -67,7 +67,7 @@ const AllSchools = () => {
   };
 
   const handleEdit = (id) => {
-    navigate(`/dashboard/schools/edit/${id}`);
+    navigate(`/dashboard/schools/edit-school/${id}`);
   };
 
   const filteredSchools = useMemo(() => {

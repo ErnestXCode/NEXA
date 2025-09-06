@@ -1,3 +1,4 @@
+// src/pages/students/AllStudents.jsx
 import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../api/axios";
@@ -16,15 +17,12 @@ const AllStudents = () => {
   const [showModal, setShowModal] = useState(false);
   const [studentToDelete, setStudentToDelete] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [classFilter, setClassFilter] = useState("");
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   // Fetch students
-  const {
-    data: students = [],
-    isLoading,
-    isError,
-  } = useQuery({
+  const { data: students = [], isLoading, isError } = useQuery({
     queryKey: ["students"],
     queryFn: fetchStudents,
   });
@@ -74,14 +72,19 @@ const AllStudents = () => {
     navigate(`/dashboard/students/edit/${id}`);
   };
 
-  // Filter students based on search term
+  // Filter students based on name and class
   const filteredStudents = useMemo(() => {
-    return students.filter((s) =>
-      `${s.firstName} ${s.lastName}`.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [students, searchTerm]);
+    return students.filter((s) => {
+      const matchesName = `${s.firstName} ${s.lastName}`
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase());
+      const matchesClass = classFilter
+        ? s.classLevel.toLowerCase().includes(classFilter.toLowerCase())
+        : true;
+      return matchesName && matchesClass;
+    });
+  }, [students, searchTerm, classFilter]);
 
-  // Format date to readable string
   const formatDate = (dateString) => {
     if (!dateString) return "-";
     const date = new Date(dateString);
@@ -89,37 +92,31 @@ const AllStudents = () => {
       day: "2-digit",
       month: "short",
       year: "numeric",
-    }); // Example: "15 Sep 2005"
+    });
   };
 
-  if (isLoading) {
-    return (
-      <main className="p-6 bg-gray-950 min-h-screen text-white">
-        <p>Loading students...</p>
-      </main>
-    );
-  }
-
-  if (isError) {
-    return (
-      <main className="p-6 bg-gray-950 min-h-screen text-white">
-        <p>❌ Failed to load students.</p>
-      </main>
-    );
-  }
+  if (isLoading) return <main className="p-6 bg-gray-950 min-h-screen text-white">Loading students...</main>;
+  if (isError) return <main className="p-6 bg-gray-950 min-h-screen text-white">❌ Failed to load students.</main>;
 
   return (
     <main className="p-6 bg-gray-950 min-h-screen relative">
       <h1 className="text-2xl font-bold mb-4 text-white">All Students</h1>
 
-      {/* Search input */}
-      <div className="mb-4">
+      {/* Search inputs */}
+      <div className="mb-4 flex flex-col md:flex-row gap-2">
         <input
           type="text"
           placeholder="Search by name..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full p-2 rounded bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="flex-1 p-2 rounded bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+        <input
+          type="text"
+          placeholder="Search by class..."
+          value={classFilter}
+          onChange={(e) => setClassFilter(e.target.value)}
+          className="flex-1 p-2 rounded bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       </div>
 
@@ -141,9 +138,7 @@ const AllStudents = () => {
             filteredStudents.map((s, i) => (
               <tr
                 key={s._id || i}
-                className={`${
-                  i % 2 === 0 ? "bg-gray-950" : "bg-gray-900"
-                } hover:bg-gray-850 transition`}
+                className={`${i % 2 === 0 ? "bg-gray-950" : "bg-gray-900"} hover:bg-gray-850 transition`}
               >
                 <td className="p-2 text-white">{s.admissionNumber}</td>
                 <td className="p-2 text-white">{s.firstName} {s.lastName}</td>
@@ -153,16 +148,10 @@ const AllStudents = () => {
                 <td className="p-2 text-white">{s.guardianName}</td>
                 <td className="p-2 text-white">{s.guardianPhone}</td>
                 <td className="p-2 flex gap-2">
-                  <button
-                    onClick={() => handleEdit(s._id)}
-                    className="px-3 py-1 rounded border border-gray-700 text-gray-200 hover:bg-gray-800 transition"
-                  >
+                  <button onClick={() => handleEdit(s._id)} className="px-3 py-1 rounded border border-gray-700 text-gray-200 hover:bg-gray-800 transition">
                     Edit
                   </button>
-                  <button
-                    onClick={() => confirmDelete(s)}
-                    className="px-3 py-1 rounded border border-gray-700 text-gray-200 hover:bg-gray-800 transition"
-                  >
+                  <button onClick={() => confirmDelete(s)} className="px-3 py-1 rounded border border-gray-700 text-gray-200 hover:bg-gray-800 transition">
                     Delete
                   </button>
                 </td>
@@ -170,9 +159,7 @@ const AllStudents = () => {
             ))
           ) : (
             <tr>
-              <td colSpan="8" className="text-center p-4 text-gray-400">
-                No students found.
-              </td>
+              <td colSpan="8" className="text-center p-4 text-gray-400">No students found.</td>
             </tr>
           )}
         </tbody>
@@ -184,21 +171,11 @@ const AllStudents = () => {
           <div className="bg-gray-900 rounded-lg p-6 w-80">
             <h2 className="text-lg font-bold text-white mb-4">Delete Student</h2>
             <p className="text-gray-300 mb-6">
-              Are you sure you want to delete{" "}
-              <span className="font-semibold">{studentToDelete.firstName} {studentToDelete.lastName}</span>?
+              Are you sure you want to delete <span className="font-semibold">{studentToDelete.firstName} {studentToDelete.lastName}</span>?
             </p>
             <div className="flex justify-end gap-2">
-              <button
-                onClick={handleCancel}
-                className="px-4 py-2 rounded bg-gray-700 text-gray-200 hover:bg-gray-600 transition"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleDelete}
-                disabled={deleteMutation.isLoading}
-                className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-500 transition"
-              >
+              <button onClick={handleCancel} className="px-4 py-2 rounded bg-gray-700 text-gray-200 hover:bg-gray-600 transition">Cancel</button>
+              <button onClick={handleDelete} disabled={deleteMutation.isLoading} className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-500 transition">
                 {deleteMutation.isLoading ? "Deleting..." : "Delete"}
               </button>
             </div>

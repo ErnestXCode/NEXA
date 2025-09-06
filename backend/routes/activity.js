@@ -4,6 +4,6 @@ const authorize = require("../middleware/authorize");
 const getActivities = require("../controllers/activity/activity");
 const router = express.Router();
 
-router.get("/", verifyJWT, authorize(["admin", "teacher"]), getActivities);
+router.get("/", verifyJWT, authorize(["admin", "teacher", 'bursar']), getActivities);
 
 module.exports = router;

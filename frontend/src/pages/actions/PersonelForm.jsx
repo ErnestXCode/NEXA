@@ -11,13 +11,13 @@ const registerObj = {
   email: "",
   password: "",
   confirmPass: "",
-  phoneNumber: "", // <-- added phoneNumber
+  phoneNumber: "",
   subjects: [],
   isClassTeacher: false,
   classLevel: "",
 };
 
-const PersonelForm = ({onNext}) => {
+const PersonelForm = ({ onNext }) => {
   const [registerDetails, setRegisterDetails] = useState(registerObj);
   const [file, setFile] = useState(null);
   const [canRegister, setCanRegister] = useState(false);
@@ -26,7 +26,7 @@ const PersonelForm = ({onNext}) => {
 
   const queryClient = useQueryClient();
 
-  // 🔥 mutation
+  // Mutation
   const addPersonnelMutation = useMutation({
     mutationFn: async (data) => {
       if (data.bulk) {
@@ -40,11 +40,11 @@ const PersonelForm = ({onNext}) => {
     onSuccess: () => {
       queryClient.refetchQueries({ queryKey: ["teachers"], exact: true });
       queryClient.refetchQueries({ queryKey: ["bursars"], exact: true });
-       if (onNext) onNext(); 
+      if (onNext) onNext();
     },
   });
 
-  // 🔥 input change
+  // Input change
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     let updated = { ...registerDetails };
@@ -54,17 +54,16 @@ const PersonelForm = ({onNext}) => {
     setRegisterDetails(updated);
 
     setCanRegister(
-  updated.role &&
-  updated.name &&
-  updated.email &&
-  updated.phoneNumber &&   // <-- add this
-  updated.password &&
-  updated.confirmPass === updated.password
-);
-
+      updated.role &&
+        updated.name &&
+        updated.email &&
+        updated.phoneNumber &&
+        updated.password &&
+        updated.confirmPass === updated.password
+    );
   };
 
-  // 🔥 subjects input (chip style)
+  // Subjects input (chip style)
   const handleSubjectKeyDown = (e) => {
     if (e.key === "Enter" || e.key === "," || e.key === " ") {
       e.preventDefault();
@@ -109,12 +108,35 @@ const PersonelForm = ({onNext}) => {
           parsedData = XLSX.utils.sheet_to_json(sheet);
         } else return alert("Unsupported file type");
 
+        // Normalize
+        parsedData = parsedData.map((row) => {
+          // booleans
+          row.isClassTeacher =
+            row.isClassTeacher &&
+            row.isClassTeacher.toString().toLowerCase() === "true";
+
+          // classLevel only if isClassTeacher
+          if (!row.isClassTeacher) row.classLevel = "";
+
+          // role
+          if (row.role) row.role = row.role.toLowerCase().trim();
+
+          // subjects array
+          if (row.subjects) {
+            row.subjects = row.subjects
+              .split(",")
+              .map((s) => s.trim())
+              .filter(Boolean);
+          } else row.subjects = [];
+
+          return row;
+        });
+
         await addPersonnelMutation.mutateAsync({ bulk: parsedData });
         setMessage("✅ Bulk upload successful!");
       } else {
         // Single registration
         const { confirmPass, ...dataToSend } = registerDetails;
-        console.log(dataToSend)
         await addPersonnelMutation.mutateAsync({ single: dataToSend });
         setMessage("✅ Single personnel added!");
         setRegisterDetails(registerObj);
@@ -139,25 +161,6 @@ const PersonelForm = ({onNext}) => {
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block mb-1">Role</label>
-              <select
-                name="role"
-                value={registerDetails.role}
-                onChange={(e) => {
-                  handleChange(e);
-                  if (e.target.value === "teacher") setShowTeacherModal(true);
-                }}
-                className="p-2 rounded bg-gray-800 text-white w-full"
-              >
-                <option value="" disabled>
-                  Select role
-                </option>
-                <option value="teacher">Teacher</option>
-                <option value="bursar">Bursar</option>
-              </select>
-            </div>
-
             <div>
               <label className="block mb-1">Name</label>
               <input
@@ -215,6 +218,25 @@ const PersonelForm = ({onNext}) => {
                 }`}
               />
             </div>
+
+            <div className="md:col-span-2">
+              <label className="block mb-1">Role</label>
+              <select
+                name="role"
+                value={registerDetails.role}
+                onChange={(e) => {
+                  handleChange(e);
+                  if (e.target.value === "teacher") setShowTeacherModal(true);
+                }}
+                className="p-2 rounded bg-gray-800 text-white w-full"
+              >
+                <option value="" disabled>
+                  Select role
+                </option>
+                <option value="teacher">Teacher</option>
+                <option value="bursar">Bursar</option>
+              </select>
+            </div>
           </div>
 
           <button
@@ -246,6 +268,28 @@ const PersonelForm = ({onNext}) => {
           className="bg-gray-900 p-6 rounded-lg shadow-lg flex flex-col gap-4"
         >
           <h2 className="text-2xl font-bold text-white mb-2">Bulk Upload</h2>
+
+          {/* Instructions */}
+          <div className="bg-gray-800 p-3 rounded mb-3 text-gray-300 text-sm">
+            <p>Expected headers for bulk upload:</p>
+            <ul className="list-disc list-inside">
+              <li>name</li>
+              <li>email</li>
+              <li>phoneNumber</li>
+              <li>role (teacher / bursar)</li>
+              <li>password</li>
+              <li>isClassTeacher (true / false)</li>
+              <li>classLevel (only required if isClassTeacher is true)</li>
+              <li>subjects (comma-separated, only for teachers)</li>
+            </ul>
+            <p>Notes:</p>
+            <ul className="list-disc list-inside">
+              <li>Boolean fields and gender fields are case-insensitive</li>
+              <li>If a teacher is not a class teacher, leave <code>classLevel</code> empty</li>
+              <li>Subjects should be comma-separated: Math, English</li>
+            </ul>
+          </div>
+
           <input
             type="file"
             accept=".csv,.xlsx,.xls"

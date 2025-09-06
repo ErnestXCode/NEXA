@@ -1,3 +1,4 @@
+// src/pages/students/StudentForm.jsx
 import React, { useState } from "react";
 import api from "../../api/axios";
 import Papa from "papaparse";
@@ -15,14 +16,29 @@ const studentObj = {
   guardianPhone: "",
 };
 
-const StudentForm = ({onNext}) => {
+const normalizeStudentData = (data) => {
+  return data.map((s) => ({
+    admissionNumber: s.admissionNumber?.trim() || "",
+    firstName: s.firstName?.trim() || "",
+    lastName: s.lastName?.trim() || "",
+    gender:
+      s.gender?.toLowerCase() === "female"
+        ? "female"
+        : "male", // default to male if unknown
+    dateOfBirth: s.dateOfBirth || "",
+    classLevel: s.classLevel?.trim() || "",
+    guardianName: s.guardianName?.trim() || "",
+    guardianPhone: s.guardianPhone?.trim() || "",
+  }));
+};
+
+const StudentForm = ({ onNext }) => {
   const [student, setStudent] = useState(studentObj);
   const [file, setFile] = useState(null);
   const [message, setMessage] = useState("");
 
   const queryClient = useQueryClient();
 
-  // Mutation for single student
   const addStudentMutation = useMutation({
     mutationFn: (newStudent) => api.post("/students", newStudent),
     onSuccess: () => {
@@ -30,21 +46,20 @@ const StudentForm = ({onNext}) => {
       setMessage("✅ Student added successfully!");
       setStudent(studentObj);
       setFile(null);
-       if (onNext) onNext(); 
+      if (onNext) onNext();
     },
     onError: (err) => {
       setMessage(`❌ ${err.response?.data?.msg || "Something went wrong"}`);
     },
   });
 
-  // Mutation for bulk upload
   const bulkUploadMutation = useMutation({
     mutationFn: (students) => api.post("/students/bulk", { students }),
     onSuccess: () => {
       queryClient.refetchQueries(["students"]);
       setMessage("✅ Bulk upload successful!");
       setFile(null);
-       if (onNext) onNext(); 
+      if (onNext) onNext();
     },
     onError: (err) => {
       setMessage(`❌ ${err.response?.data?.msg || "Something went wrong"}`);
@@ -80,6 +95,9 @@ const StudentForm = ({onNext}) => {
         } else {
           return alert("Unsupported file type");
         }
+
+        // Normalize the bulk data
+        parsedData = normalizeStudentData(parsedData);
 
         bulkUploadMutation.mutate(parsedData);
       } else {
@@ -163,6 +181,12 @@ const StudentForm = ({onNext}) => {
 
         {/* Bulk upload */}
         <div className="col-span-2">
+          <p className="text-gray-400 text-sm mb-1">
+            Expected columns for CSV / Excel: <br />
+            <strong>
+              admissionNumber, firstName, lastName, gender, dateOfBirth, classLevel, guardianName, guardianPhone
+            </strong>
+          </p>
           <label className="block mb-1">Or upload CSV / Excel for bulk</label>
           <input
             type="file"

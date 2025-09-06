@@ -12,7 +12,7 @@ router.post("/", verifyJWT, authorize(["bursar", "admin"]), addFee);
 router.get("/", verifyJWT, authorize(["bursar", "admin"]), getAllFees);
 
 // Get total outstanding fees (dynamic)
-router.get("/outstanding", verifyJWT, authorize(["admin", "teacher"]), getOutstandingFees);
+router.get("/outstanding", verifyJWT, authorize(["admin", "teacher", 'bursar']), getOutstandingFees);
 
 // Get student fee history
 router.get("/student/:studentId", verifyJWT, authorize(["superadmin", "admin", "bursar"]), getStudentFees);

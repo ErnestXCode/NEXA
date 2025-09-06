@@ -14,8 +14,8 @@ const {
 
 // Superadmin only
 router.get("/", verifyJWT,getAllSchools);
-router.get("/me", verifyJWT,getMySchool);
 router.post("/", verifyJWT,createSchool);
+router.get("/me", verifyJWT,getMySchool);
 router.get("/:id", verifyJWT,getSchoolById);
 router.put("/:id", verifyJWT,updateSchool);
 router.delete("/:id", verifyJWT,deleteSchool);
