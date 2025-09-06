@@ -15,12 +15,8 @@ import AllTeachers from "./pages/actions/AllTeachers";
 import AllBursars from "./pages/actions/AllBursars";
 import AllStudents from "./pages/actions/AllStudents";
 import SendMessageForm from "./pages/communication/SendMessageForm";
-import FeePaymentForm from "./pages/fees/FeePaymentForm";
 import StudentEditPage from "./pages/actions/StudentEditPage";
 import PersonnelEditPage from "./pages/actions/PersonnelEditPage";
-import FeesModule from "./pages/fees/FeesModule";
-import SetupTermFees from "./pages/fees/SetupTermFees";
-import StudentFeeDetail from "./pages/fees/StudentFeeDetail";
 import AttendanceDashboard from "./pages/attendance/AttendanceDashboard";
 import ParentForm from "./pages/actions/ParentForm";
 import SetupWizard from "./components/wizard/SetUpWizard";
@@ -28,12 +24,26 @@ import AttendancePage from "./pages/attendance/AttendancePage";
 import ExamsPage from "./pages/exams/ExamsPage";
 import RecordResultsPage from "./pages/exams/RecordResultsPage";
 import ReportCardPage from "./pages/exams/ReportCardPage";
+import FeesPage from "./pages/fees/FeesPage";
+import AddFeePage from "./pages/fees/AddFeePage";
+import StudentFeesPage from "./pages/fees/StudentFeesPage";
+import SendFeeStatementPage from "./pages/fees/SendFeeStatementPage";
+import SetFeeExpectationPage from "./pages/fees/SetFeeExpectationPage";
+
+
+import { useParams } from "react-router-dom";
+import FeeHistory from "./pages/fees/FeeHistory";
+const FeeHistoryWrapper = () => {
+  const { studentId } = useParams();
+  return <FeeHistory studentId={studentId} />;
+};
 
 function App() {
+
+  
   return (
     <div className="bg-gray-950 text-white min-h-screen">
       <BrowserRouter>
-       
         <Routes>
           {/* Public routes */}
           <Route path="/" element={<Home />} />
@@ -47,15 +57,21 @@ function App() {
           <Route element={<PersistLogin />}>
             <Route path="/dashboard">
               <Route index element={<Dashboard />} />
-              <Route path="fees" element={<FeesModule />} />
-              <Route path="fees/record" element={<FeePaymentForm />} />
-              <Route path="fees/term" element={<SetupTermFees />} />
-              <Route path="fees/detail" element={<StudentFeeDetail />} />
-
+              <Route path="fees" element={<FeesPage />} />
+              <Route path="fees/add" element={<AddFeePage />} />
+              <Route
+                path="fees/student/:studentId"
+                element={<StudentFeesPage />}
+              />
+              <Route
+                path="fees/send-statement"
+                element={<SendFeeStatementPage />}
+              />
+              <Route path="fees/set-expectation" element={<SetFeeExpectationPage />} />
+              <Route path="fees/history/:studentId" element={<FeeHistoryWrapper />} />
 
               <Route path="attendance" element={<AttendanceDashboard />} />
               <Route path="attendance/mark" element={<AttendancePage />} />
-              
 
               <Route path="communication" element={<Communication />} />
               <Route path="communication/send" element={<SendMessageForm />} />
@@ -74,8 +90,10 @@ function App() {
 
               <Route path="teachers" element={<AllTeachers />} />
               <Route path="bursars" element={<AllBursars />} />
-              <Route path="personnel/edit/:id" element={<PersonnelEditPage />} />
-
+              <Route
+                path="personnel/edit/:id"
+                element={<PersonnelEditPage />}
+              />
 
               <Route path="exams" element={<ExamsPage />} />
               <Route path="exams/record" element={<RecordResultsPage />} />

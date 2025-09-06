@@ -4,12 +4,17 @@ const gradeScaleSchema = new mongoose.Schema({
   min: { type: Number, required: true },
   max: { type: Number, required: true },
   grade: { type: String, required: true },
-  remark: { type: String }
+  remark: { type: String },
 });
 
 const classLevelSchema = new mongoose.Schema({
-  name: { type: String, required: true },  // e.g., "Grade 1"
-  streams: [{ type: String }]              // e.g., ["North", "South"]
+  name: { type: String, required: true }, // e.g., "Grade 1"
+  streams: [{ type: String }], // e.g., ["North", "South"]
+});
+
+const feeExpectationSchema = new mongoose.Schema({
+  term: { type: String, enum: ["Term 1", "Term 2", "Term 3"], required: true },
+  amount: { type: Number, required: true, default: 0 },
 });
 
 const schoolSchema = new mongoose.Schema(
@@ -28,25 +33,27 @@ const schoolSchema = new mongoose.Schema(
       type: [gradeScaleSchema],
       default: () => School.defaultGradingSystem(),
     },
-
-    // ✅ Subjects offered in the school (same for all levels, for now)
-    subjects: {
-      type: [String],
-      default: () => School.defaultSubjects(),
+    subjects: { type: [String], default: () => School.defaultSubjects() },
+    feeExpectations: {
+      type: [feeExpectationSchema],
+      default: [
+        { term: "Term 1", amount: 20000 },
+        { term: "Term 2", amount: 18000 },
+        { term: "Term 3", amount: 22000 },
+      ],
     },
 
-    // --- Optional extras ---
+    // --- Optional modules ---
     modules: {
       exams: { type: Boolean, default: true },
       attendance: { type: Boolean, default: true },
       feeTracking: { type: Boolean, default: true },
-      communication: { type: Boolean, default: true }
-    }
+      communication: { type: Boolean, default: true },
+    },
   },
   { timestamps: true }
 );
 
-// Kenyan default grading system
 schoolSchema.statics.defaultGradingSystem = function () {
   return [
     { min: 80, max: 100, grade: "A", remark: "Excellent" },
@@ -59,11 +66,10 @@ schoolSchema.statics.defaultGradingSystem = function () {
     { min: 45, max: 49, grade: "C-", remark: "Below Average" },
     { min: 40, max: 44, grade: "D+", remark: "Weak" },
     { min: 35, max: 39, grade: "D", remark: "Poor" },
-    { min: 0, max: 34, grade: "E", remark: "Fail" }
+    { min: 0, max: 34, grade: "E", remark: "Fail" },
   ];
 };
 
-// CBC default class levels
 schoolSchema.statics.defaultCBCLevels = function () {
   return [
     { name: "Pre-Primary 1 (PP1)", streams: [] },
@@ -79,11 +85,10 @@ schoolSchema.statics.defaultCBCLevels = function () {
     { name: "Grade 9 (JSS3)", streams: [] },
     { name: "Senior 1", streams: [] },
     { name: "Senior 2", streams: [] },
-    { name: "Senior 3", streams: [] }
+    { name: "Senior 3", streams: [] },
   ];
 };
 
-// ✅ Default subjects
 schoolSchema.statics.defaultSubjects = function () {
   return [
     "Mathematics",
@@ -93,7 +98,7 @@ schoolSchema.statics.defaultSubjects = function () {
     "Social Studies",
     "Religious Education",
     "Creative Arts",
-    "Physical Education"
+    "Physical Education",
   ];
 };
 

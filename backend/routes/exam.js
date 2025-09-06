@@ -11,7 +11,7 @@ const router = express.Router();
 
 // Admin & Teacher can manage exams
 // Create exam
-router.post("/", verifyJWT, authorize(["admin"]), createExam);
+router.post("/", verifyJWT, authorize(["admin", 'teacher']), createExam);
 
 // Get all exams
 router.get("/", verifyJWT, authorize(["superadmin", "admin", "teacher"]), getAllExams);

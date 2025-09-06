@@ -1,19 +1,16 @@
 const Fee = require("../../models/Fee");
 const Student = require("../../models/Student");
+const School = require("../../models/School");
 const User = require("../../models/User");
 
+// --- Get all fees ---
 const getAllFees = async (req, res) => {
   try {
     const requester = req.user;
+    const query =
+      requester.role === "superadmin" ? {} : { school: requester.school };
 
-    const query = {};
-    if (requester.role !== "superadmin") {
-      query.school = requester.school;
-    }
-
-    const fees = await Fee.find(query)
-    .sort({ createdAt: -1 });
-
+    const fees = await Fee.find(query).sort({ createdAt: -1 });
     res.status(200).json(fees);
   } catch (err) {
     console.error(err);
@@ -21,7 +18,7 @@ const getAllFees = async (req, res) => {
   }
 };
 
-// Add payment / adjustment
+// --- Add payment / adjustment ---
 const addFee = async (req, res) => {
   try {
     const {
@@ -29,113 +26,122 @@ const addFee = async (req, res) => {
       amount,
       term,
       type = "payment",
-      method = "cash", // new field for payment method
+      method = "cash",
       note,
       generateReceipt = false,
     } = req.body;
 
     const requester = req.user;
-    const requesterDoc = await User.findOne({ email: requester.email });
 
+    // Find student
     const student = await Student.findById(studentId);
     if (!student) return res.status(404).json({ msg: "Student not found" });
 
-    // Check if term exists in student's feeExpectations
-    const termIndex = student.feeExpectations.findIndex((f) => f.term === term);
-    if (termIndex === -1)
-      return res
-        .status(400)
-        .json({ msg: `Term ${term} not set up for student` });
+    // Find requester
+    const requesterDoc = await User.findOne({ email: requester.email });
+    const school = await School.findById(student.school);
 
-    // Initialize termBalances if not present
-    if (!student.termBalances) student.termBalances = {};
-    if (student.termBalances[term] === undefined)
-      student.termBalances[term] = student.feeExpectations[termIndex].amount;
+    // Validate term exists in school expectations
+    const termExpectation = school.feeExpectations.find((f) => f.term === term);
+    if (!termExpectation)
+      return res.status(400).json({ msg: `Term ${term} not set in school` });
 
-    // Update term balance
-    if (type === "payment") {
-      student.termBalances[term] -= amount;
-      if (student.termBalances[term] < 0) student.termBalances[term] = 0;
-    } else if (type === "adjustment") {
-      student.termBalances[term] += amount;
-    }
-
-    await student.save();
-
-    // Save Fee record
+    // Create Fee record
     const feeRecord = new Fee({
       student: student._id,
       term,
       classLevel: student.classLevel,
       amount,
-      type, // "payment" or "adjustment"
-      method, // "cash", "mpesa", "card"
+      type,
+      method,
       note,
       handledBy: requesterDoc._id,
-      school: requester.school,
+      school: school._id,
       receiptGenerated: generateReceipt,
     });
-
     await feeRecord.save();
+
+    // ALSO update student.payments array
+    student.payments.push({
+      term,
+      amount,
+      category: type, // "payment" or "adjustment"
+      type: method, // "cash", "mpesa", "card"
+      note,
+      date: new Date(),
+    });
+    await student.save();
 
     res
       .status(200)
-      .json({ msg: "Fee updated successfully", student, feeRecord });
+      .json({ msg: "Fee recorded successfully", feeRecord, student });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ msg: "Error updating fee", error: err.message });
+    res.status(500).json({ msg: "Error adding fee", error: err.message });
   }
 };
 
-// Get fee history for a student
+// --- Get student fee history ---
 const getStudentFees = async (req, res) => {
   try {
     const { studentId } = req.params;
     const requester = req.user;
-
     const query = { student: studentId };
     if (requester.role !== "superadmin") query.school = requester.school;
 
     const records = await Fee.find(query).sort({ createdAt: -1 });
     res.status(200).json(records);
   } catch (err) {
+    console.error(err);
     res
       .status(500)
-      .json({ msg: "Error fetching fee history", error: err.message });
+      .json({ msg: "Error fetching student fees", error: err.message });
   }
 };
 
-// Get total outstanding fees (optionally filtered by term or class)
+// --- Get total outstanding fees dynamically ---
 const getOutstandingFees = async (req, res) => {
   try {
     const { term, classLevel } = req.query;
     const schoolQuery =
       req.user.role === "superadmin" ? {} : { school: req.user.school };
-
-    let studentQuery = { ...schoolQuery };
+    const studentQuery = { ...schoolQuery };
     if (classLevel) studentQuery.classLevel = classLevel;
 
-    const students = await Student.find(studentQuery);
-
+    const students = await Student.find(studentQuery).populate("school");
     let totalOutstanding = 0;
-    students.forEach((s) => {
+
+    for (const s of students) {
+      const school = await School.findById(s.school);
+      if (!school) continue;
       if (term) {
-        const termExp = s.feeExpectations.find((f) => f.term === term);
-        const termBalance =
-          (s.termBalances && s.termBalances[term]) || termExp?.amount || 0;
-        totalOutstanding += termBalance;
+        const expected =
+          school.feeExpectations.find((f) => f.term === term)?.amount || 0;
+        const payments = await Fee.find({ student: s._id, term });
+        const paid = payments
+          .filter((p) => p.type === "payment")
+          .reduce((sum, p) => sum + p.amount, 0);
+        const adjustments = payments
+          .filter((p) => p.type === "adjustment")
+          .reduce((sum, p) => sum + p.amount, 0);
+        totalOutstanding += expected - paid + adjustments;
       } else {
-        // sum across all terms
-        const studentTotal = s.feeExpectations.reduce((sum, f) => {
-          const bal = (s.termBalances && s.termBalances[f.term]) || f.amount;
-          return sum + bal;
-        }, 0);
-        totalOutstanding += studentTotal;
+        for (const t of school.feeExpectations) {
+          const payments = await Fee.find({ student: s._id, term: t.term });
+          const paid = payments
+            .filter((p) => p.type === "payment")
+            .reduce((sum, p) => sum + p.amount, 0);
+          const adjustments = payments
+            .filter((p) => p.type === "adjustment")
+            .reduce((sum, p) => sum + p.amount, 0);
+          totalOutstanding += t.amount - paid + adjustments;
+        }
       }
-    });
+    }
 
     res.status(200).json({ totalOutstanding });
   } catch (err) {
+    console.error(err);
     res
       .status(500)
       .json({ msg: "Error fetching outstanding fees", error: err.message });

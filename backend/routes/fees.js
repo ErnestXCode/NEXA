@@ -3,29 +3,18 @@ const verifyJWT = require("../middleware/verifyJWT");
 const authorize = require("../middleware/authorize");
 const { addFee, getStudentFees, getOutstandingFees, getAllFees } = require("../controllers/fee/feeController");
 
-const {
-  sendFeeStatement,
-} = require("../controllers/fee/feeStatementController");
 const router = express.Router();
 
-// Add payment / adjust fee (Bursar/Admin)
+// Add payment / adjustment (Bursar/Admin)
 router.post("/", verifyJWT, authorize(["bursar", "admin"]), addFee);
+
+// Get all fees
 router.get("/", verifyJWT, authorize(["bursar", "admin"]), getAllFees);
 
-router.get(
-  "/outstanding",
-  verifyJWT,
-  authorize(["admin", "teacher"]),
-  getOutstandingFees
-);
-router.post("/send-fee-statement", verifyJWT, sendFeeStatement);
+// Get total outstanding fees (dynamic)
+router.get("/outstanding", verifyJWT, authorize(["admin", "teacher"]), getOutstandingFees);
 
-// Get fee history for a student
-router.get(
-  "/student/:studentId",
-  verifyJWT,
-  authorize(["superadmin", "admin", "bursar"]),
-  getStudentFees
-);
+// Get student fee history
+router.get("/student/:studentId", verifyJWT, authorize(["superadmin", "admin", "bursar"]), getStudentFees);
 
 module.exports = router;

@@ -6,7 +6,6 @@ const sgMail = require("@sendgrid/mail");
 const twilio = require("twilio");
 
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-
 const client = twilio(process.env.TWILIO_SID, process.env.TWILIO_AUTH_TOKEN);
 
 // Generate PDF buffer
@@ -15,6 +14,7 @@ const generateFeePDFBuffer = (student, term, payments, expectedAmount) => {
   doc.setFontSize(16);
   doc.text(`${student.firstName} ${student.lastName} - ${term} Fee Statement`, 14, 20);
   doc.setFontSize(12);
+
   const paid = payments.reduce((sum, f) => sum + f.amount, 0);
   const balance = expectedAmount - paid;
 
@@ -36,7 +36,7 @@ const generateFeePDFBuffer = (student, term, payments, expectedAmount) => {
     body: tableData
   });
 
-  return doc.output("arraybuffer"); // returns PDF buffer
+  return doc.output("arraybuffer");
 };
 
 // Send statement via email/SMS
@@ -52,7 +52,6 @@ const sendFeeStatement = async (req, res) => {
 
     const pdfBuffer = generateFeePDFBuffer(student, term, payments, expectedAmount);
 
-    // Send Email
     if (sendEmail && student.guardianEmail) {
       const msg = {
         to: student.guardianEmail,
@@ -71,11 +70,10 @@ const sendFeeStatement = async (req, res) => {
       await sgMail.send(msg);
     }
 
-    // Send SMS/WhatsApp
     if (sendSMS && student.guardianPhone) {
       await client.messages.create({
         body: `Dear ${student.guardianName}, fee statement for ${term} has been sent to your email.`,
-        from: process.env.TWILIO_PHONE_NUMBER, // WhatsApp: "whatsapp:+14155238886"
+        from: process.env.TWILIO_PHONE_NUMBER,
         to: student.guardianPhone
       });
     }

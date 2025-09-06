@@ -6,7 +6,7 @@ const feeSchema = new mongoose.Schema({
   classLevel: { type: String, required: true },
   amount: { type: Number, required: true },
   type: { type: String, enum: ["payment", "adjustment"], default: "payment" },
-  method: { type: String, enum: ["cash", "mpesa", "card"], default: "cash" }, // new field
+  method: { type: String, enum: ["cash", "mpesa", "card"], default: "cash" },
   note: { type: String },
   date: { type: Date, default: Date.now },
   handledBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
@@ -14,7 +14,5 @@ const feeSchema = new mongoose.Schema({
   receiptGenerated: { type: Boolean, default: false },
 }, { timestamps: true });
 
-
 const Fee = mongoose.model('Fee', feeSchema)
-
 module.exports = Fee

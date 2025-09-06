@@ -9,6 +9,14 @@ const getAllSchools = async (req, res) => {
     res.status(500).json({ msg: "Error fetching schools", error: err.message });
   }
 };
+const getMySchool = async (req, res) => {
+  try {
+    const school = await School.findById(req.user.school);
+    res.status(200).json(school);
+  } catch (err) {
+    res.status(500).json({ msg: "Error fetching schools", error: err.message });
+  }
+};
 
 // Get single school by ID
 const getSchoolById = async (req, res) => {
@@ -57,6 +65,7 @@ const deleteSchool = async (req, res) => {
 module.exports = {
   getAllSchools,
   getSchoolById,
+  getMySchool,
   createSchool,
   updateSchool,
   deleteSchool,

@@ -8,14 +8,16 @@ const {
   createSchool,
   getSchoolById,
   updateSchool,
+  getMySchool,
   deleteSchool,
 } = require("../controllers/school/allSchoolsController");
 
 // Superadmin only
-router.get("/", verifyJWT, authorize(["superadmin"]), getAllSchools);
-router.post("/", verifyJWT, authorize(["superadmin"]), createSchool);
-router.get("/:id", verifyJWT, authorize(["superadmin"]), getSchoolById);
-router.put("/:id", verifyJWT, authorize(["superadmin"]), updateSchool);
-router.delete("/:id", verifyJWT, authorize(["superadmin"]), deleteSchool);
+router.get("/", verifyJWT,getAllSchools);
+router.get("/me", verifyJWT,getMySchool);
+router.post("/", verifyJWT,createSchool);
+router.get("/:id", verifyJWT,getSchoolById);
+router.put("/:id", verifyJWT,updateSchool);
+router.delete("/:id", verifyJWT,deleteSchool);
 
 module.exports = router;

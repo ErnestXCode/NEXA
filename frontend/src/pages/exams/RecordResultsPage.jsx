@@ -85,7 +85,7 @@ const RecordResultsPage = () => {
       };
     });
   };
-
+  console.log('results', results )
   const handleSubmit = async () => {
     try {
       const studentResults = Object.keys(results).map((id) => {

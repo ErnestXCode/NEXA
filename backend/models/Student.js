@@ -13,39 +13,29 @@ const studentSchema = new mongoose.Schema({
   subjects: [{ type: String }],
 
   guardian: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-
-
   guardianName: { type: String, required: true },
   guardianPhone: { type: String, required: true },
   guardianEmail: { type: String },
   relationship: { type: String },
 
-  feeExpectations: [
-    {
-      term: { type: String, enum: ["Term 1", "Term 2", "Term 3"], required: true },
-      amount: { type: Number, default: 0 },
-    }
-  ],
-
   payments: [
-    {
-      term: { type: String, enum: ["Term 1", "Term 2", "Term 3"], required: true },
-      amount: { type: Number, required: true },
-      date: { type: Date, default: Date.now },
-      type: { type: String, enum: ["cash", "mpesa", "card"], default: "cash" },
-      note: String,
-    }
-  ],
+  {
+    term: { type: String, enum: ["Term 1", "Term 2", "Term 3"], required: true },
+    amount: { type: Number, required: true },
+    date: { type: Date, default: Date.now },
+    category: { type: String, enum: ["payment", "adjustment"], required: true }, // NEW
+    type: { type: String, enum: ["cash", "mpesa", "card"], default: "cash" },  // method
+    note: String,
+  }
+],
+
 
   examResults: [
     {
       exam: { type: mongoose.Schema.Types.ObjectId, ref: "Exam" },
       term: String,
       subjects: [
-        {
-          name: String,
-          score: Number
-        }
+        { name: String, score: Number }
       ],
       total: Number,
       average: Number,

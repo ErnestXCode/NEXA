@@ -30,7 +30,9 @@ const Navigation = () => {
   return (
     <nav className="p-4 flex justify-between items-center bg-gray-900 text-white sticky top-0 z-20">
       <h1 className="font-semibold text-lg">
-        <NavLink end to="/dashboard">NEXA | Hello, {currentUser?.name}</NavLink>
+        <NavLink end to="/dashboard">
+          NEXA | Hello, {currentUser?.name}
+        </NavLink>
       </h1>
 
       <div className="flex items-center gap-3">
@@ -64,20 +66,40 @@ const Navigation = () => {
 
           <div className="flex flex-col gap-3 text-white">
             {/* Dashboard */}
-            <NavLink end onClick={handleCloseSidenav} to="/dashboard" className={navLinkClasses}>
+            <NavLink
+              end
+              onClick={handleCloseSidenav}
+              to="/dashboard"
+              className={navLinkClasses}
+            >
               Dashboard
             </NavLink>
 
             {/* Forms */}
             <div className="mt-4">
               <h3 className="text-gray-400 uppercase text-xs mb-2">Forms</h3>
-              <NavLink end onClick={handleCloseSidenav} to="/dashboard/createPersonel" className={navLinkClasses}>
+              <NavLink
+                end
+                onClick={handleCloseSidenav}
+                to="/dashboard/createPersonel"
+                className={navLinkClasses}
+              >
                 Add Teacher/Bursar
               </NavLink>
-              <NavLink end onClick={handleCloseSidenav} to="/dashboard/createStudent" className={navLinkClasses}>
+              <NavLink
+                end
+                onClick={handleCloseSidenav}
+                to="/dashboard/createStudent"
+                className={navLinkClasses}
+              >
                 Add Student
               </NavLink>
-              <NavLink end onClick={handleCloseSidenav} to="/dashboard/createParent" className={navLinkClasses}>
+              <NavLink
+                end
+                onClick={handleCloseSidenav}
+                to="/dashboard/createParent"
+                className={navLinkClasses}
+              >
                 Add Parent
               </NavLink>
             </div>
@@ -85,47 +107,88 @@ const Navigation = () => {
             {/* Lists */}
             <div className="mt-4">
               <h3 className="text-gray-400 uppercase text-xs mb-2">Lists</h3>
-              <NavLink end onClick={handleCloseSidenav} to="/dashboard/teachers" className={navLinkClasses}>
+              <NavLink
+                end
+                onClick={handleCloseSidenav}
+                to="/dashboard/teachers"
+                className={navLinkClasses}
+              >
                 All Teachers
               </NavLink>
-              <NavLink end onClick={handleCloseSidenav} to="/dashboard/bursars" className={navLinkClasses}>
+              <NavLink
+                end
+                onClick={handleCloseSidenav}
+                to="/dashboard/bursars"
+                className={navLinkClasses}
+              >
                 All Bursars
               </NavLink>
-              <NavLink end onClick={handleCloseSidenav} to="/dashboard/students" className={navLinkClasses}>
+              <NavLink
+                end
+                onClick={handleCloseSidenav}
+                to="/dashboard/students"
+                className={navLinkClasses}
+              >
                 All Students
               </NavLink>
             </div>
 
             {/* Attendance */}
             <div className="mt-4">
-              <h3 className="text-gray-400 uppercase text-xs mb-2">Attendance</h3>
-              <NavLink end onClick={handleCloseSidenav} to="/dashboard/attendance" className={navLinkClasses}>
+              <h3 className="text-gray-400 uppercase text-xs mb-2">
+                Attendance
+              </h3>
+              <NavLink
+                end
+                onClick={handleCloseSidenav}
+                to="/dashboard/attendance"
+                className={navLinkClasses}
+              >
                 View Attendance
               </NavLink>
-              <NavLink end onClick={handleCloseSidenav} to="/dashboard/attendance/mark" className={navLinkClasses}>
+              <NavLink
+                end
+                onClick={handleCloseSidenav}
+                to="/dashboard/attendance/mark"
+                className={navLinkClasses}
+              >
                 Mark Attendance
               </NavLink>
             </div>
 
             {/* Communication */}
             <div className="mt-4">
-              <h3 className="text-gray-400 uppercase text-xs mb-2">Communication</h3>
-              <NavLink end onClick={handleCloseSidenav} to="/dashboard/communication" className={navLinkClasses}>
+              <h3 className="text-gray-400 uppercase text-xs mb-2">
+                Communication
+              </h3>
+              <NavLink
+                end
+                onClick={handleCloseSidenav}
+                to="/dashboard/communication"
+                className={navLinkClasses}
+              >
                 Messages
               </NavLink>
-              
             </div>
 
             {/* Exams */}
             <div className="mt-4">
               <h3 className="text-gray-400 uppercase text-xs mb-2">Exams</h3>
-              <NavLink end onClick={handleCloseSidenav} to="/dashboard/exams" className={navLinkClasses}>
+              <NavLink
+                end
+                onClick={handleCloseSidenav}
+                to="/dashboard/exams"
+                className={navLinkClasses}
+              >
                 Exams
               </NavLink>
-              <NavLink end onClick={handleCloseSidenav} to="/dashboard/exams/create" className={navLinkClasses}>
-                Create Exam
-              </NavLink>
-              <NavLink end onClick={handleCloseSidenav} to="/dashboard/exams/record" className={navLinkClasses}>
+
+              <NavLink
+                end
+                onClick={handleCloseSidenav}
+                to="/dashboard/exams/record"
+                className={navLinkClasses}
+              >
                 Record Results
               </NavLink>
             </div>
@@ -133,16 +196,47 @@ const Navigation = () => {
             {/* Fees */}
             <div className="mt-4">
               <h3 className="text-gray-400 uppercase text-xs mb-2">Fees</h3>
-              <NavLink end onClick={handleCloseSidenav} to="/dashboard/fees" className={navLinkClasses}>
+              <NavLink
+                end
+                onClick={handleCloseSidenav}
+                to="/dashboard/fees"
+                className={navLinkClasses}
+              >
                 Fees
               </NavLink>
-              <NavLink end onClick={handleCloseSidenav} to="/dashboard/fees/record" className={navLinkClasses}>
+              {/* <NavLink
+                end
+                onClick={handleCloseSidenav}
+                to="/dashboard/fees/set-expectation"
+                className={navLinkClasses}
+              >
+                Set Expectations
+              </NavLink> */}
+              <NavLink
+                end
+                onClick={handleCloseSidenav}
+                to="/dashboard/fees/add"
+                className={navLinkClasses}
+              >
                 Record Payment
               </NavLink>
+              {/* <NavLink
+                end
+                onClick={handleCloseSidenav}
+                to="/dashboard/fees/send-statement"
+                className={navLinkClasses}
+              >
+                Send Statement
+              </NavLink> */}
             </div>
 
             {/* Settings */}
-            <NavLink end onClick={handleCloseSidenav} to="/dashboard/settings" className={`${navLinkClasses} mt-4`}>
+            <NavLink
+              end
+              onClick={handleCloseSidenav}
+              to="/dashboard/settings"
+              className={`${navLinkClasses} mt-4`}
+            >
               Settings
             </NavLink>
           </div>
