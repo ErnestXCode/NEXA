@@ -33,6 +33,7 @@ import SetFeeExpectationPage from "./pages/fees/SetFeeExpectationPage";
 
 import { useParams } from "react-router-dom";
 import FeeHistory from "./pages/fees/FeeHistory";
+import AllSchools from "./pages/actions/AllSchools";
 const FeeHistoryWrapper = () => {
   const { studentId } = useParams();
   return <FeeHistory studentId={studentId} />;
@@ -76,6 +77,8 @@ function App() {
               <Route path="communication" element={<Communication />} />
               <Route path="communication/send" element={<SendMessageForm />} />
               <Route path="settings" element={<Settings />} />
+
+              <Route path="schools" element={<AllSchools />} />
 
               {/* Forms */}
               <Route path="createPersonel" element={<PersonelForm />} />

@@ -30,10 +30,10 @@ const Dashboard = () => {
     queryFn: () => api.get("/personel/parent").then((res) => res.data),
   });
 
-  const feesQuery = useQuery({
-    queryKey: ["feesOutstanding"],
-    queryFn: () => api.get("/fees/outstanding").then((res) => res.data),
-  });
+  // const feesQuery = useQuery({
+  //   queryKey: ["feesOutstanding"],
+  //   queryFn: () => api.get("/fees/outstanding").then((res) => res.data),
+  // });
 
   const activityQuery = useQuery({
     queryKey: ["activities"],
@@ -51,31 +51,35 @@ const Dashboard = () => {
   const studentsLength = studentsQuery.data?.length || 0;
   const parentsLength = parentsQuery.data?.length || 0;
 
-  const outstandingFees = feesQuery.data?.totalOutstanding || 0;
+  // const outstandingFees = feesQuery.data?.totalOutstanding || 0;
   const recentActivities = activityQuery.data?.slice(0, 5) || [];
 
+  // feesQuery.isLoading ||
   if (
     teachersQuery.isLoading ||
     bursarsQuery.isLoading ||
     studentsQuery.isLoading ||
     parentsQuery.isLoading ||
-    feesQuery.isLoading ||
     activityQuery.isLoading
   ) {
     return <p className="p-6 text-gray-400">Loading dashboard...</p>;
   }
+  // feesQuery.isError ||
 
   if (
     teachersQuery.isError ||
     bursarsQuery.isError ||
     studentsQuery.isError ||
     parentsQuery.isError ||
-    feesQuery.isError ||
     activityQuery.isError
   ) {
     return <p className="p-6 text-red-500">❌ Error loading dashboard data</p>;
   }
 
+  // {
+  //   label: "Outstanding Fees",
+  //   value: `Ksh ${outstandingFees.toLocaleString()}`,
+  // },
   return (
     <main className="p-6 bg-gray-950 text-white min-h-screen space-y-8">
       {/* Top Summary Cards */}
@@ -85,10 +89,6 @@ const Dashboard = () => {
           { label: "Teachers", value: teachersLength },
           { label: "Bursars", value: bursarsLength },
           { label: "Parents", value: parentsLength },
-          {
-            label: "Outstanding Fees",
-            value: `Ksh ${outstandingFees.toLocaleString()}`,
-          },
         ].map((card, i) => (
           <div
             key={i}

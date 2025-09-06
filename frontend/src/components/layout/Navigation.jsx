@@ -131,6 +131,14 @@ const Navigation = () => {
               >
                 All Students
               </NavLink>
+              <NavLink
+                end
+                onClick={handleCloseSidenav}
+                to="/dashboard/schools"
+                className={navLinkClasses}
+              >
+                All Schools
+              </NavLink>
             </div>
 
             {/* Attendance */}
