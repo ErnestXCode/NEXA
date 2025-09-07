@@ -31,7 +31,10 @@ const AttendancePage = () => {
         const initialRecords = Object.fromEntries(
           allStudents.map((s) => [
             s._id,
-            { status: s.attendance?.status || "present", reason: s.attendance?.reason || "" },
+            {
+              status: s.attendance?.status || "present",
+              reason: s.attendance?.reason || "",
+            },
           ])
         );
         setRecords(initialRecords);
@@ -45,14 +48,19 @@ const AttendancePage = () => {
   // Filter students when selectedClass changes
   useEffect(() => {
     if (selectedClass) {
-      setFilteredStudents(students.filter((s) => s.classLevel === selectedClass));
+      setFilteredStudents(
+        students.filter((s) => s.classLevel === selectedClass)
+      );
     } else {
       setFilteredStudents(students);
     }
   }, [students, selectedClass]);
 
   const handleChange = (studentId, field, value) => {
-    setRecords((prev) => ({ ...prev, [studentId]: { ...prev[studentId], [field]: value } }));
+    setRecords((prev) => ({
+      ...prev,
+      [studentId]: { ...prev[studentId], [field]: value },
+    }));
   };
 
   const handleSubmit = async () => {
@@ -107,7 +115,10 @@ const AttendancePage = () => {
           onClick={() =>
             setRecords(
               Object.fromEntries(
-                filteredStudents.map((s) => [s._id, { status: "present", reason: "" }])
+                filteredStudents.map((s) => [
+                  s._id,
+                  { status: "present", reason: "" },
+                ])
               )
             )
           }
@@ -146,11 +157,14 @@ const AttendancePage = () => {
             {filteredStudents.length > 0 ? (
               filteredStudents.map((s, i) => {
                 const showReason =
-                  records[s._id]?.status === "absent" || records[s._id]?.status === "late";
+                  records[s._id]?.status === "absent" ||
+                  records[s._id]?.status === "late";
                 return (
                   <tr
                     key={s._id}
-                    className={`${i % 2 === 0 ? "bg-gray-950" : "bg-gray-900"} hover:bg-gray-800 transition`}
+                    className={`${
+                      i % 2 === 0 ? "bg-gray-950" : "bg-gray-900"
+                    } hover:bg-gray-800 transition`}
                   >
                     <td className="py-2 px-4">
                       {s.firstName} {s.lastName}
@@ -162,7 +176,9 @@ const AttendancePage = () => {
                         <input
                           type="text"
                           value={records[s._id]?.reason || ""}
-                          onChange={(e) => handleChange(s._id, "reason", e.target.value)}
+                          onChange={(e) =>
+                            handleChange(s._id, "reason", e.target.value)
+                          }
                           placeholder="Reason"
                           className="absolute inset-0 w-full border rounded px-2 py-1 bg-gray-800 text-white"
                         />
@@ -172,7 +188,9 @@ const AttendancePage = () => {
                     <td className="py-2 px-2">
                       <select
                         value={records[s._id]?.status}
-                        onChange={(e) => handleChange(s._id, "status", e.target.value)}
+                        onChange={(e) =>
+                          handleChange(s._id, "status", e.target.value)
+                        }
                         className="border rounded px-2 py-1 bg-gray-800 text-white"
                       >
                         <option value="present">Present</option>

@@ -81,7 +81,7 @@ const PersonnelEditPage = () => {
   };
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-gray-950">
+    <main className="overflow-hidden flex items-center justify-center bg-gray-950">
       <div className="bg-gray-900 p-6 rounded-lg shadow-md w-full max-w-md">
         <h1 className="text-lg font-semibold text-white mb-4">
           Edit Personnel

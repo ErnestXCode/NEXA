@@ -138,7 +138,7 @@ const SchoolEditPage = () => {
   };
 
   return (
-    <main className="min-h-screen flex items-start justify-center bg-gray-950 p-6">
+    <main className="overflow-hidden flex items-start justify-center bg-gray-950 p-6">
       <div className="bg-gray-900 p-6 rounded-lg shadow-md w-full max-w-4xl space-y-6">
         <h1 className="text-xl font-semibold text-white">Edit School</h1>
         <form onSubmit={handleSubmit} className="space-y-4">

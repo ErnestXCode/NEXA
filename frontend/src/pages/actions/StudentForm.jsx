@@ -109,7 +109,7 @@ const StudentForm = ({ onNext }) => {
   };
 
   return (
-    <main className="p-6 bg-gray-950 min-h-screen flex justify-center items-start">
+    <main className="p-6 bg-gray-950 overflow-hidden flex justify-center items-start">
       <form
         onSubmit={handleSubmit}
         className="bg-gray-900 p-6 rounded-lg w-full max-w-3xl grid gap-4 grid-cols-1 md:grid-cols-2"
