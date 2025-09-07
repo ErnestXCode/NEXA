@@ -40,7 +40,9 @@ app.use("/api/activity", require("./routes/activity"));
 app.use("/api/term", require("./routes/term"));
 app.use("/api/settings", require("./routes/settings"));
 
-app.listen(5000, () => {
+const PORT = process.env.PORT || 5000;
+
+app.listen(PORT, () => {
   connectDB();
   console.log("Listening on Port 5000");
 });
