@@ -7,14 +7,31 @@ const gradeScaleSchema = new mongoose.Schema({
   remark: { type: String },
 });
 
-const classLevelSchema = new mongoose.Schema({
-  name: { type: String, required: true }, // e.g., "Grade 1"
-  streams: [{ type: String }], // e.g., ["North", "South"]
-});
-
 const feeExpectationSchema = new mongoose.Schema({
   term: { type: String, enum: ["Term 1", "Term 2", "Term 3"], required: true },
   amount: { type: Number, required: true, default: 0 },
+});
+
+// fee rule for ranges (you already had this)
+const feeRuleSchema = new mongoose.Schema({
+  fromClass: { type: String, required: true }, // e.g., "Grade 1"
+  toClass: { type: String, required: true },   // e.g., "Grade 3"
+  term: { type: String, enum: ["Term 1", "Term 2", "Term 3"], required: true },
+  amount: { type: Number, required: true },
+});
+
+// subjects rule for ranges (NEW)
+const subjectsRuleSchema = new mongoose.Schema({
+  fromClass: { type: String, required: true },
+  toClass: { type: String, required: true },
+  subjects: [{ type: String }],
+});
+
+const classLevelSchema = new mongoose.Schema({
+  name: { type: String, required: true }, // e.g., "Grade 1"
+  streams: [{ type: String }],
+  // Added per-class fee expectations (optional override)
+  feeExpectations: { type: [feeExpectationSchema], default: [] },
 });
 
 const schoolSchema = new mongoose.Schema(
@@ -34,6 +51,8 @@ const schoolSchema = new mongoose.Schema(
       default: () => School.defaultGradingSystem(),
     },
     subjects: { type: [String], default: () => School.defaultSubjects() },
+
+    // fallback general expectations (if no per-class or rule found)
     feeExpectations: {
       type: [feeExpectationSchema],
       default: [
@@ -42,6 +61,12 @@ const schoolSchema = new mongoose.Schema(
         { term: "Term 3", amount: 22000 },
       ],
     },
+
+    // feeRules allow ranges like Grade1-Grade3 → amount per term
+    feeRules: { type: [feeRuleSchema], default: [] },
+
+    // NEW: subjectsByClass allow ranges with custom subject lists
+    subjectsByClass: { type: [subjectsRuleSchema], default: [] },
 
     // --- Optional modules ---
     modules: {
@@ -54,6 +79,7 @@ const schoolSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+// keep your statics / defaults intact
 schoolSchema.statics.defaultGradingSystem = function () {
   return [
     { min: 80, max: 100, grade: "A", remark: "Excellent" },

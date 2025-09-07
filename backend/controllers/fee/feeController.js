@@ -99,7 +99,22 @@ const getStudentFees = async (req, res) => {
   }
 };
 
+// --- Helper: check if className is within fromClass..toClass range based on the school's classLevels order ---
+const isClassInRange = (className, fromClass, toClass, allClasses = []) => {
+  const idx = allClasses.findIndex((c) => c.name === className);
+  const fromIdx = allClasses.findIndex((c) => c.name === fromClass);
+  const toIdx = allClasses.findIndex((c) => c.name === toClass);
+  if (idx === -1 || fromIdx === -1 || toIdx === -1) return false;
+  const min = Math.min(fromIdx, toIdx);
+  const max = Math.max(fromIdx, toIdx);
+  return idx >= min && idx <= max;
+};
+
 // --- Get total outstanding fees dynamically ---
+// NOTE: this function now respects:
+// 1) school.feeRules (ranges) -> if matched for student's class, use rule(s)
+// 2) class-level feeExpectations (if defined)
+// 3) fallback to school.feeExpectations
 const getOutstandingFees = async (req, res) => {
   try {
     const { term, classLevel } = req.query;
@@ -112,12 +127,45 @@ const getOutstandingFees = async (req, res) => {
     let totalOutstanding = 0;
 
     for (const s of students) {
-      const school = await School.findById(s.school);
-      if (!school) continue;
+      // ensure we have the school doc (populated or fetch)
+      let school = s.school;
+      if (!school || !school.classLevels) {
+        school = await School.findById(s.school);
+      }
+
+      // priority of expectation sources:
+      // 1) feeRules (ranges)
+      // 2) class-level feeExpectations
+      // 3) school.feeExpectations (fallback)
+      let expectations = [];
+
+      const allClassLevels = (school.classLevels || []).map((c) => ({ name: c.name }));
+
+      // find matching rules (if any)
+      if (Array.isArray(school.feeRules) && school.feeRules.length) {
+        const matchedRules = school.feeRules.filter((rule) =>
+          isClassInRange(s.classLevel, rule.fromClass, rule.toClass, school.classLevels)
+        );
+        if (matchedRules.length) {
+          expectations = matchedRules; // each has { fromClass,toClass,term,amount }
+        }
+      }
+
+      // if no matched rules, check class-level expectations
+      if (!expectations.length) {
+        const classDef = (school.classLevels || []).find((c) => c.name === s.classLevel);
+        if (classDef && Array.isArray(classDef.feeExpectations) && classDef.feeExpectations.length) {
+          expectations = classDef.feeExpectations;
+        } else {
+          expectations = school.feeExpectations || [];
+        }
+      }
+
       if (term) {
-        const expected =
-          school.feeExpectations.find((f) => f.term === term)?.amount || 0;
+        // term-specific calculation
+        const expected = expectations.find((f) => f.term === term)?.amount || 0;
         const payments = await Fee.find({ student: s._id, term });
+
         const paid = payments
           .filter((p) => p.type === "payment")
           .reduce((sum, p) => sum + p.amount, 0);
@@ -126,15 +174,19 @@ const getOutstandingFees = async (req, res) => {
           .reduce((sum, p) => sum + p.amount, 0);
         totalOutstanding += expected - paid + adjustments;
       } else {
-        for (const t of school.feeExpectations) {
+        // full-year (or all terms) calculation — iterate expectations available
+        for (const t of expectations) {
+          const expectedAmount = t.amount || 0;
           const payments = await Fee.find({ student: s._id, term: t.term });
+
           const paid = payments
             .filter((p) => p.type === "payment")
             .reduce((sum, p) => sum + p.amount, 0);
           const adjustments = payments
             .filter((p) => p.type === "adjustment")
             .reduce((sum, p) => sum + p.amount, 0);
-          totalOutstanding += t.amount - paid + adjustments;
+
+          totalOutstanding += expectedAmount - paid + adjustments;
         }
       }
     }

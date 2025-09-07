@@ -7,11 +7,16 @@ const FeesPage = () => {
   const [selectedTerm, setSelectedTerm] = useState("Term 1");
   const [selectedClass, setSelectedClass] = useState("All");
   const [onlyWithBalance, setOnlyWithBalance] = useState(false);
+  const [totalOutstanding, setTotalOutstanding] = useState(0);
 
   useEffect(() => {
     fetchStudents();
     fetchSchool();
   }, []);
+
+  useEffect(() => {
+    fetchOutstanding();
+  }, [selectedTerm, selectedClass]);
 
   const fetchStudents = async () => {
     try {
@@ -31,18 +36,65 @@ const FeesPage = () => {
     }
   };
 
+  const fetchOutstanding = async () => {
+    try {
+      let query = `?term=${selectedTerm}`;
+      if (selectedClass !== "All") query += `&classLevel=${selectedClass}`;
+      const res = await api.get(`/fees/outstanding${query}`);
+      setTotalOutstanding(res.data.totalOutstanding || 0);
+    } catch (err) {
+      console.error("Error fetching outstanding fees:", err);
+    }
+  };
+
   const getStudentBalance = (student) => {
     if (!school) return 0;
 
-    const termExpectation = school.feeExpectations.find(f => f.term === selectedTerm);
-    const expected = termExpectation?.amount || 0;
+    // priority order like backend:
+    // 1) feeRules
+    // 2) class-level feeExpectations
+    // 3) school.feeExpectations
+    let expectations = [];
 
+    if (Array.isArray(school.feeRules) && school.feeRules.length) {
+      const idx = school.classLevels.findIndex((c) => c.name === student.classLevel);
+
+      const matchedRules = school.feeRules.filter((rule) => {
+        const fromIdx = school.classLevels.findIndex((c) => c.name === rule.fromClass);
+        const toIdx = school.classLevels.findIndex((c) => c.name === rule.toClass);
+        if (idx === -1 || fromIdx === -1 || toIdx === -1) return false;
+        const min = Math.min(fromIdx, toIdx);
+        const max = Math.max(fromIdx, toIdx);
+        return idx >= min && idx <= max && rule.term === selectedTerm;
+      });
+
+      if (matchedRules.length) {
+        expectations = matchedRules;
+      }
+    }
+
+    if (!expectations.length) {
+      const classDef = (school.classLevels || []).find((c) => c.name === student.classLevel);
+      if (classDef && Array.isArray(classDef.feeExpectations)) {
+        expectations = classDef.feeExpectations.filter((f) => f.term === selectedTerm);
+      }
+    }
+
+    if (!expectations.length) {
+      expectations = (school.feeExpectations || []).filter((f) => f.term === selectedTerm);
+    }
+
+    // expected fee for this student + term
+    const expected = expectations[0]?.amount || 0;
+
+    // sum payments
     const payments = student.payments
-      .filter(p => p.term === selectedTerm && p.category === "payment")
+      .filter((p) => p.term === selectedTerm && p.category === "payment")
       .reduce((sum, p) => sum + p.amount, 0);
 
+    // sum adjustments
     const adjustments = student.payments
-      .filter(p => p.term === selectedTerm && p.category === "adjustment")
+      .filter((p) => p.term === selectedTerm && p.category === "adjustment")
       .reduce((sum, p) => sum + p.amount, 0);
 
     return expected - payments + adjustments;
@@ -67,7 +119,9 @@ const FeesPage = () => {
 
   return (
     <div className="max-w-5xl mx-auto p-6 bg-gray-950 text-gray-100 rounded-md shadow-lg mt-6">
-      <h2 className="text-3xl font-bold mb-6 text-center">Student Fees - {selectedTerm}</h2>
+      <h2 className="text-3xl font-bold mb-6 text-center">
+        Student Fees - {selectedTerm}
+      </h2>
 
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-4 mb-6">
@@ -105,8 +159,18 @@ const FeesPage = () => {
             onChange={() => setOnlyWithBalance(!onlyWithBalance)}
             className="mr-2 accent-blue-500"
           />
-          <label htmlFor="onlyWithBalance" className="font-medium">Only show students with balance</label>
+          <label htmlFor="onlyWithBalance" className="font-medium">
+            Only show students with balance
+          </label>
         </div>
+      </div>
+
+      {/* Total Outstanding */}
+      <div className="bg-gray-900 p-4 rounded-lg mb-6 shadow-md">
+        <h3 className="text-lg font-semibold">Total Outstanding Fees</h3>
+        <p className="text-2xl text-red-400 font-bold">
+          KSh {totalOutstanding.toLocaleString()}
+        </p>
       </div>
 
       {/* Student table */}
@@ -123,8 +187,12 @@ const FeesPage = () => {
             const balance = getStudentBalance(s);
             return (
               <tr key={s._id} className="hover:bg-gray-900 transition">
-                <td className="px-4 py-2 border-b border-gray-700">{s.firstName} {s.lastName}</td>
-                <td className="px-4 py-2 border-b border-gray-700">{s.classLevel}</td>
+                <td className="px-4 py-2 border-b border-gray-700">
+                  {s.firstName} {s.lastName}
+                </td>
+                <td className="px-4 py-2 border-b border-gray-700">
+                  {s.classLevel}
+                </td>
                 <td className={`px-4 py-2 border-b border-gray-700 font-semibold ${getBalanceColor(balance)}`}>
                   KSh {balance}
                 </td>

@@ -1,4 +1,3 @@
-// src/pages/schools/SchoolSettings.jsx
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../api/axios";
@@ -63,6 +62,69 @@ const SchoolSettings = () => {
     updateMutation.mutate(school);
   };
 
+  // --- Fee Rule helpers (already in your file) ---
+  const addFeeRule = () => {
+    const fromDefault = school.classLevels?.[0]?.name || "";
+    const toDefault = school.classLevels?.[school.classLevels.length - 1]?.name || fromDefault || "";
+    setSchool((prev) => ({
+      ...prev,
+      feeRules: [
+        ...(prev.feeRules || []),
+        { fromClass: fromDefault, toClass: toDefault, term: "Term 1", amount: 0 },
+      ],
+    }));
+  };
+
+  const updateFeeRule = (idx, key, value) => {
+    const newRules = [...(school.feeRules || [])];
+    newRules[idx] = { ...newRules[idx], [key]: value };
+    setSchool((prev) => ({ ...prev, feeRules: newRules }));
+  };
+
+  const removeFeeRule = (idx) => {
+    const newRules = (school.feeRules || []).filter((_, i) => i !== idx);
+    setSchool((prev) => ({ ...prev, feeRules: newRules }));
+  };
+
+  // --- Subjects by Class Range helpers (NEW) ---
+  const addSubjectsRule = () => {
+    const fromDefault = school.classLevels?.[0]?.name || "";
+    const toDefault = school.classLevels?.[school.classLevels.length - 1]?.name || fromDefault || "";
+    setSchool((prev) => ({
+      ...prev,
+      subjectsByClass: [
+        ...(prev.subjectsByClass || []),
+        { fromClass: fromDefault, toClass: toDefault, subjects: [] },
+      ],
+    }));
+  };
+
+  const updateSubjectsRule = (idx, key, value) => {
+    const newRules = [...(school.subjectsByClass || [])];
+    newRules[idx] = { ...newRules[idx], [key]: value };
+    setSchool((prev) => ({ ...prev, subjectsByClass: newRules }));
+  };
+
+  const addSubjectToRule = (idx, subject) => {
+    if (!subject) return;
+    const newRules = [...(school.subjectsByClass || [])];
+    const rule = newRules[idx] || { subjects: [] };
+    rule.subjects = Array.from(new Set([...(rule.subjects || []), subject]));
+    newRules[idx] = rule;
+    setSchool((prev) => ({ ...prev, subjectsByClass: newRules }));
+  };
+
+  const removeSubjectFromRule = (idx, subject) => {
+    const newRules = [...(school.subjectsByClass || [])];
+    newRules[idx].subjects = (newRules[idx].subjects || []).filter((s) => s !== subject);
+    setSchool((prev) => ({ ...prev, subjectsByClass: newRules }));
+  };
+
+  const removeSubjectsRule = (idx) => {
+    const newRules = (school.subjectsByClass || []).filter((_, i) => i !== idx);
+    setSchool((prev) => ({ ...prev, subjectsByClass: newRules }));
+  };
+
   return (
     <main className="min-h-screen flex items-start justify-center bg-gray-950 p-6">
       <div className="bg-gray-900 p-6 rounded-lg shadow-md w-full max-w-5xl">
@@ -105,10 +167,10 @@ const SchoolSettings = () => {
             </div>
           </section>
 
-          {/* Subjects */}
+          {/* Subjects (global) */}
           <section>
             <h2 className="text-gray-200 font-semibold mb-3 border-b border-gray-700 pb-1">
-              Subjects
+              Subjects (Global)
             </h2>
             <div className="flex flex-wrap gap-2 mb-3">
               {school.subjects.map((subj, idx) => (
@@ -345,6 +407,186 @@ const SchoolSettings = () => {
                   />
                 </div>
               ))}
+            </div>
+          </section>
+
+          {/* Fee Rules (by class range) */}
+          <section>
+            <h2 className="text-gray-200 font-semibold mb-3 border-b border-gray-700 pb-1">
+              Fee Rules (by Class Range)
+            </h2>
+            <div className="space-y-3">
+              {school.feeRules?.map((rule, idx) => (
+                <div
+                  key={idx}
+                  className="bg-gray-800 p-3 rounded border border-gray-700 grid grid-cols-1 sm:grid-cols-5 gap-2 items-center"
+                >
+                  <select
+                    value={rule.fromClass}
+                    onChange={(e) => updateFeeRule(idx, "fromClass", e.target.value)}
+                    className="p-2 rounded bg-gray-700 text-white text-sm"
+                  >
+                    {school.classLevels && school.classLevels.length ? (
+                      school.classLevels.map((c, i) => (
+                        <option key={i} value={c.name}>
+                          {c.name}
+                        </option>
+                      ))
+                    ) : (
+                      <option value={rule.fromClass || ""}>No classes</option>
+                    )}
+                  </select>
+
+                  <select
+                    value={rule.toClass}
+                    onChange={(e) => updateFeeRule(idx, "toClass", e.target.value)}
+                    className="p-2 rounded bg-gray-700 text-white text-sm"
+                  >
+                    {school.classLevels && school.classLevels.length ? (
+                      school.classLevels.map((c, i) => (
+                        <option key={i} value={c.name}>
+                          {c.name}
+                        </option>
+                      ))
+                    ) : (
+                      <option value={rule.toClass || ""}>No classes</option>
+                    )}
+                  </select>
+
+                  <select
+                    value={rule.term}
+                    onChange={(e) => updateFeeRule(idx, "term", e.target.value)}
+                    className="p-2 rounded bg-gray-700 text-white text-sm"
+                  >
+                    <option value="Term 1">Term 1</option>
+                    <option value="Term 2">Term 2</option>
+                    <option value="Term 3">Term 3</option>
+                  </select>
+
+                  <input
+                    type="number"
+                    value={rule.amount}
+                    onChange={(e) => updateFeeRule(idx, "amount", Number(e.target.value))}
+                    placeholder="Fee Amount"
+                    className="p-2 rounded bg-gray-700 text-white text-sm"
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() => removeFeeRule(idx)}
+                    className="text-red-400 hover:text-red-600 text-sm"
+                  >
+                    ✕ Remove
+                  </button>
+                </div>
+              ))}
+
+              <button
+                type="button"
+                onClick={addFeeRule}
+                className="px-3 py-1 bg-gray-700 text-white rounded hover:bg-gray-600 text-sm"
+              >
+                ➕ Add Fee Rule
+              </button>
+            </div>
+          </section>
+
+          {/* Subjects By Class Range (NEW) */}
+          <section>
+            <h2 className="text-gray-200 font-semibold mb-3 border-b border-gray-700 pb-1">
+              Subjects by Class Range
+            </h2>
+            <div className="space-y-3">
+              {school.subjectsByClass?.map((rule, idx) => (
+                <div
+                  key={idx}
+                  className="bg-gray-800 p-3 rounded border border-gray-700"
+                >
+                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-2 mb-2 items-center">
+                    <select
+                      value={rule.fromClass}
+                      onChange={(e) => updateSubjectsRule(idx, "fromClass", e.target.value)}
+                      className="p-2 rounded bg-gray-700 text-white text-sm"
+                    >
+                      {school.classLevels && school.classLevels.length ? (
+                        school.classLevels.map((c, i) => (
+                          <option key={i} value={c.name}>
+                            {c.name}
+                          </option>
+                        ))
+                      ) : (
+                        <option value={rule.fromClass || ""}>No classes</option>
+                      )}
+                    </select>
+
+                    <select
+                      value={rule.toClass}
+                      onChange={(e) => updateSubjectsRule(idx, "toClass", e.target.value)}
+                      className="p-2 rounded bg-gray-700 text-white text-sm"
+                    >
+                      {school.classLevels && school.classLevels.length ? (
+                        school.classLevels.map((c, i) => (
+                          <option key={i} value={c.name}>
+                            {c.name}
+                          </option>
+                        ))
+                      ) : (
+                        <option value={rule.toClass || ""}>No classes</option>
+                      )}
+                    </select>
+
+                    <input
+                      type="text"
+                      placeholder="Add subject and press Enter"
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          const val = e.target.value.trim();
+                          if (val) {
+                            addSubjectToRule(idx, val);
+                            e.target.value = "";
+                          }
+                        }
+                      }}
+                      className="p-2 rounded bg-gray-700 text-white text-sm"
+                    />
+
+                    <button
+                      type="button"
+                      onClick={() => removeSubjectsRule(idx)}
+                      className="text-red-400 hover:text-red-600 text-sm"
+                    >
+                      ✕ Remove Rule
+                    </button>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    {(rule.subjects || []).map((s, si) => (
+                      <span key={si} className="bg-indigo-600 text-white px-2 py-1 rounded-full text-sm flex items-center gap-2">
+                        {s}
+                        <button
+                          type="button"
+                          onClick={() => removeSubjectFromRule(idx, s)}
+                          className="ml-1 text-xs text-red-200 hover:text-red-400"
+                        >
+                          ✕
+                        </button>
+                      </span>
+                    ))}
+                    {(rule.subjects || []).length === 0 && (
+                      <div className="text-gray-400 text-sm">No subjects set for this range</div>
+                    )}
+                  </div>
+                </div>
+              ))}
+
+              <button
+                type="button"
+                onClick={addSubjectsRule}
+                className="px-3 py-1 bg-gray-700 text-white rounded hover:bg-gray-600 text-sm"
+              >
+                ➕ Add Subjects Rule
+              </button>
             </div>
           </section>
 

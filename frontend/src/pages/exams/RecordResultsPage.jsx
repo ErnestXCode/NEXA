@@ -10,36 +10,53 @@ const RecordResultsPage = () => {
   const [selectedSubject, setSelectedSubject] = useState("");
   const [results, setResults] = useState({});
 
-  // 🔹 Fetch exams
+  // 🔹 Fetch exams & students (initial)
   useEffect(() => {
     const fetchExams = async () => {
       try {
         const res = await api.get("/exams");
-        setExams(res.data?.exams || res.data);
+        setExams(res.data?.exams || res.data || []);
       } catch (err) {
         console.error("Failed to fetch exams", err);
       }
     };
 
-    const fetchStudentsAndSubjects = async () => {
+    const fetchStudents = async () => {
       try {
-        const res = await api.get("/students/students-with-subjects");
-        setStudents(res.data.students || []);
-        setSubjects(res.data.subjects || []);
+        const res = await api.get("/students");
+        setStudents(res.data || []);
       } catch (err) {
-        console.error("Failed to fetch students/subjects", err);
+        console.error("Failed to fetch students", err);
       }
     };
 
     fetchExams();
-    fetchStudentsAndSubjects();
+    fetchStudents();
   }, []);
+
+  // 🔹 Fetch subjects for selected class (NEW)
+  useEffect(() => {
+    const fetchSubjectsForClass = async () => {
+      if (!selectedClass) {
+        setSubjects([]);
+        return;
+      }
+      try {
+        // calls the backend endpoint we added
+        const res = await api.get(`/schools/subjects/${encodeURIComponent(selectedClass)}`);
+        setSubjects(res.data?.subjects || []);
+      } catch (err) {
+        console.error("Failed to fetch subjects for class", err);
+        setSubjects([]);
+      }
+    };
+    fetchSubjectsForClass();
+  }, [selectedClass]);
 
   // 🔹 Fetch saved results when exam/class changes
   useEffect(() => {
     const fetchResults = async () => {
       if (!examId || !selectedClass) return;
-      console.log(examId, selectedClass)
       try {
         const res = await api.get(
           `/exams/results/${examId}/${encodeURIComponent(selectedClass)}`
@@ -47,7 +64,7 @@ const RecordResultsPage = () => {
 
         // Map each studentId → full result object
         const mapped = {};
-        res.data.forEach(r => {
+        (res.data || []).forEach((r) => {
           mapped[r.studentId] = {
             subjects: r.subjects || [],
             total: r.total,
@@ -66,14 +83,12 @@ const RecordResultsPage = () => {
   }, [examId, selectedClass]);
 
   const handleScoreChange = (studentId, subject, score) => {
-    setResults(prev => {
+    setResults((prev) => {
       const prevEntry = prev[studentId] || { subjects: [] };
       const prevSubjects = prevEntry.subjects || [];
 
-      const updatedSubjects = prevSubjects.some(s => s.name === subject)
-        ? prevSubjects.map(s =>
-            s.name === subject ? { ...s, score } : s
-          )
+      const updatedSubjects = prevSubjects.some((s) => s.name === subject)
+        ? prevSubjects.map((s) => (s.name === subject ? { ...s, score } : s))
         : [...prevSubjects, { name: subject, score }];
 
       return {
@@ -85,7 +100,7 @@ const RecordResultsPage = () => {
       };
     });
   };
-  console.log('results', results )
+
   const handleSubmit = async () => {
     try {
       const studentResults = Object.keys(results).map((id) => {
@@ -93,19 +108,9 @@ const RecordResultsPage = () => {
         const subjectsArr = entry.subjects || [];
 
         const total = subjectsArr.reduce((acc, s) => acc + (s.score || 0), 0);
-        const average = subjectsArr.length
-          ? total / subjectsArr.length
-          : 0;
+        const average = subjectsArr.length ? total / subjectsArr.length : 0;
         const grade =
-          average >= 80
-            ? "A"
-            : average >= 70
-            ? "B"
-            : average >= 60
-            ? "C"
-            : average >= 50
-            ? "D"
-            : "E";
+          average >= 80 ? "A" : average >= 70 ? "B" : average >= 60 ? "C" : average >= 50 ? "D" : "E";
 
         return {
           studentId: id,
@@ -125,9 +130,7 @@ const RecordResultsPage = () => {
   };
 
   const classLevels = [...new Set(students.map((s) => s.classLevel || "Unassigned"))];
-  const filteredStudents = students.filter(
-    (s) => selectedClass && s.classLevel === selectedClass
-  );
+  const filteredStudents = students.filter((s) => selectedClass && s.classLevel === selectedClass);
 
   return (
     <div className="p-6 space-y-6">
@@ -140,6 +143,7 @@ const RecordResultsPage = () => {
           setExamId(e.target.value);
           setSelectedClass("");
           setSelectedSubject("");
+          setResults({});
         }}
         className="p-2 w-full rounded bg-gray-800 text-white"
       >
@@ -158,6 +162,7 @@ const RecordResultsPage = () => {
           onChange={(e) => {
             setSelectedClass(e.target.value);
             setSelectedSubject("");
+            setResults({});
           }}
           className="p-2 w-full rounded bg-gray-800 text-white"
         >
@@ -190,18 +195,21 @@ const RecordResultsPage = () => {
       {examId && selectedClass && (
         <div className="bg-gray-900 p-4 rounded-lg shadow overflow-auto">
           <h2 className="text-lg font-semibold mb-2">
-            {selectedClass}{" "}
-            {selectedSubject ? `— ${selectedSubject}` : "— All Subjects"}
+            {selectedClass} {selectedSubject ? `— ${selectedSubject}` : "— All Subjects"}
           </h2>
           <table className="min-w-full border border-gray-700 rounded-lg">
             <thead>
               <tr className="bg-gray-800">
                 <th className="p-2 text-left">Student</th>
-                {selectedSubject
-                  ? <th className="p-2 text-left">{selectedSubject}</th>
-                  : subjects.map((subj) => (
-                      <th key={subj} className="p-2 text-left">{subj}</th>
-                    ))}
+                {selectedSubject ? (
+                  <th className="p-2 text-left">{selectedSubject}</th>
+                ) : (
+                  subjects.map((subj) => (
+                    <th key={subj} className="p-2 text-left">
+                      {subj}
+                    </th>
+                  ))
+                )}
                 <th className="p-2 text-left">Average</th>
                 <th className="p-2 text-left">Grade</th>
               </tr>
@@ -211,23 +219,10 @@ const RecordResultsPage = () => {
                 const studentResult = results[student._id] || { subjects: [] };
                 const subjectsArr = studentResult.subjects || [];
 
-                const total = subjectsArr.reduce(
-                  (acc, s) => acc + (s.score || 0),
-                  0
-                );
-                const average = subjectsArr.length
-                  ? total / subjectsArr.length
-                  : 0;
+                const total = subjectsArr.reduce((acc, s) => acc + (s.score || 0), 0);
+                const average = subjectsArr.length ? total / subjectsArr.length : 0;
                 const grade =
-                  average >= 80
-                    ? "A"
-                    : average >= 70
-                    ? "B"
-                    : average >= 60
-                    ? "C"
-                    : average >= 50
-                    ? "D"
-                    : "E";
+                  average >= 80 ? "A" : average >= 70 ? "B" : average >= 60 ? "C" : average >= 50 ? "D" : "E";
 
                 return (
                   <tr key={student._id} className="border-t border-gray-700">
@@ -240,16 +235,9 @@ const RecordResultsPage = () => {
                           type="number"
                           min="0"
                           max="100"
-                          value={
-                            subjectsArr.find((s) => s.name === selectedSubject)
-                              ?.score || ""
-                          }
+                          value={subjectsArr.find((s) => s.name === selectedSubject)?.score ?? ""}
                           onChange={(e) =>
-                            handleScoreChange(
-                              student._id,
-                              selectedSubject,
-                              Number(e.target.value)
-                            )
+                            handleScoreChange(student._id, selectedSubject, Number(e.target.value))
                           }
                           className="p-1 w-20 rounded bg-gray-800 text-white no-spinner"
                         />
@@ -261,17 +249,8 @@ const RecordResultsPage = () => {
                             type="number"
                             min="0"
                             max="100"
-                            value={
-                              subjectsArr.find((s) => s.name === subj)
-                                ?.score || ""
-                            }
-                            onChange={(e) =>
-                              handleScoreChange(
-                                student._id,
-                                subj,
-                                Number(e.target.value)
-                              )
-                            }
+                            value={subjectsArr.find((s) => s.name === subj)?.score ?? ""}
+                            onChange={(e) => handleScoreChange(student._id, subj, Number(e.target.value))}
                             className="p-1 w-20 rounded bg-gray-800 text-white no-spinner"
                           />
                         </td>
