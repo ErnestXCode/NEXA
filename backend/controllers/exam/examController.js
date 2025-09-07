@@ -153,7 +153,6 @@ const recordResult = async (req, res) => {
 const getResultsForExamClass = async (req, res) => {
   try {
     const { examId, classLevel, subject } = req.params;
-    console.log('llllll', req.params)
     if (!examId || !classLevel) {
       return res
         .status(400)

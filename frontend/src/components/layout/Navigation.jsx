@@ -206,6 +206,14 @@ const Navigation = () => {
                   >
                     Record Results
                   </NavLink>
+                  <NavLink
+                    end
+                    onClick={handleCloseSidenav}
+                    to="/dashboard/exams/report"
+                    className={navLinkClasses}
+                  >
+                    Report Cards
+                  </NavLink>
                 </div>
 
                 {/* Fees */}

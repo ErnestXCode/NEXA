@@ -24,7 +24,6 @@ import SetupWizard from "./components/wizard/SetUpWizard";
 import AttendancePage from "./pages/attendance/AttendancePage";
 import ExamsPage from "./pages/exams/ExamsPage";
 import RecordResultsPage from "./pages/exams/RecordResultsPage";
-import ReportCardPage from "./pages/exams/ReportCardPage";
 import FeesPage from "./pages/fees/FeesPage";
 import AddFeePage from "./pages/fees/AddFeePage";
 import StudentFeesPage from "./pages/fees/StudentFeesPage";
@@ -37,6 +36,7 @@ import AllSchools from "./pages/actions/AllSchools";
 import AllParents from "./pages/actions/AllParents";
 import SchoolEditPage from "./pages/actions/SchoolEditPage";
 import SchoolSettings from "./pages/settings/SchoolSettings";
+import ReportCardsPage from "./pages/exams/ReportCardsPage";
 const FeeHistoryWrapper = () => {
   const { studentId } = useParams();
   return <FeeHistory studentId={studentId} />;
@@ -116,7 +116,7 @@ function App() {
 
               <Route path="exams" element={<ExamsPage />} />
               <Route path="exams/record" element={<RecordResultsPage />} />
-              <Route path="exams/report" element={<ReportCardPage />} />
+              <Route path="exams/report" element={<ReportCardsPage />} />
             </Route>
           </Route>
         </Routes>
