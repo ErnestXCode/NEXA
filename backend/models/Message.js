@@ -7,6 +7,8 @@ const messageSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+    school: { type: mongoose.Schema.Types.ObjectId, ref: "School" },
+
     subject: {
       type: String,
       default: "",

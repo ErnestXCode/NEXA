@@ -44,6 +44,10 @@ const getAllTeachers = async (req, res) => {
 
     let query = { role: "teacher" };
 
+    if(requester.role !== 'admin' && requester.role !=='superadmin'){
+      return res.status(403).json({msg: 'Unauthorized'})
+    }
+
     if (requester.role === "admin") {
       query.school = requester.school; // school-specific teachers
     }

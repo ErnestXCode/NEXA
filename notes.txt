@@ -1,0 +1,23 @@
+dashboard not loading for teachers only 
+communcation as well
+restating shows 404 not found from vercel
+maybe the calls aint working at all, i think
+
+details show up in these tabs man, most likely pulling all teachers and bursars
+
+attendance doesnt update as soon as its marked in the view attendance, but its not like every one will stay there forver
+
+when changing days i think i would like for all to be present, but for the day marked to remain the same 
+
+marking attendance takes forever., as in saving 
+
+the cards in mark attendance is abit misleading for admin , coz its not taking classes into account, maybe there should be overall for admin to show how much each class is contributing to attendance , which ones marked recently, how many times a class has been marked , a grapgh comparing attendance between classes , etc and stuff like that 
+
+
+i wonder if i need a view results page, also print report card should be possible
+
+total outstanding fees  , diff fees for diff classes  
+
+fees is not updating right away 
+
+classes, stream and grading arent actually being used  

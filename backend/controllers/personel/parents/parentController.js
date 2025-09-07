@@ -52,6 +52,12 @@ const getAllParents = async (req, res) => {
 
     let query = { role: "parent" };
 
+    console.log(requester.role)
+
+    if(requester.role !== 'admin' &&  requester.role !=='superadmin'){
+      return res.status(403).json({msg: 'Unauthorized'})
+    }
+
     if (requester.role === "admin") {
       query.school = requester.school; // school-specific parents
     }

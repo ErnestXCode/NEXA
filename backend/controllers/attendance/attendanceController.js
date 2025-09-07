@@ -31,7 +31,15 @@ exports.saveAttendance = async (req, res) => {
 
       const doc = await Attendance.findOneAndUpdate(
         { student: studentId, date: attendanceDate },
-        { student: studentId, classLevel: attendanceClassLevel, date: attendanceDate, status, reason, markedBy },
+        {
+          student: studentId,
+          classLevel: attendanceClassLevel,
+          school: requester.school,
+          date: attendanceDate,
+          status,
+          reason,
+          markedBy,
+        },
         { upsert: true, new: true }
       );
       results.push(doc);
@@ -39,7 +47,11 @@ exports.saveAttendance = async (req, res) => {
       if (notifyParents && status === "absent") {
         const student = await Student.findById(studentId).populate("guardian");
         if (student?.guardian) {
-          notificationService.notifyParent(student.guardian, student, attendanceDate);
+          notificationService.notifyParent(
+            student.guardian,
+            student,
+            attendanceDate
+          );
         }
       }
     }
@@ -63,7 +75,8 @@ exports.getAttendanceByDate = async (req, res) => {
     nextDay.setHours(23, 59, 59, 999);
 
     const attendanceRecords = await Attendance.find({
-      date: { $gte: filterDate, $lte: nextDay }
+      date: { $gte: filterDate, $lte: nextDay },
+      school: requester.school,
     });
 
     const studentFilter = {};
@@ -72,11 +85,15 @@ exports.getAttendanceByDate = async (req, res) => {
     }
     const students = await Student.find(studentFilter);
 
-    const data = students.map(s => {
-      const record = attendanceRecords.find(r => r.student.toString() === s._id.toString());
+    const data = students.map((s) => {
+      const record = attendanceRecords.find(
+        (r) => r.student.toString() === s._id.toString()
+      );
       return {
         ...s.toObject(),
-        attendance: record ? { status: record.status, reason: record.reason } : { status: "present", reason: "" }
+        attendance: record
+          ? { status: record.status, reason: record.reason }
+          : { status: "present", reason: "" },
       };
     });
 
@@ -98,7 +115,10 @@ exports.getStatsByRange = async (req, res) => {
     const end = new Date(endDate);
     end.setHours(23, 59, 59, 999);
 
-    const filter = { date: { $gte: start, $lte: end } };
+    const filter = {
+      date: { $gte: start, $lte: end },
+      school: requester.school,
+    };
     if (requester.role === "teacher" && requester.isClassTeacher) {
       filter.classLevel = requester.classLevel;
     }
@@ -132,7 +152,11 @@ exports.getAbsenteeListRange = async (req, res) => {
     since.setHours(0, 0, 0, 0);
 
     const requester = await User.findOne({ email: req.user.email });
-    const filter = { status: "absent", date: { $gte: since } };
+    const filter = {
+      status: "absent",
+      date: { $gte: since },
+      school: requester.school,
+    };
     if (requester.role === "teacher" && requester.isClassTeacher) {
       filter.classLevel = requester.classLevel;
     }

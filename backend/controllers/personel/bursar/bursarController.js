@@ -44,6 +44,10 @@ const getAllBursars = async (req, res) => {
 
     let query = { role: "bursar" };
 
+    if(requester.role !== 'admin' && requester.role !=='superadmin'){
+      return res.status(403).json({msg: 'Unauthorized'})
+    }
+
     if (requester.role === "admin") {
       query.school = requester.school; // school-specific bursars
     }
