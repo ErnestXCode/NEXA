@@ -43,7 +43,7 @@ const handleTokenRefresh = async (req, res) => {
     // ✅ Send back tokens
     res.cookie("jwt", newRefreshToken, {
       httpOnly: true,
-      sameSite: "Lax",
+      sameSite: process.env.SAMESITE_CONFIG,
       secure: process.env.NODE_ENV !== "dev",
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7d
     });

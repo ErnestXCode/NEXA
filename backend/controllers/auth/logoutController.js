@@ -20,7 +20,7 @@ const handleLogout = async (req, res) => {
     // Clear cookie
     res.clearCookie("jwt", {
       httpOnly: true,
-      sameSite: "Lax",
+      sameSite: process.env.SAMESITE_CONFIG,
       secure: process.env.NODE_ENV !== "dev",
     });
     res.sendStatus(204); // Success, no content

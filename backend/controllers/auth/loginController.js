@@ -3,7 +3,7 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 
 const handleLogin = async (req, res) => {
-  console.log('hit login')
+  console.log("hit login");
   const deviceInfo = req.headers["user-agent"] || "unknown device";
 
   const { email, password } = req.body;
@@ -42,13 +42,12 @@ const handleLogin = async (req, res) => {
   }
 
   await foundUser.save();
-  console.log('finished login', foundUser)
-
+  console.log("finished login", foundUser);
 
   res
     .cookie("jwt", refreshToken, {
       httpOnly: true,
-      sameSite: "Lax",
+      sameSite: process.env.SAMESITE_CONFIG,
       secure: process.env.NODE_ENV !== "dev",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     })

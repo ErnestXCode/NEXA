@@ -129,7 +129,7 @@ const handleRegister = async (req, res) => {
   res
     .cookie("jwt", refreshToken, {
       httpOnly: true,
-      sameSite: "Lax",
+      sameSite: process.env.SAMESITE_CONFIG,
       secure: process.env.NODE_ENV !== "dev",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     })
