@@ -48,7 +48,7 @@ const sendMessage = async (req, res) => {
 const getMessages = async (req, res) => {
   try {
     const { type } = req.query;
-    const filter = type ? { type } : {};
+    const filter = type ? { type , school: req.user.school} : {school: req.user.school};
     const messages = await Message.find(filter)
       .populate("sender", "name email role")
       .sort({ createdAt: -1 });

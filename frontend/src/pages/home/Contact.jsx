@@ -1,19 +1,8 @@
 import React, { useState } from "react";
 import { NavLink, Link } from "react-router-dom";
+import Feedback from "../feedback/Feedback";
 
 const Contact = () => {
-  const [form, setForm] = useState({ name: "", email: "", message: "" });
-
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    alert("Message sent! (backend not yet connected)");
-    setForm({ name: "", email: "", message: "" });
-  };
-
   return (
     <>
       <nav className="flex justify-between items-center px-6 py-4 bg-gray-900">
@@ -21,10 +10,18 @@ const Contact = () => {
           <h1 className="text-2xl font-bold text-white">Nexa</h1>
         </div>
         <ul className="hidden md:flex gap-6 text-gray-300">
-          <NavLink to="/" className="hover:text-white">Home</NavLink>
-          <NavLink to="/features" className="hover:text-white">Features</NavLink>
-          <NavLink to="/pricing" className="hover:text-white">Pricing</NavLink>
-          <NavLink to="/contact" className="hover:text-white">Contact</NavLink>
+          <NavLink to="/" className="hover:text-white">
+            Home
+          </NavLink>
+          <NavLink to="/features" className="hover:text-white">
+            Features
+          </NavLink>
+          <NavLink to="/pricing" className="hover:text-white">
+            Pricing
+          </NavLink>
+          <NavLink to="/contact" className="hover:text-white">
+            Contact
+          </NavLink>
         </ul>
         <Link
           to="/register"
@@ -44,60 +41,35 @@ const Contact = () => {
 
           {/* Mobile Links Row */}
           <div className="flex flex-row gap-4 mt-6 md:hidden justify-center px-4">
-            <NavLink to="/" className="text-white hover:text-gray-300 text-sm px-2">Home</NavLink>
-            <NavLink to="/features" className="text-white hover:text-gray-300 text-sm px-2">Features</NavLink>
-            <NavLink to="/pricing" className="text-white hover:text-gray-300 text-sm px-2">Pricing</NavLink>
-            <NavLink to="/contact" className="text-white hover:text-gray-300 text-sm px-2">Contact</NavLink>
+            <NavLink
+              to="/"
+              className="text-white hover:text-gray-300 text-sm px-2"
+            >
+              Home
+            </NavLink>
+            <NavLink
+              to="/features"
+              className="text-white hover:text-gray-300 text-sm px-2"
+            >
+              Features
+            </NavLink>
+            <NavLink
+              to="/pricing"
+              className="text-white hover:text-gray-300 text-sm px-2"
+            >
+              Pricing
+            </NavLink>
+            <NavLink
+              to="/contact"
+              className="text-white hover:text-gray-300 text-sm px-2"
+            >
+              Contact
+            </NavLink>
           </div>
         </section>
 
         {/* Contact Form */}
-        <section className="py-20 max-w-4xl mx-auto px-6">
-          <form
-            onSubmit={handleSubmit}
-            className="p-8 bg-gray-900 rounded-xl shadow border border-gray-800"
-          >
-            <div className="mb-6">
-              <label className="block mb-2 text-gray-300">Name</label>
-              <input
-                type="text"
-                name="name"
-                value={form.name}
-                onChange={handleChange}
-                className="w-full px-4 py-2 rounded-lg bg-black border border-gray-700 text-white focus:outline-none focus:border-gray-500"
-                required
-              />
-            </div>
-            <div className="mb-6">
-              <label className="block mb-2 text-gray-300">Email</label>
-              <input
-                type="email"
-                name="email"
-                value={form.email}
-                onChange={handleChange}
-                className="w-full px-4 py-2 rounded-lg bg-black border border-gray-700 text-white focus:outline-none focus:border-gray-500"
-                required
-              />
-            </div>
-            <div className="mb-6">
-              <label className="block mb-2 text-gray-300">Message</label>
-              <textarea
-                name="message"
-                value={form.message}
-                onChange={handleChange}
-                rows="5"
-                className="w-full px-4 py-2 rounded-lg bg-black border border-gray-700 text-white focus:outline-none focus:border-gray-500"
-                required
-              />
-            </div>
-            <button
-              type="submit"
-              className="px-6 py-3 bg-white text-black font-semibold rounded-lg shadow hover:bg-gray-200"
-            >
-              Send Message
-            </button>
-          </form>
-        </section>
+        <Feedback />
       </main>
     </>
   );

@@ -9,6 +9,19 @@ const RecordResultsPage = () => {
   const [selectedClass, setSelectedClass] = useState("");
   const [selectedSubject, setSelectedSubject] = useState("");
   const [results, setResults] = useState({});
+  const [isDesktop, setIsDesktop] = useState(true);
+
+  // 🔹 Check if user is on desktop
+  useEffect(() => {
+    const checkScreenSize = () => {
+      setIsDesktop(window.innerWidth >= 1024); // lg breakpoint ~ 1024px
+    };
+    checkScreenSize();
+    window.addEventListener("resize", checkScreenSize);
+    return () => window.removeEventListener("resize", checkScreenSize);
+  }, []);
+
+  // 🔹 If not desktop, block access
 
   // 🔹 Fetch exams & students (initial)
   useEffect(() => {
@@ -43,7 +56,9 @@ const RecordResultsPage = () => {
       }
       try {
         // calls the backend endpoint we added
-        const res = await api.get(`/schools/subjects/${encodeURIComponent(selectedClass)}`);
+        const res = await api.get(
+          `/schools/subjects/${encodeURIComponent(selectedClass)}`
+        );
         setSubjects(res.data?.subjects || []);
       } catch (err) {
         console.error("Failed to fetch subjects for class", err);
@@ -82,6 +97,18 @@ const RecordResultsPage = () => {
     fetchResults();
   }, [examId, selectedClass]);
 
+  if (!isDesktop) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen text-center p-6">
+        <h1 className="text-2xl font-bold mb-4">⚠️ Desktop Required</h1>
+        <p className="text-gray-300">
+          Recording results is only available on a desktop or laptop device.
+          Please switch to a larger screen for the best experience.
+        </p>
+      </div>
+    );
+  }
+
   const handleScoreChange = (studentId, subject, score) => {
     setResults((prev) => {
       const prevEntry = prev[studentId] || { subjects: [] };
@@ -110,7 +137,15 @@ const RecordResultsPage = () => {
         const total = subjectsArr.reduce((acc, s) => acc + (s.score || 0), 0);
         const average = subjectsArr.length ? total / subjectsArr.length : 0;
         const grade =
-          average >= 80 ? "A" : average >= 70 ? "B" : average >= 60 ? "C" : average >= 50 ? "D" : "E";
+          average >= 80
+            ? "A"
+            : average >= 70
+            ? "B"
+            : average >= 60
+            ? "C"
+            : average >= 50
+            ? "D"
+            : "E";
 
         return {
           studentId: id,
@@ -121,7 +156,11 @@ const RecordResultsPage = () => {
         };
       });
 
-      await api.post("/exams/results", { examId, studentResults, classLevel: selectedClass });
+      await api.post("/exams/results", {
+        examId,
+        studentResults,
+        classLevel: selectedClass,
+      });
       alert("Results saved!");
     } catch (err) {
       console.error(err);
@@ -129,8 +168,12 @@ const RecordResultsPage = () => {
     }
   };
 
-  const classLevels = [...new Set(students.map((s) => s.classLevel || "Unassigned"))];
-  const filteredStudents = students.filter((s) => selectedClass && s.classLevel === selectedClass);
+  const classLevels = [
+    ...new Set(students.map((s) => s.classLevel || "Unassigned")),
+  ];
+  const filteredStudents = students.filter(
+    (s) => selectedClass && s.classLevel === selectedClass
+  );
 
   return (
     <div className="p-6 space-y-6">
@@ -195,7 +238,8 @@ const RecordResultsPage = () => {
       {examId && selectedClass && (
         <div className="bg-gray-900 p-4 rounded-lg shadow overflow-auto">
           <h2 className="text-lg font-semibold mb-2">
-            {selectedClass} {selectedSubject ? `— ${selectedSubject}` : "— All Subjects"}
+            {selectedClass}{" "}
+            {selectedSubject ? `— ${selectedSubject}` : "— All Subjects"}
           </h2>
           <table className="min-w-full border border-gray-700 rounded-lg">
             <thead>
@@ -219,10 +263,23 @@ const RecordResultsPage = () => {
                 const studentResult = results[student._id] || { subjects: [] };
                 const subjectsArr = studentResult.subjects || [];
 
-                const total = subjectsArr.reduce((acc, s) => acc + (s.score || 0), 0);
-                const average = subjectsArr.length ? total / subjectsArr.length : 0;
+                const total = subjectsArr.reduce(
+                  (acc, s) => acc + (s.score || 0),
+                  0
+                );
+                const average = subjectsArr.length
+                  ? total / subjectsArr.length
+                  : 0;
                 const grade =
-                  average >= 80 ? "A" : average >= 70 ? "B" : average >= 60 ? "C" : average >= 50 ? "D" : "E";
+                  average >= 80
+                    ? "A"
+                    : average >= 70
+                    ? "B"
+                    : average >= 60
+                    ? "C"
+                    : average >= 50
+                    ? "D"
+                    : "E";
 
                 return (
                   <tr key={student._id} className="border-t border-gray-700">
@@ -235,9 +292,16 @@ const RecordResultsPage = () => {
                           type="number"
                           min="0"
                           max="100"
-                          value={subjectsArr.find((s) => s.name === selectedSubject)?.score ?? ""}
+                          value={
+                            subjectsArr.find((s) => s.name === selectedSubject)
+                              ?.score ?? ""
+                          }
                           onChange={(e) =>
-                            handleScoreChange(student._id, selectedSubject, Number(e.target.value))
+                            handleScoreChange(
+                              student._id,
+                              selectedSubject,
+                              Number(e.target.value)
+                            )
                           }
                           className="p-1 w-20 rounded bg-gray-800 text-white no-spinner"
                         />
@@ -249,8 +313,17 @@ const RecordResultsPage = () => {
                             type="number"
                             min="0"
                             max="100"
-                            value={subjectsArr.find((s) => s.name === subj)?.score ?? ""}
-                            onChange={(e) => handleScoreChange(student._id, subj, Number(e.target.value))}
+                            value={
+                              subjectsArr.find((s) => s.name === subj)?.score ??
+                              ""
+                            }
+                            onChange={(e) =>
+                              handleScoreChange(
+                                student._id,
+                                subj,
+                                Number(e.target.value)
+                              )
+                            }
                             className="p-1 w-20 rounded bg-gray-800 text-white no-spinner"
                           />
                         </td>

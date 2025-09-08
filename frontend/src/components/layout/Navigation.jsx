@@ -246,6 +246,14 @@ const Navigation = () => {
                 <NavLink
                   end
                   onClick={handleCloseSidenav}
+                  to="/feedback"
+                  className={`${navLinkClasses} mt-4`}
+                >
+                  Feedback
+                </NavLink>
+                <NavLink
+                  end
+                  onClick={handleCloseSidenav}
                   to="/dashboard/settings"
                   className={`${navLinkClasses} mt-4`}
                 >

@@ -1,11 +1,9 @@
 classes, stream and grading  
 attendance for class teahcers only 
 polish parents portal and make it mobile friendly
-view attendance for class teacher and on desktop only 
+
 record results to look better for mobile 
 complete email functionality 
 finish forgot passwords email 
 finish email for admin 
-
-
 
