@@ -6,6 +6,6 @@ record results to look better for mobile
 complete email functionality 
 finish forgot passwords email 
 finish email for admin 
-analytics for pages maybe google or vercel 
-input validation like phone numbers 
-report cards to look more descent
+
+
+

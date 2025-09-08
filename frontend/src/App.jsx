@@ -37,6 +37,7 @@ import AllParents from "./pages/actions/AllParents";
 import SchoolEditPage from "./pages/actions/SchoolEditPage";
 import SchoolSettings from "./pages/settings/SchoolSettings";
 import ReportCardsPage from "./pages/exams/ReportCardsPage";
+import Analytics from "./components/analytics/Analytics";
 const FeeHistoryWrapper = () => {
   const { studentId } = useParams();
   return <FeeHistory studentId={studentId} />;
@@ -46,6 +47,7 @@ function App() {
   return (
     <div className="bg-gray-950 text-white min-h-screen">
       <BrowserRouter>
+        <Analytics />
         <Routes>
           {/* Public routes */}
           <Route path="/" element={<Home />} />
@@ -84,7 +86,6 @@ function App() {
               <Route path="communication" element={<Communication />} />
               <Route path="communication/send" element={<SendMessageForm />} />
               <Route path="settings" element={<SchoolSettings />} />
-
 
               {/* Forms */}
               <Route path="createPersonel" element={<PersonelForm />} />

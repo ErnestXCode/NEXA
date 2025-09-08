@@ -68,22 +68,34 @@ const Register = () => {
           Create an Account
         </h2>
 
-        {["name", "email", "school", "phoneNumber"].map((field) => (
-          <div key={field} className="flex flex-col">
-            <label htmlFor={field} className="text-gray-300 font-medium">
-              {field === "phoneNumber" ? "Phone Number" : field.charAt(0).toUpperCase() + field.slice(1)}
-            </label>
-            <input
-              type={field === "email" ? "email" : "text"}
-              id={field}
-              name={field}
-              value={formData[field]}
-              onChange={handleChange}
-              className="bg-gray-800 text-white p-2 rounded-md focus:ring-2 focus:ring-gray-500"
-              placeholder={`Enter ${field === "phoneNumber" ? "phone number" : field}`}
-            />
-          </div>
-        ))}
+       {["name", "email", "school", "phoneNumber"].map((field) => (
+  <div key={field} className="flex flex-col">
+    <label htmlFor={field} className="text-gray-300 font-medium">
+      {field === "phoneNumber"
+        ? "Phone Number"
+        : field.charAt(0).toUpperCase() + field.slice(1)}
+    </label>
+    <input
+      type={field === "email" ? "email" : field === "phoneNumber" ? "tel" : "text"}
+      id={field}
+      name={field}
+      value={formData[field]}
+      onChange={handleChange}
+      className="bg-gray-800 text-white p-2 rounded-md focus:ring-2 focus:ring-gray-500"
+      placeholder={
+        field === "phoneNumber" ? "Enter phone e.g. 0789383985" : `Enter ${field}`
+      }
+      {...(field === "phoneNumber"
+        ? {
+            pattern: "^(07\\d{8}|01\\d{8})$",
+            maxLength: 10,
+            required: true,
+          }
+        : {})}
+    />
+  </div>
+))}
+
 
         {/* Password */}
         <div className="flex flex-col">
