@@ -17,34 +17,35 @@ const {
   getPersonnelById,
   updatePersonnel,
 } = require("../controllers/personel/personnelController");
-const { getAllParents, getParentById, updateParent, deleteParent } = require("../controllers/personel/parents/parentController");
+const {
+  getAllParents,
+  getParentById,
+  updateParent,
+  deleteParent,
+  getParentDashboard,
+} = require("../controllers/personel/parents/parentController");
 const router = express.Router();
 
-router
-  .route("/bursar")
-  .get(verifyJWT,  getAllBursars);
-router
-  .route("/teacher")
-  .get(verifyJWT,  getAllTeachers);
-router
-  .route("/parent")
-  .get(verifyJWT,  getAllParents);
+router.route("/bursar").get(verifyJWT, getAllBursars);
+router.route("/teacher").get(verifyJWT, getAllTeachers);
+router.route("/parent").get(verifyJWT, getAllParents);
 
+router.route("/parent/dashboard").get(verifyJWT, getParentDashboard);
 router
   .route("/parent/:id")
-  .get(verifyJWT,  getParentById)
-  .put(verifyJWT,  updateParent)
-  .delete(verifyJWT,  deleteParent);
+  .get(verifyJWT, getParentById)
+  .put(verifyJWT, updateParent)
+  .delete(verifyJWT, deleteParent);
 router
   .route("/bursar/:id")
-  .get(verifyJWT,  getBursarById)
-  .put(verifyJWT,  updateBursar)
-  .delete(verifyJWT,  deleteBursar);
+  .get(verifyJWT, getBursarById)
+  .put(verifyJWT, updateBursar)
+  .delete(verifyJWT, deleteBursar);
 router
   .route("/teacher/:id")
-  .get(verifyJWT,  getTeacherById)
-  .put(verifyJWT,  updateTeacher)
-  .delete(verifyJWT,  deleteTeacher);
+  .get(verifyJWT, getTeacherById)
+  .put(verifyJWT, updateTeacher)
+  .delete(verifyJWT, deleteTeacher);
 
 router.route("/id/:id").get(verifyJWT, getPersonnelById);
 router.route("/edit/:id").put(verifyJWT, updatePersonnel);

@@ -1,13 +1,14 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "../../api/axios";
 
-const SendMessageForm = ({ type }) => {
+const SendMessageForm = ({ type, mobile = false }) => {
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
   const [message, setMessage] = useState("");
 
   const queryClient = useQueryClient();
+  const textareaRef = useRef();
 
   const sendMessageMutation = useMutation({
     mutationFn: async (newMessage) => {
@@ -36,20 +37,28 @@ const SendMessageForm = ({ type }) => {
     sendMessageMutation.mutate({ subject, body, type });
   };
 
+  // Auto resize textarea on mobile
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+    }
+  }, [body]);
+
   return (
     <form
       onSubmit={handleSubmit}
-      className="bg-gray-900 rounded-lg shadow p-6 flex flex-col gap-4"
+      className={`flex flex-col gap-2 ${
+        mobile
+          ? "flex-row items-end w-full"
+          : "bg-gray-900 rounded-lg shadow p-6 flex-col"
+      }`}
     >
-      <h2 className="text-lg font-semibold mb-2">
-        {type === "chat" ? "Send Message" : "Send Email"}
-      </h2>
-
-      {type === "email" && (
+      {type === "email" && !mobile && (
         <input
           type="text"
           placeholder="Subject"
-          className="p-2 rounded bg-gray-800 text-white border border-gray-700 focus:ring-2 focus:ring-green-600 outline-none"
+          className="p-2 rounded bg-gray-800 text-white border border-gray-700 focus:ring-2 focus:ring-green-600 outline-none mb-2"
           value={subject}
           onChange={(e) => setSubject(e.target.value)}
           required
@@ -57,19 +66,21 @@ const SendMessageForm = ({ type }) => {
       )}
 
       <textarea
+        ref={textareaRef}
         placeholder={
-          type === "chat" ? "Write your message..." : "Write your email..."
+          type === "chat" ? "Type a message..." : "Write your email..."
         }
-        className="p-3 rounded bg-gray-800 text-white min-h-[120px] border border-gray-700 focus:ring-2 focus:ring-blue-600 outline-none"
+        className={`p-3 rounded bg-gray-800 text-white border border-gray-700 focus:ring-2 focus:ring-blue-600 outline-none resize-none ${
+          mobile ? "flex-1 h-10 min-h-[36px]" : "min-h-[120px]"
+        }`}
         value={body}
         onChange={(e) => setBody(e.target.value)}
-        required
       />
 
       <button
         type="submit"
         disabled={sendMessageMutation.isLoading}
-        className={`px-4 py-2 rounded font-semibold transition ${
+        className={`ml-2 px-4 py-2 rounded font-semibold transition ${
           type === "chat"
             ? "bg-blue-600 hover:bg-blue-700"
             : "bg-green-600 hover:bg-green-700"
@@ -78,11 +89,11 @@ const SendMessageForm = ({ type }) => {
         {sendMessageMutation.isLoading
           ? "Sending..."
           : type === "chat"
-          ? "Send Message"
+          ? "➤"
           : "Send Email"}
       </button>
 
-      {message && (
+      {message && !mobile && (
         <div
           className={`mt-2 p-2 rounded text-sm ${
             message.startsWith("✅")

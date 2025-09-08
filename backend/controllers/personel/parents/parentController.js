@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const User = require("../../../models/User");
+const Student = require("../../../models/Student");
 
 // Get parent by ID
 const getParentById = async (req, res) => {
@@ -73,8 +74,55 @@ const getAllParents = async (req, res) => {
   }
 };
 
+const getParentDashboard = async (req, res) => {
+  try {
+
+    // Get parent's children
+    const parent = await User.findOne({email : req.user.email}).populate({
+      path: "children",
+      select: "firstName lastName classLevel stream admissionNumber",
+    });
+
+    if (!parent || parent.role !== "parent") {
+      return res.status(404).json({ msg: "Parent not found" });
+    }
+
+    // Fetch detailed data for each child
+    const childrenData = await Promise.all(
+      parent.children.map(async (child) => {
+        const student = await Student.findById(child._id)
+          .select("-__v -createdAt -updatedAt")
+          .lean();
+
+        // Compute total fees paid and outstanding per term
+        const feesSummary = student.payments.reduce(
+          (acc, p) => {
+            if (p.category === "payment") acc.paid += p.amount;
+            else if (p.category === "adjustment") acc.adjustments += p.amount;
+            acc.total += p.amount;
+            return acc;
+          },
+          { paid: 0, adjustments: 0, total: 0 }
+        );
+
+        return {
+          ...student,
+          feesSummary,
+        };
+      })
+    );
+
+    res.status(200).json({ parent: parent._id, children: childrenData });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ msg: "Error fetching dashboard", error: err.message });
+  }
+};
+
+
 module.exports = {
   getParentById,
+  getParentDashboard,
   updateParent,
   deleteParent,
   getAllParents,

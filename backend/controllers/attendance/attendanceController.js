@@ -102,6 +102,7 @@ exports.getAttendanceByDate = async (req, res) => {
 };
 
 // --- Get stats by range ---
+// --- Get stats by range (daily trend) ---
 exports.getStatsByRange = async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
@@ -118,29 +119,18 @@ exports.getStatsByRange = async (req, res) => {
     }
 
     const records = await Attendance.aggregate([
-  { $match: filter },
-  {
-    $group: {
-      _id: { classLevel: "$classLevel", date: { $dateToString: { format: "%Y-%m-%d", date: "$date" } } },
-      present: { $sum: { $cond: [{ $eq: ["$status", "present"] }, 1, 0] } },
-      absent: { $sum: { $cond: [{ $eq: ["$status", "absent"] }, 1, 0] } },
-      late: { $sum: { $cond: [{ $eq: ["$status", "late"] }, 1, 0] } },
-      lastMarked: { $max: "$updatedAt" },
-    },
-  },
-  {
-    $group: {
-      _id: "$_id.classLevel",
-      present: { $sum: "$present" },
-      absent: { $sum: "$absent" },
-      late: { $sum: "$late" },
-      markCount: { $sum: 1 }, // <-- distinct days counted
-      lastMarked: { $max: "$lastMarked" },
-    },
-  },
-  { $sort: { _id: 1 } },
-]);
-
+      { $match: filter },
+      {
+        $group: {
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$date" } },
+          present: { $sum: { $cond: [{ $eq: ["$status", "present"] }, 1, 0] } },
+          absent: { $sum: { $cond: [{ $eq: ["$status", "absent"] }, 1, 0] } },
+          late: { $sum: { $cond: [{ $eq: ["$status", "late"] }, 1, 0] } },
+          lastMarked: { $max: "$updatedAt" },
+        },
+      },
+      { $sort: { _id: 1 } }, // sort by date
+    ]);
 
     res.json(records);
   } catch (err) {
@@ -148,6 +138,7 @@ exports.getStatsByRange = async (req, res) => {
     res.status(500).json({ msg: "Server error" });
   }
 };
+
 
 // --- Get chronic absentees ---
 exports.getAbsenteeListRange = async (req, res) => {

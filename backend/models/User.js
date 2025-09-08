@@ -16,7 +16,7 @@ const userSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "School",
       required: function () {
-        return this.role !== "superadmin"; 
+        return this.role !== "superadmin";
       },
     },
     children: [{ type: mongoose.Schema.Types.ObjectId, ref: "Student" }],
@@ -27,10 +27,12 @@ const userSchema = new mongoose.Schema(
     classLevel: { type: String }, // e.g., "Grade 5" if they are a class teacher
 
     refreshTokens: [{ token: String, createdAt: Date, deviceInfo: String }],
+    // models/User.js (add these inside userSchema)
+    resetPasswordToken: { type: String },
+    resetPasswordExpires: { type: Date },
   },
   { timestamps: true }
 );
-
 
 // Hash password before saving
 userSchema.pre("save", async function (next) {

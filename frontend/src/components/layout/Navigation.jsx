@@ -122,49 +122,55 @@ const Navigation = () => {
                   </NavLink>
                 </div>
 
-                <div className="mt-4">
-                  <h3 className="text-gray-400 uppercase text-xs mb-2">Lists</h3>
-                  <NavLink
-                    end
-                    onClick={handleCloseSidenav}
-                    to="/dashboard/teachers"
-                    className={navLinkClasses}
-                  >
-                    All Teachers
-                  </NavLink>
-                  <NavLink
-                    end
-                    onClick={handleCloseSidenav}
-                    to="/dashboard/bursars"
-                    className={navLinkClasses}
-                  >
-                    All Bursars
-                  </NavLink>
-                  <NavLink
-                    end
-                    onClick={handleCloseSidenav}
-                    to="/dashboard/students"
-                    className={navLinkClasses}
-                  >
-                    All Students
-                  </NavLink>
-                  <NavLink
-                    end
-                    onClick={handleCloseSidenav}
-                    to="/dashboard/parents"
-                    className={navLinkClasses}
-                  >
-                    All Parents
-                  </NavLink>
-                  <NavLink
-                    end
-                    onClick={handleCloseSidenav}
-                    to="/dashboard/schools"
-                    className={navLinkClasses}
-                  >
-                    All Schools
-                  </NavLink>
-                </div>
+                {/* Lists */}
+<div className="mt-4">
+  <h3 className="text-gray-400 uppercase text-xs mb-2">Lists</h3>
+  <NavLink
+    end
+    onClick={handleCloseSidenav}
+    to="/dashboard/teachers"
+    className={navLinkClasses}
+  >
+    All Teachers
+  </NavLink>
+  <NavLink
+    end
+    onClick={handleCloseSidenav}
+    to="/dashboard/bursars"
+    className={navLinkClasses}
+  >
+    All Bursars
+  </NavLink>
+  <NavLink
+    end
+    onClick={handleCloseSidenav}
+    to="/dashboard/students"
+    className={navLinkClasses}
+  >
+    All Students
+  </NavLink>
+  <NavLink
+    end
+    onClick={handleCloseSidenav}
+    to="/dashboard/parents"
+    className={navLinkClasses}
+  >
+    All Parents
+  </NavLink>
+  
+  {/* Only superadmin can see all schools */}
+  {role === "superadmin" && (
+    <NavLink
+      end
+      onClick={handleCloseSidenav}
+      to="/dashboard/schools"
+      className={navLinkClasses}
+    >
+      All Schools
+    </NavLink>
+  )}
+</div>
+
 
                 {/* Attendance */}
                 <div className="mt-4">

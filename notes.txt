@@ -1,1 +1,11 @@
-classes, stream and grading 
+classes, stream and grading  
+attendance for class teahcers only 
+polish parents portal and make it mobile friendly
+view attendance for class teacher and on desktop only 
+record results to look better for mobile 
+complete email functionality 
+finish forgot passwords email 
+finish email for admin 
+analytics for pages maybe google or vercel 
+input validation like phone numbers 
+report cards to look more descent

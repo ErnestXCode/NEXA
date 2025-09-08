@@ -1,4 +1,3 @@
-// src/pages/attendance/AttendancePage.jsx
 import React, { useState, useEffect } from "react";
 import api from "../../api/axios";
 
@@ -11,7 +10,7 @@ const AttendancePage = () => {
   const [records, setRecords] = useState({});
   const [notifyParents, setNotifyParents] = useState(false);
 
-  // Fetch students
+  // Fetch students when date or class changes
   useEffect(() => {
     const fetchStudents = async () => {
       try {
@@ -27,7 +26,7 @@ const AttendancePage = () => {
         const defaultClass = levels.length === 1 ? levels[0] : "";
         setSelectedClass(defaultClass);
 
-        // initialize records
+        // initialize records for that date
         const initialRecords = Object.fromEntries(
           allStudents.map((s) => [
             s._id,
@@ -42,6 +41,7 @@ const AttendancePage = () => {
         console.error("Error fetching students", err);
       }
     };
+
     fetchStudents();
   }, [date]);
 
@@ -77,7 +77,7 @@ const AttendancePage = () => {
       };
 
       await api.post("/attendance", payload);
-      alert("Attendance saved ✅");
+      alert(`Attendance saved for ${date} ✅`);
     } catch (err) {
       console.error("Error saving attendance", err);
       alert("Error saving attendance");
@@ -85,9 +85,10 @@ const AttendancePage = () => {
   };
 
   return (
-    <main className="p-6 bg-gray-950 min-h-screen text-white">
+    <main className="p-4 md:p-6 bg-gray-950 min-h-screen text-white">
       <h1 className="text-2xl font-bold mb-4">Mark Attendance</h1>
 
+      {/* Controls */}
       <div className="flex flex-wrap items-center gap-4 mb-6">
         <input
           type="date"
@@ -143,7 +144,8 @@ const AttendancePage = () => {
         </label>
       </div>
 
-      <div className="bg-gray-900 rounded-lg shadow overflow-x-auto">
+      {/* Desktop Table */}
+      <div className="hidden md:block bg-gray-900 rounded-lg shadow overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-gray-800">
             <tr>
@@ -170,7 +172,6 @@ const AttendancePage = () => {
                       {s.firstName} {s.lastName}
                     </td>
                     <td className="py-2 px-4">{s.classLevel}</td>
-
                     <td className="py-2 px-2 w-32 relative">
                       {showReason && (
                         <input
@@ -184,7 +185,6 @@ const AttendancePage = () => {
                         />
                       )}
                     </td>
-
                     <td className="py-2 px-2">
                       <select
                         value={records[s._id]?.status}
@@ -210,6 +210,52 @@ const AttendancePage = () => {
             )}
           </tbody>
         </table>
+      </div>
+
+      {/* Mobile Cards */}
+      <div className="md:hidden flex flex-col gap-4">
+        {filteredStudents.length > 0 ? (
+          filteredStudents.map((s) => {
+            const showReason =
+              records[s._id]?.status === "absent" ||
+              records[s._id]?.status === "late";
+            return (
+              <div
+                key={s._id}
+                className="bg-gray-900 rounded-lg shadow p-4 flex flex-col gap-2"
+              >
+                <div className="flex justify-between items-center">
+                  <span className="font-semibold">{s.firstName} {s.lastName}</span>
+                  <span className="text-gray-400 text-sm">{s.classLevel}</span>
+                </div>
+                {showReason && (
+                  <input
+                    type="text"
+                    value={records[s._id]?.reason || ""}
+                    onChange={(e) =>
+                      handleChange(s._id, "reason", e.target.value)
+                    }
+                    placeholder="Reason"
+                    className="border rounded px-2 py-1 bg-gray-800 text-white w-full"
+                  />
+                )}
+                <select
+                  value={records[s._id]?.status}
+                  onChange={(e) =>
+                    handleChange(s._id, "status", e.target.value)
+                  }
+                  className="border rounded px-2 py-1 bg-gray-800 text-white w-full"
+                >
+                  <option value="present">Present</option>
+                  <option value="absent">Absent</option>
+                  <option value="late">Late</option>
+                </select>
+              </div>
+            );
+          })
+        ) : (
+          <div className="text-center py-6 text-gray-400">No students found.</div>
+        )}
       </div>
     </main>
   );

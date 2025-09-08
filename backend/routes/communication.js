@@ -11,13 +11,13 @@ const router = express.Router();
 router.post(
   "/",
   verifyJWT,
-  authorize(["teacher", "admin", "bursar"]),
+  authorize(["teacher", "admin", "bursar", 'parent']),
   sendMessage
 );
 router.get(
   "/",
   verifyJWT,
-  authorize(["teacher", "admin", "bursar"]),
+  authorize(["teacher", "admin", "bursar", 'parent']),
   getMessages
 );
 
