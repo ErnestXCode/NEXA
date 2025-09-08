@@ -2,9 +2,10 @@
 import axios from "axios";
 import { logOut, setCredentials } from "../redux/slices/authSlice";
 import { store } from "../redux/store";
+const apiBaseUrl = import.meta.env.VITE_BACKEND_URL
 
 const api = axios.create({
-  baseURL: "http://localhost:5000/api",
+  baseURL: `${apiBaseUrl}/api`,
   withCredentials: true, // send cookies (refresh token)
 });
 
