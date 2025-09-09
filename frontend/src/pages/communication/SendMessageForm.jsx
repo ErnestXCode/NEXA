@@ -37,7 +37,6 @@ const SendMessageForm = ({ type, mobile = false }) => {
     sendMessageMutation.mutate({ subject, body, type });
   };
 
-  // Auto resize textarea on mobile
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
@@ -48,17 +47,17 @@ const SendMessageForm = ({ type, mobile = false }) => {
   return (
     <form
       onSubmit={handleSubmit}
-      className={`flex flex-col gap-2 ${
+      className={`flex gap-2 items-end ${
         mobile
-          ? "flex-row items-end w-full"
-          : "bg-gray-900 rounded-lg shadow p-6 flex-col"
+          ? "flex-row w-full"
+          : "flex-col bg-gray-900 rounded-2xl shadow-lg p-6"
       }`}
     >
       {type === "email" && !mobile && (
         <input
           type="text"
           placeholder="Subject"
-          className="p-2 rounded bg-gray-800 text-white border border-gray-700 focus:ring-2 focus:ring-green-600 outline-none mb-2"
+          className="w-full p-3 rounded-lg bg-gray-800 text-white border border-gray-700 focus:ring-2 focus:ring-green-600 outline-none mb-3"
           value={subject}
           onChange={(e) => setSubject(e.target.value)}
           required
@@ -67,11 +66,9 @@ const SendMessageForm = ({ type, mobile = false }) => {
 
       <textarea
         ref={textareaRef}
-        placeholder={
-          type === "chat" ? "Type a message..." : "Write your email..."
-        }
-        className={`p-3 rounded bg-gray-800 text-white border border-gray-700 focus:ring-2 focus:ring-blue-600 outline-none resize-none ${
-          mobile ? "flex-1 h-10 min-h-[36px]" : "min-h-[120px]"
+        placeholder={type === "chat" ? "Type a message..." : "Write your email..."}
+        className={`w-full p-3 rounded-lg bg-gray-800 text-white border border-gray-700 focus:ring-2 focus:ring-blue-600 outline-none resize-none ${
+          mobile ? "h-10 min-h-[36px]" : "min-h-[120px]"
         }`}
         value={body}
         onChange={(e) => setBody(e.target.value)}
@@ -80,7 +77,7 @@ const SendMessageForm = ({ type, mobile = false }) => {
       <button
         type="submit"
         disabled={sendMessageMutation.isLoading}
-        className={`ml-2 px-4 py-2 rounded font-semibold transition ${
+        className={`px-4 py-2 rounded-lg font-semibold transition-all ${
           type === "chat"
             ? "bg-blue-600 hover:bg-blue-700"
             : "bg-green-600 hover:bg-green-700"
@@ -95,7 +92,7 @@ const SendMessageForm = ({ type, mobile = false }) => {
 
       {message && !mobile && (
         <div
-          className={`mt-2 p-2 rounded text-sm ${
+          className={`mt-2 w-full p-2 rounded-lg text-sm ${
             message.startsWith("✅")
               ? "bg-green-700 text-green-100"
               : "bg-red-700 text-red-100"

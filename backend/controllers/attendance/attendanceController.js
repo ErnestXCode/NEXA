@@ -209,7 +209,8 @@ exports.getAbsenteeListRange = async (req, res) => {
 exports.getClassStats = async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
-    const requester = req.user
+    const requester = await User.findById(req.user.userId);
+
     if (!["admin", "superadmin"].includes(requester.role)) {
       return res.status(403).json({ msg: "Unauthorized" });
     }
@@ -221,12 +222,8 @@ exports.getClassStats = async (req, res) => {
 
     const filter = {
       date: { $gte: start, $lte: end },
-     
+      school: requester.school,
     };
-
-    if(requester.role !== 'superadmin'){
-       filter.school = requester.school
-    }
 
     const records = await Attendance.aggregate([
       { $match: filter },

@@ -3,12 +3,16 @@ import { useNavigate } from "react-router-dom";
 import api from "../../api/axios";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
-const SchoolSettings = () => {
+const SchoolSettings = ({ onNext }) => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   // Fetch logged-in school
-  const { data: schoolData, isLoading, isError } = useQuery({
+  const {
+    data: schoolData,
+    isLoading,
+    isError,
+  } = useQuery({
     queryKey: ["school", "me"],
     queryFn: async () => {
       const res = await api.get(`/schools/me`);
@@ -26,12 +30,13 @@ const SchoolSettings = () => {
     mutationFn: (updatedData) => api.put(`/schools/${school._id}`, updatedData),
     onSuccess: () => {
       queryClient.invalidateQueries(["school", "me"]);
-      navigate("/dashboard");
+      if (onNext) onNext();
     },
   });
 
   if (isLoading) return <p className="text-white p-6">Loading settings...</p>;
-  if (isError) return <p className="text-red-500 p-6">❌ Error fetching school</p>;
+  if (isError)
+    return <p className="text-red-500 p-6">❌ Error fetching school</p>;
   if (!school) return null;
 
   const handleChange = (e) => {
@@ -60,17 +65,26 @@ const SchoolSettings = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     updateMutation.mutate(school);
+    // if (onNext) onNext();
   };
 
   // --- Fee Rule helpers (already in your file) ---
   const addFeeRule = () => {
     const fromDefault = school.classLevels?.[0]?.name || "";
-    const toDefault = school.classLevels?.[school.classLevels.length - 1]?.name || fromDefault || "";
+    const toDefault =
+      school.classLevels?.[school.classLevels.length - 1]?.name ||
+      fromDefault ||
+      "";
     setSchool((prev) => ({
       ...prev,
       feeRules: [
         ...(prev.feeRules || []),
-        { fromClass: fromDefault, toClass: toDefault, term: "Term 1", amount: 0 },
+        {
+          fromClass: fromDefault,
+          toClass: toDefault,
+          term: "Term 1",
+          amount: 0,
+        },
       ],
     }));
   };
@@ -89,7 +103,10 @@ const SchoolSettings = () => {
   // --- Subjects by Class Range helpers (NEW) ---
   const addSubjectsRule = () => {
     const fromDefault = school.classLevels?.[0]?.name || "";
-    const toDefault = school.classLevels?.[school.classLevels.length - 1]?.name || fromDefault || "";
+    const toDefault =
+      school.classLevels?.[school.classLevels.length - 1]?.name ||
+      fromDefault ||
+      "";
     setSchool((prev) => ({
       ...prev,
       subjectsByClass: [
@@ -106,24 +123,23 @@ const SchoolSettings = () => {
   };
 
   const handleExport = async () => {
-  try {
-    const res = await api.get(`/schools/export/${school._id}`, {
-      responseType: "blob", // important for downloading files
-    });
+    try {
+      const res = await api.get(`/schools/export/${school._id}`, {
+        responseType: "blob", // important for downloading files
+      });
 
-    const blob = new Blob([res.data], { type: "application/zip" });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `school_${school.name}_data.zip`;
-    a.click();
-    window.URL.revokeObjectURL(url);
-  } catch (err) {
-    console.error(err);
-    alert("Failed to export school data.");
-  }
-};
-
+      const blob = new Blob([res.data], { type: "application/zip" });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `school_${school.name}_data.zip`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to export school data.");
+    }
+  };
 
   const addSubjectToRule = (idx, subject) => {
     if (!subject) return;
@@ -136,7 +152,9 @@ const SchoolSettings = () => {
 
   const removeSubjectFromRule = (idx, subject) => {
     const newRules = [...(school.subjectsByClass || [])];
-    newRules[idx].subjects = (newRules[idx].subjects || []).filter((s) => s !== subject);
+    newRules[idx].subjects = (newRules[idx].subjects || []).filter(
+      (s) => s !== subject
+    );
     setSchool((prev) => ({ ...prev, subjectsByClass: newRules }));
   };
 
@@ -148,7 +166,9 @@ const SchoolSettings = () => {
   return (
     <main className="min-h-screen flex items-start justify-center bg-gray-950 p-6">
       <div className="bg-gray-900 p-6 rounded-lg shadow-md w-full max-w-5xl">
-        <h1 className="text-xl font-semibold text-white mb-6">🏫 School Settings</h1>
+        <h1 className="text-xl font-semibold text-white mb-6">
+          🏫 School Settings
+        </h1>
         <form onSubmit={handleSubmit} className="space-y-10">
           {/* Basic Info */}
           <section>
@@ -230,22 +250,33 @@ const SchoolSettings = () => {
             </h2>
             <div className="space-y-3">
               {school.classLevels.map((cls, idx) => (
-                <div key={idx} className="bg-gray-800 p-3 rounded border border-gray-700">
+                <div
+                  key={idx}
+                  className="bg-gray-800 p-3 rounded border border-gray-700"
+                >
                   <div className="flex justify-between items-center mb-2">
                     <input
                       value={cls.name}
                       onChange={(e) => {
                         const newLevels = [...school.classLevels];
                         newLevels[idx].name = e.target.value;
-                        setSchool((prev) => ({ ...prev, classLevels: newLevels }));
+                        setSchool((prev) => ({
+                          ...prev,
+                          classLevels: newLevels,
+                        }));
                       }}
                       className="flex-1 mr-2 p-2 rounded bg-gray-700 text-white text-sm"
                     />
                     <button
                       type="button"
                       onClick={() => {
-                        const newLevels = school.classLevels.filter((_, i) => i !== idx);
-                        setSchool((prev) => ({ ...prev, classLevels: newLevels }));
+                        const newLevels = school.classLevels.filter(
+                          (_, i) => i !== idx
+                        );
+                        setSchool((prev) => ({
+                          ...prev,
+                          classLevels: newLevels,
+                        }));
                       }}
                       className="text-red-400 hover:text-red-600 text-sm"
                     >
@@ -264,10 +295,13 @@ const SchoolSettings = () => {
                           type="button"
                           onClick={() => {
                             const newLevels = [...school.classLevels];
-                            newLevels[idx].streams = newLevels[idx].streams.filter(
-                              (_, si) => si !== i
-                            );
-                            setSchool((prev) => ({ ...prev, classLevels: newLevels }));
+                            newLevels[idx].streams = newLevels[
+                              idx
+                            ].streams.filter((_, si) => si !== i);
+                            setSchool((prev) => ({
+                              ...prev,
+                              classLevels: newLevels,
+                            }));
                           }}
                           className="ml-1 text-xs text-red-200 hover:text-red-400"
                         >
@@ -283,7 +317,10 @@ const SchoolSettings = () => {
                           e.preventDefault();
                           const newLevels = [...school.classLevels];
                           newLevels[idx].streams.push(e.target.value.trim());
-                          setSchool((prev) => ({ ...prev, classLevels: newLevels }));
+                          setSchool((prev) => ({
+                            ...prev,
+                            classLevels: newLevels,
+                          }));
                           e.target.value = "";
                         }
                       }}
@@ -297,7 +334,10 @@ const SchoolSettings = () => {
                 onClick={() =>
                   setSchool((prev) => ({
                     ...prev,
-                    classLevels: [...prev.classLevels, { name: "New Class", streams: [] }],
+                    classLevels: [
+                      ...prev.classLevels,
+                      { name: "New Class", streams: [] },
+                    ],
                   }))
                 }
                 className="px-3 py-1 bg-gray-700 text-white rounded hover:bg-gray-600 text-sm"
@@ -318,9 +358,15 @@ const SchoolSettings = () => {
                   <tr>
                     <th className="px-3 py-2 border-b border-gray-700">Min</th>
                     <th className="px-3 py-2 border-b border-gray-700">Max</th>
-                    <th className="px-3 py-2 border-b border-gray-700">Grade</th>
-                    <th className="px-3 py-2 border-b border-gray-700">Remark</th>
-                    <th className="px-3 py-2 border-b border-gray-700">Action</th>
+                    <th className="px-3 py-2 border-b border-gray-700">
+                      Grade
+                    </th>
+                    <th className="px-3 py-2 border-b border-gray-700">
+                      Remark
+                    </th>
+                    <th className="px-3 py-2 border-b border-gray-700">
+                      Action
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -333,7 +379,10 @@ const SchoolSettings = () => {
                           onChange={(e) => {
                             const newGrades = [...school.gradingSystem];
                             newGrades[idx].min = Number(e.target.value);
-                            setSchool((prev) => ({ ...prev, gradingSystem: newGrades }));
+                            setSchool((prev) => ({
+                              ...prev,
+                              gradingSystem: newGrades,
+                            }));
                           }}
                           className="w-20 p-1 rounded bg-gray-800 text-white text-xs"
                         />
@@ -345,7 +394,10 @@ const SchoolSettings = () => {
                           onChange={(e) => {
                             const newGrades = [...school.gradingSystem];
                             newGrades[idx].max = Number(e.target.value);
-                            setSchool((prev) => ({ ...prev, gradingSystem: newGrades }));
+                            setSchool((prev) => ({
+                              ...prev,
+                              gradingSystem: newGrades,
+                            }));
                           }}
                           className="w-20 p-1 rounded bg-gray-800 text-white text-xs"
                         />
@@ -356,7 +408,10 @@ const SchoolSettings = () => {
                           onChange={(e) => {
                             const newGrades = [...school.gradingSystem];
                             newGrades[idx].grade = e.target.value;
-                            setSchool((prev) => ({ ...prev, gradingSystem: newGrades }));
+                            setSchool((prev) => ({
+                              ...prev,
+                              gradingSystem: newGrades,
+                            }));
                           }}
                           className="w-20 p-1 rounded bg-gray-800 text-white text-xs"
                         />
@@ -367,7 +422,10 @@ const SchoolSettings = () => {
                           onChange={(e) => {
                             const newGrades = [...school.gradingSystem];
                             newGrades[idx].remark = e.target.value;
-                            setSchool((prev) => ({ ...prev, gradingSystem: newGrades }));
+                            setSchool((prev) => ({
+                              ...prev,
+                              gradingSystem: newGrades,
+                            }));
                           }}
                           className="w-28 p-1 rounded bg-gray-800 text-white text-xs"
                         />
@@ -376,8 +434,13 @@ const SchoolSettings = () => {
                         <button
                           type="button"
                           onClick={() => {
-                            const newGrades = school.gradingSystem.filter((_, i) => i !== idx);
-                            setSchool((prev) => ({ ...prev, gradingSystem: newGrades }));
+                            const newGrades = school.gradingSystem.filter(
+                              (_, i) => i !== idx
+                            );
+                            setSchool((prev) => ({
+                              ...prev,
+                              gradingSystem: newGrades,
+                            }));
                           }}
                           className="text-red-400 hover:text-red-600 text-xs"
                         >
@@ -414,14 +477,19 @@ const SchoolSettings = () => {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {school.feeExpectations.map((fee, idx) => (
                 <div key={idx} className="bg-gray-800 p-3 rounded">
-                  <label className="block text-gray-400 text-xs mb-1">{fee.term}</label>
+                  <label className="block text-gray-400 text-xs mb-1">
+                    {fee.term}
+                  </label>
                   <input
                     type="number"
                     value={fee.amount}
                     onChange={(e) => {
                       const newFees = [...school.feeExpectations];
                       newFees[idx].amount = Number(e.target.value);
-                      setSchool((prev) => ({ ...prev, feeExpectations: newFees }));
+                      setSchool((prev) => ({
+                        ...prev,
+                        feeExpectations: newFees,
+                      }));
                     }}
                     className="w-full p-2 rounded bg-gray-700 text-white text-sm"
                   />
@@ -443,7 +511,9 @@ const SchoolSettings = () => {
                 >
                   <select
                     value={rule.fromClass}
-                    onChange={(e) => updateFeeRule(idx, "fromClass", e.target.value)}
+                    onChange={(e) =>
+                      updateFeeRule(idx, "fromClass", e.target.value)
+                    }
                     className="p-2 rounded bg-gray-700 text-white text-sm"
                   >
                     {school.classLevels && school.classLevels.length ? (
@@ -459,7 +529,9 @@ const SchoolSettings = () => {
 
                   <select
                     value={rule.toClass}
-                    onChange={(e) => updateFeeRule(idx, "toClass", e.target.value)}
+                    onChange={(e) =>
+                      updateFeeRule(idx, "toClass", e.target.value)
+                    }
                     className="p-2 rounded bg-gray-700 text-white text-sm"
                   >
                     {school.classLevels && school.classLevels.length ? (
@@ -486,7 +558,9 @@ const SchoolSettings = () => {
                   <input
                     type="number"
                     value={rule.amount}
-                    onChange={(e) => updateFeeRule(idx, "amount", Number(e.target.value))}
+                    onChange={(e) =>
+                      updateFeeRule(idx, "amount", Number(e.target.value))
+                    }
                     placeholder="Fee Amount"
                     className="p-2 rounded bg-gray-700 text-white text-sm"
                   />
@@ -525,7 +599,9 @@ const SchoolSettings = () => {
                   <div className="grid grid-cols-1 sm:grid-cols-4 gap-2 mb-2 items-center">
                     <select
                       value={rule.fromClass}
-                      onChange={(e) => updateSubjectsRule(idx, "fromClass", e.target.value)}
+                      onChange={(e) =>
+                        updateSubjectsRule(idx, "fromClass", e.target.value)
+                      }
                       className="p-2 rounded bg-gray-700 text-white text-sm"
                     >
                       {school.classLevels && school.classLevels.length ? (
@@ -541,7 +617,9 @@ const SchoolSettings = () => {
 
                     <select
                       value={rule.toClass}
-                      onChange={(e) => updateSubjectsRule(idx, "toClass", e.target.value)}
+                      onChange={(e) =>
+                        updateSubjectsRule(idx, "toClass", e.target.value)
+                      }
                       className="p-2 rounded bg-gray-700 text-white text-sm"
                     >
                       {school.classLevels && school.classLevels.length ? (
@@ -582,7 +660,10 @@ const SchoolSettings = () => {
 
                   <div className="flex flex-wrap gap-2">
                     {(rule.subjects || []).map((s, si) => (
-                      <span key={si} className="bg-indigo-600 text-white px-2 py-1 rounded-full text-sm flex items-center gap-2">
+                      <span
+                        key={si}
+                        className="bg-indigo-600 text-white px-2 py-1 rounded-full text-sm flex items-center gap-2"
+                      >
                         {s}
                         <button
                           type="button"
@@ -594,7 +675,9 @@ const SchoolSettings = () => {
                       </span>
                     ))}
                     {(rule.subjects || []).length === 0 && (
-                      <div className="text-gray-400 text-sm">No subjects set for this range</div>
+                      <div className="text-gray-400 text-sm">
+                        No subjects set for this range
+                      </div>
                     )}
                   </div>
                 </div>
@@ -616,40 +699,45 @@ const SchoolSettings = () => {
               Optional Modules
             </h2>
             <div className="flex flex-wrap gap-4">
-              {["exams", "attendance", "feeTracking", "communication"].map((mod) => (
-                <label key={mod} className="flex items-center gap-2 text-gray-300">
-                  <input
-                    type="checkbox"
-                    name={mod}
-                    checked={school.modules?.[mod] || false}
-                    onChange={(e) =>
-                      setSchool((prev) => ({
-                        ...prev,
-                        modules: { ...prev.modules, [mod]: e.target.checked },
-                      }))
-                    }
-                  />
-                  {mod.charAt(0).toUpperCase() + mod.slice(1)}
-                </label>
-              ))}
+              {["exams", "attendance", "feeTracking", "communication"].map(
+                (mod) => (
+                  <label
+                    key={mod}
+                    className="flex items-center gap-2 text-gray-300"
+                  >
+                    <input
+                      type="checkbox"
+                      name={mod}
+                      checked={school.modules?.[mod] || false}
+                      onChange={(e) =>
+                        setSchool((prev) => ({
+                          ...prev,
+                          modules: { ...prev.modules, [mod]: e.target.checked },
+                        }))
+                      }
+                    />
+                    {mod.charAt(0).toUpperCase() + mod.slice(1)}
+                  </label>
+                )
+              )}
             </div>
           </section>
 
           <button
-    type="button"
-    onClick={handleExport}
-    className="w-full py-2 mb-3 rounded bg-green-600 text-white font-medium text-sm hover:bg-green-500"
-  >
-    ⬇️ Export School Data
-  </button>
+            type="button"
+            onClick={handleExport}
+            className="w-full py-2 mb-3 rounded bg-green-600 text-white font-medium text-sm hover:bg-green-500"
+          >
+            ⬇️ Export School Data
+          </button>
 
-  {/* Save Settings Button */}
-  <button
-    type="submit"
-    className="w-full py-2 rounded bg-blue-600 text-white font-medium text-sm hover:bg-blue-500"
-  >
-    💾 Save Settings
-  </button>
+          {/* Save Settings Button */}
+          <button
+            type="submit"
+            className="w-full py-2 rounded bg-blue-600 text-white font-medium text-sm hover:bg-blue-500"
+          >
+            💾 Save Settings
+          </button>
         </form>
       </div>
     </main>

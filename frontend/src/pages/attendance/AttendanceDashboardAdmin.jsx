@@ -3,6 +3,8 @@ import api from "../../api/axios";
 import {
   LineChart,
   Line,
+  BarChart,
+  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -133,49 +135,82 @@ const AttendanceDashboardAdmin = () => {
         ))}
       </div>
 
-      {/* Comparison chart */}
+      {/* Comparison chart (Line + Bar) */}
       <div className="bg-gray-950 shadow-xl rounded-2xl p-6 mt-6">
         <h2 className="text-xl font-semibold mb-4 border-b border-gray-900 pb-2">Class Comparison</h2>
-        <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={comparisonData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-            <XAxis dataKey="classLevel" stroke="#ccc" />
-            <YAxis stroke="#ccc" />
-            <Tooltip />
-            <Legend />
-            <Line type="monotone" dataKey="present" stroke="#4CAF50" />
-            <Line type="monotone" dataKey="absent" stroke="#F44336" />
-            <Line type="monotone" dataKey="late" stroke="#FFC107" />
-          </LineChart>
-        </ResponsiveContainer>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Line Chart */}
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart data={comparisonData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+              <XAxis dataKey="classLevel" stroke="#ccc" />
+              <YAxis stroke="#ccc" />
+              <Tooltip />
+              <Legend />
+              <Line type="monotone" dataKey="present" stroke="#4CAF50" />
+              <Line type="monotone" dataKey="absent" stroke="#F44336" />
+              <Line type="monotone" dataKey="late" stroke="#FFC107" />
+            </LineChart>
+          </ResponsiveContainer>
+
+          {/* Bar Chart */}
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={comparisonData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+              <XAxis dataKey="classLevel" stroke="#ccc" />
+              <YAxis stroke="#ccc" />
+              <Tooltip />
+              <Legend />
+              <Bar dataKey="present" fill="#4CAF50" />
+              <Bar dataKey="absent" fill="#F44336" />
+              <Bar dataKey="late" fill="#FFC107" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
       </div>
 
-      {/* Avg attendance per day + mark count */}
+      {/* Avg attendance per day + mark count (Line + Bar) */}
       <div className="bg-gray-950 shadow-xl rounded-2xl p-6 mt-6">
         <h2 className="text-xl font-semibold mb-4 border-b border-gray-900 pb-2">
           Average Attendance & Days Marked
         </h2>
-        <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={avgData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-            <XAxis dataKey="classLevel" stroke="#ccc" />
-            <YAxis stroke="#ccc" />
-            <Tooltip />
-            <Legend />
-            <Line
-              type="monotone"
-              dataKey="avgPerDay"
-              stroke="#4CAF50"
-              name="Avg Attendance"
-            />
-            <Line
-              type="monotone"
-              dataKey="markCount"
-              stroke="#2196F3"
-              name="Days Marked"
-            />
-          </LineChart>
-        </ResponsiveContainer>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Line Chart */}
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart data={avgData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+              <XAxis dataKey="classLevel" stroke="#ccc" />
+              <YAxis stroke="#ccc" />
+              <Tooltip />
+              <Legend />
+              <Line
+                type="monotone"
+                dataKey="avgPerDay"
+                stroke="#4CAF50"
+                name="Avg Attendance"
+              />
+              <Line
+                type="monotone"
+                dataKey="markCount"
+                stroke="#2196F3"
+                name="Days Marked"
+              />
+            </LineChart>
+          </ResponsiveContainer>
+
+          {/* Bar Chart */}
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={avgData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+              <XAxis dataKey="classLevel" stroke="#ccc" />
+              <YAxis stroke="#ccc" />
+              <Tooltip />
+              <Legend />
+              <Bar dataKey="avgPerDay" fill="#4CAF50" name="Avg Attendance" />
+              <Bar dataKey="markCount" fill="#2196F3" name="Days Marked" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
       </div>
     </div>
   );

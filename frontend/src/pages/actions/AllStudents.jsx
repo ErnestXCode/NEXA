@@ -128,13 +128,15 @@ const AllStudents = () => {
             <th className="p-2 text-left text-white">Gender</th>
             <th className="p-2 text-left text-white">DOB</th>
             <th className="p-2 text-left text-white">Class</th>
+            <th className="p-2 text-left text-white">Guardian Name</th>
+            <th className="p-2 text-left text-white">Guardian Email</th>
+            <th className="p-2 text-left text-white">Guardian Phone</th>
             <th className="p-2 text-left text-white">Actions</th>
           </tr>
         </thead>
         <tbody>
           {filteredStudents.length > 0 ? (
             filteredStudents.map((s, i) => {
-              if( s.firstName === 'Susan'  && s.lastName === 'Jackson') console.log(s.guardian)
               return <tr
                 key={s._id || i}
                 className={`${i % 2 === 0 ? "bg-gray-950" : "bg-gray-900"} hover:bg-gray-850 transition`}
@@ -144,6 +146,9 @@ const AllStudents = () => {
                 <td className="p-2 text-white">{s.gender}</td>
                 <td className="p-2 text-white">{formatDate(s.dateOfBirth)}</td>
                 <td className="p-2 text-white">{s.classLevel}</td>
+                <td className="p-2 text-white">{s.guardian?.name}</td>
+                <td className="p-2 text-white">{s.guardian?.email}</td>
+                <td className="p-2 text-white">{s.guardian?.phoneNumber}</td>
         
                 <td className="p-2 flex gap-2">
                   <button onClick={() => handleEdit(s._id)} className="px-3 py-1 rounded border border-gray-700 text-gray-200 hover:bg-gray-800 transition">

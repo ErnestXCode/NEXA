@@ -75,42 +75,41 @@ const isClassInRange = (className, fromClass, toClass, allClasses = []) => {
 };
 
 // NEW: Get subjects for a specific class (uses subjectsByClass rules if present)
-// URL: GET /schools/subjects/:classLevel
+// GET /schools/subjects/:classLevel
 const getSubjectsForClass = async (req, res) => {
   try {
-    const classLevel = req.params.classLevel;
-    // prefer the requester's school if available
-    const schoolId = req.user?.school;
-    const school = await School.findById(schoolId)
+    const school = await School.findById(req.user.school);
     if (!school) return res.status(404).json({ msg: "School not found" });
 
-    // find matched subjects rules
-    let matched = [];
-    if (Array.isArray(school.subjectsByClass) && school.subjectsByClass.length) {
-      matched = school.subjectsByClass.filter((rule) =>
-        isClassInRange(classLevel, rule.fromClass, rule.toClass, school.classLevels || [])
-      );
+    const { classLevel } = req.params;
+    const cls = school.classLevels.find(c => c.name === classLevel);
+    if (!cls) return res.status(404).json({ msg: "Class not found" });
+
+    // 1️⃣ Collect subjects: class-specific + by-range + global
+    const subjectsByRange = school.subjectsByClass.filter(r =>
+      isClassInRange(classLevel, r.fromClass, r.toClass, school.classLevels)
+    );
+    let subjects = Array.from(new Set([
+      ...(cls.subjects || []),
+      ...(subjectsByRange.flatMap(r => r.subjects || [])),
+      ...(school.subjects || [])
+    ]));
+
+    // 2️⃣ Restrict for teachers
+    if (req.user.role === "teacher") {
+      const teacher = await User.findById(req.user.userId);
+      if (teacher && teacher.subjects.length > 0) {
+        subjects = subjects.filter(s => teacher.subjects.includes(s));
+      }
     }
 
-    // if matched, merge all subject arrays (unique)
-    if (matched.length) {
-      const combined = Array.from(new Set(matched.flatMap((m) => m.subjects || [])));
-      return res.status(200).json({ subjects: combined });
-    }
-
-    // fallback to class-level subjects (if you store them per-class) OR global subjects
-    const classDef = (school.classLevels || []).find((c) => c.name === classLevel);
-    if (classDef && classDef.subjects && classDef.subjects.length) {
-      return res.status(200).json({ subjects: classDef.subjects });
-    }
-
-    // final fallback: school.subjects
-    return res.status(200).json({ subjects: school.subjects || [] });
+    res.json({ subjects });
   } catch (err) {
-    console.error(err);
+    console.error("Error fetching subjects for class", err);
     res.status(500).json({ msg: "Error fetching subjects", error: err.message });
   }
 };
+
 
 module.exports = {
   getAllSchools,

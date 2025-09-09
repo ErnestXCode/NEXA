@@ -1,80 +1,155 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Generate Excel Files</title>
+  <meta charset="utf-8" />
+  <title>Generate Students & Parents XLSX</title>
+  <!-- SheetJS -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <style>
+    body { font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; background:#0f1724; color:#e6eef8; display:flex; flex-direction:column; align-items:center; padding:40px; }
+    .card { background:#0b1220; padding:20px; border-radius:8px; box-shadow:0 6px 20px rgba(2,6,23,0.6); width:760px; }
+    h1 { margin:0 0 12px 0; font-size:20px; }
+    p { margin:6px 0 12px 0; color:#9fb0c8; }
+    button { padding:10px 14px; margin-right:8px; border-radius:6px; border:0; cursor:pointer; font-weight:600; }
+    .btn-students { background: #10b981; color:white; }
+    .btn-parents { background: #3b82f6; color:white; }
+    .note { font-size:13px; color:#9fb0c8; margin-top:12px; }
+  </style>
 </head>
 <body>
-  <h2>Generate Students & Parents Excel</h2>
-  <button onclick="downloadStudents()">Download Students Excel</button>
-  <button onclick="downloadParents()">Download Parents Excel</button>
+  <div class="card">
+    <h1>Generate test Excel files</h1>
+    <p>Click to generate two Excel files: <strong>students.xlsx</strong> and <strong>parents.xlsx</strong>.</p>
+    <div>
+      <button class="btn-students" onclick="downloadStudents()">⬇️ Download students.xlsx (200)</button>
+      <button class="btn-parents" onclick="downloadParents()">⬇️ Download parents.xlsx (150)</button>
+    </div>
+    <p class="note">Workflow: import <em>students.xlsx</em> into your app first. Then import <em>parents.xlsx</em> — each parent has a <code>children</code> column with comma-separated student full names (first + last) matching the students file.</p>
+  </div>
 
-  <script>
-    function randomName() {
-      const firstNames = ["John", "Mary", "James", "Grace", "Peter", "Lucy", "Michael", "Sarah", "David", "Emily"];
-      const lastNames = ["Omondi", "Mwangi", "Kamau", "Njoroge", "Atieno", "Otieno", "Koech", "Mutiso", "Wanjiku", "Odhiambo"];
-      return firstNames[Math.floor(Math.random() * firstNames.length)] + " " +
-             lastNames[Math.floor(Math.random() * lastNames.length)];
+<script>
+/* ----------------- Utilities ----------------- */
+function randChoice(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+function pad(n, width=2){ return String(n).padStart(width,'0'); }
+function randomDateISO(startYear, endYear){
+  const year = Math.floor(Math.random() * (endYear - startYear + 1)) + startYear;
+  const month = Math.floor(Math.random()*12) + 1;
+  const day = Math.floor(Math.random()*28) + 1;
+  return `${year}-${pad(month)}-${pad(day)}`;
+}
+function uniquePhone(existing){
+  let p;
+  do { p = '07' + Math.floor(10000000 + Math.random()*90000000); } while(existing.has(p));
+  existing.add(p);
+  return p;
+}
+function uniqueEmail(prefix, i, existing){
+  let e;
+  do { e = `${prefix}${i}@example.com`; i++; } while(existing.has(e));
+  existing.add(e);
+  return e;
+}
+
+/* ----------------- Name pools ----------------- */
+const firstNames = ["James","Mary","John","Patricia","Robert","Linda","Michael","Barbara","William","Elizabeth",
+  "David","Jennifer","Richard","Maria","Joseph","Susan","Thomas","Margaret","Charles","Dorothy","George","Ann","Paul","Grace","Peter","Lucy","Daniel","Aisha","Kevin","Karen"];
+const middleNames = ["A.","Lee","M.","K.","N.","T.","J.","L.","R.","S.","O.","B.","C.","D.","F."];
+const lastNames = ["Omondi","Mwangi","Kamau","Njoroge","Atieno","Otieno","Koech","Mutiso","Wanjiku","Odhiambo",
+  "Kimani","Ngugi","Mbiti","Gitau","Mugo","Wainaina","Kariuki","Mwenda","Ochieng","Kiptoo","Kibwana","Ruto","Wanyama","Maina","Lagat"];
+const classLevels = ["PP1","PP2","Grade 1","Grade 2","Grade 3","Grade 4","Grade 5","Grade 6","Grade 7","Grade 8","Grade 9","Grade 10"];
+const genders = ["male","female"];
+
+/* ----------------- Generate students array ----------------- */
+function generateStudents(count=200){
+  const students = [];
+  const emails = new Set();
+  const phones = new Set();
+  for(let i=1;i<=count;i++){
+    const first = randChoice(firstNames);
+    const middle = randChoice(middleNames);
+    const last = randChoice(lastNames);
+    const gender = randChoice(genders);
+    // realistic date range for school children (age ~5-18)
+    const dob = randomDateISO(2005, 2019);
+    const classLevel = randChoice(classLevels);
+    // optional admission id
+    const admissionNumber = `S${String(10000 + i)}`;
+    // store as plain student row
+    students.push({
+      admissionNumber,
+      firstName: first,
+      middleName: middle,
+      lastName: last,
+      gender,
+      dateOfBirth: dob,
+      classLevel
+    });
+  }
+  return students;
+}
+
+/* ----------------- Generate parents array that uses student names ----------------- */
+function generateParents(students, count=150){
+  const parents = [];
+  const usedEmails = new Set();
+  const usedPhones = new Set();
+  // build array of "First Last" for assignment
+  const fullNames = students.map(s => `${s.firstName} ${s.lastName}`);
+  for(let i=1;i<=count;i++){
+    // create unique email/phone
+    const email = uniqueEmail('koko', i, usedEmails);
+    const phone = uniquePhone(usedPhones);
+    // parent name
+    const pFirst = randChoice(firstNames);
+    const pLast = randChoice(lastNames);
+    const pName = `${pFirst} ${pLast}`;
+    // assign 1-3 children by picking random indices and dedup
+    const numChildren = Math.floor(Math.random()*3) + 1;
+    const assigned = new Set();
+    while(assigned.size < numChildren){
+      assigned.add(randChoice(fullNames));
     }
+    // create comma-separated children list (exactly matches students file first+last)
+    const childrenCSV = Array.from(assigned).join(', ');
+    parents.push({
+      name: pName,
+      email,
+      phoneNumber: phone,
+      role: "parent",
+      password: "Password123!",
+      children: childrenCSV
+    });
+  }
+  return parents;
+}
 
-    function randomEmail(i) {
-      return `sodddmi${i}@example.com`;
-    }
+/* ----------------- XLSX download helpers ----------------- */
+function downloadXLSXFromJSON(jsonArray, filename, sheetName='Sheet1'){
+  const ws = XLSX.utils.json_to_sheet(jsonArray);
+  // Force date cells (if date strings) - optional: keep as strings for easy matching
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, sheetName);
+  XLSX.writeFile(wb, filename);
+}
 
-    function randomPhone(i) {
-      return `07${Math.floor(10000000 + Math.random() * 89999999)}`;
-    }
+/* ----------------- Export functions ----------------- */
+let lastGeneratedStudents = null;
+function downloadStudents(){
+  lastGeneratedStudents = generateStudents(200);
+  // Download students.xlsx
+  // Header order: admissionNumber, firstName, middleName, lastName, gender, dateOfBirth, classLevel
+  downloadXLSXFromJSON(lastGeneratedStudents, 'students.xlsx', 'Students');
+  alert('students.xlsx (200) generated. Import this first in your app.');
+}
 
-    function randomGender() {
-      return Math.random() > 0.5 ? "male" : "female";
-    }
-
-    function randomClass() {
-      const levels = ["PP1", "PP2", "Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6"];
-      return levels[Math.floor(Math.random() * levels.length)];
-    }
-
-    // 📘 Generate Students Excel
-    function downloadStudents() {
-      let students = [];
-      for (let i = 1; i <= 100; i++) {
-        const fullName = randomName().split(" ");
-        students.push({
-          firstName: fullName[0],
-          middleName: "M.",
-          lastName: fullName[1],
-          gender: randomGender(),
-          dateOfBirth: `200${Math.floor(Math.random()*10)}-0${Math.floor(Math.random()*9+1)}-1${Math.floor(Math.random()*9)}`,
-          classLevel: randomClass()
-        });
-      }
-
-      const ws = XLSX.utils.json_to_sheet(students);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Students");
-      XLSX.writeFile(wb, "students.xlsx");
-    }
-
-    // 📘 Generate Parents Excel
-    function downloadParents() {
-      let parents = [];
-      for (let i = 1; i <= 80; i++) {
-        parents.push({
-          name: randomName(),
-          email: randomEmail(i),
-          phoneNumber: randomPhone(i),
-          role: "parent",
-          password: "password123",
-          children: `Student${(i % 100) + 1},Student${((i+1) % 100) + 1}`
-        });
-      }
-
-      const ws = XLSX.utils.json_to_sheet(parents);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Parents");
-      XLSX.writeFile(wb, "parents.xlsx");
-    }
-  </script>
+function downloadParents(){
+  // If students not generated in this page, generate one so names match.
+  // But note: if you already imported different students into your DB, the frontend will match by name.
+  if(!lastGeneratedStudents) lastGeneratedStudents = generateStudents(200);
+  const parents = generateParents(lastGeneratedStudents, 150);
+  downloadXLSXFromJSON(parents, 'parents.xlsx', 'Parents');
+  alert('parents.xlsx (150) generated. Children are comma-separated full names matching students.xlsx.');
+}
+</script>
 </body>
 </html>

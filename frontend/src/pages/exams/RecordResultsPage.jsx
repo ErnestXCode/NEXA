@@ -24,49 +24,34 @@ const RecordResultsPage = () => {
   // 🔹 If not desktop, block access
 
   // 🔹 Fetch exams & students (initial)
-  useEffect(() => {
-    const fetchExams = async () => {
-      try {
-        const res = await api.get("/exams");
-        setExams(res.data?.exams || res.data || []);
-      } catch (err) {
-        console.error("Failed to fetch exams", err);
-      }
-    };
+  // 🔹 Fetch exams & students (initial)
+useEffect(() => {
+  const fetchExams = async () => {
+    try {
+      const res = await api.get("/exams");
+      setExams(res.data?.exams || res.data || []);
+    } catch (err) {
+      console.error("Failed to fetch exams", err);
+    }
+  };
 
-    const fetchStudents = async () => {
-      try {
-        const res = await api.get("/students");
-        setStudents(res.data || []);
-      } catch (err) {
-        console.error("Failed to fetch students", err);
-      }
-    };
+  const fetchStudents = async () => {
+    try {
+      const res = await api.get("/students/students-with-subjects");
+      setStudents(res.data?.students || []);
+      setSubjects(res.data?.subjects || []);
+    } catch (err) {
+      console.error("Failed to fetch students", err);
+    }
+  };
 
-    fetchExams();
-    fetchStudents();
-  }, []);
+  fetchExams();
+  fetchStudents();
+}, []);
+
 
   // 🔹 Fetch subjects for selected class (NEW)
-  useEffect(() => {
-    const fetchSubjectsForClass = async () => {
-      if (!selectedClass) {
-        setSubjects([]);
-        return;
-      }
-      try {
-        // calls the backend endpoint we added
-        const res = await api.get(
-          `/schools/subjects/${encodeURIComponent(selectedClass)}`
-        );
-        setSubjects(res.data?.subjects || []);
-      } catch (err) {
-        console.error("Failed to fetch subjects for class", err);
-        setSubjects([]);
-      }
-    };
-    fetchSubjectsForClass();
-  }, [selectedClass]);
+
 
   // 🔹 Fetch saved results when exam/class changes
   useEffect(() => {

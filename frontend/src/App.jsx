@@ -63,10 +63,10 @@ function App() {
           <Route path="/contact" element={<Contact />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/feedback" element={<Feedback />} />
 
           {/* Protected routes */}
           <Route element={<PersistLogin />}>
+          <Route path="/feedback" element={<Feedback />} />
             <Route path="/dashboard">
               <Route index element={<Dashboard />} />
               <Route path="fees" element={<FeesPage />} />

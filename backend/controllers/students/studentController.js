@@ -151,7 +151,11 @@ const getAllStudents = async (req, res) => {
       query.school = requester.school;
     }
 
-    const students = await Student.find(query);
+    const students = await Student.find(query).populate({
+      path: "guardian",
+      select:
+        "name email phoneNumber",
+    });
     res.status(200).json(students);
   } catch (err) {
     res
