@@ -39,7 +39,6 @@ app.use("/api/students", require("./routes/students"));
 app.use("/api/communication", require("./routes/communication"));
 app.use("/api/activity", require("./routes/activity"));
 app.use("/api/term", require("./routes/term"));
-app.use("/api/settings", require("./routes/settings"));
 app.use("/api/reports", require("./routes/report"));
 
 

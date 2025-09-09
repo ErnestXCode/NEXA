@@ -6,7 +6,6 @@ const {
   updateStudent,
   deleteStudent,
   getStudentsWithSubjects,
-  getRandStudent,
 } = require("../controllers/students/studentController");
 const verifyJWT = require("../middleware/verifyJWT");
 const authorize = require("../middleware/authorize");
@@ -20,7 +19,7 @@ router.route("/bulk").get(verifyJWT, getAllStudents).post(verifyJWT , bulkCreate
 
 router.route("/students-with-subjects").get(verifyJWT, getStudentsWithSubjects)
 
-router.get('/rand', getRandStudent)
+
 
 router
   .route("/:id")

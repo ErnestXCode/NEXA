@@ -123,30 +123,28 @@ const AllStudents = () => {
       <table className="w-full text-sm bg-gray-900 rounded-lg overflow-hidden">
         <thead className="bg-gray-800">
           <tr>
-            <th className="p-2 text-left text-white">Admission #</th>
+       
             <th className="p-2 text-left text-white">Name</th>
             <th className="p-2 text-left text-white">Gender</th>
             <th className="p-2 text-left text-white">DOB</th>
             <th className="p-2 text-left text-white">Class</th>
-            <th className="p-2 text-left text-white">Guardian</th>
-            <th className="p-2 text-left text-white">Phone</th>
             <th className="p-2 text-left text-white">Actions</th>
           </tr>
         </thead>
         <tbody>
           {filteredStudents.length > 0 ? (
-            filteredStudents.map((s, i) => (
-              <tr
+            filteredStudents.map((s, i) => {
+              if( s.firstName === 'Susan'  && s.lastName === 'Jackson') console.log(s.guardian)
+              return <tr
                 key={s._id || i}
                 className={`${i % 2 === 0 ? "bg-gray-950" : "bg-gray-900"} hover:bg-gray-850 transition`}
               >
-                <td className="p-2 text-white">{s.admissionNumber}</td>
-                <td className="p-2 text-white">{s.firstName} {s.lastName}</td>
+               
+                <td className="p-2 text-white">{s.firstName} {s.middleName} {s.lastName}</td>
                 <td className="p-2 text-white">{s.gender}</td>
                 <td className="p-2 text-white">{formatDate(s.dateOfBirth)}</td>
                 <td className="p-2 text-white">{s.classLevel}</td>
-                <td className="p-2 text-white">{s.guardianName}</td>
-                <td className="p-2 text-white">{s.guardianPhone}</td>
+        
                 <td className="p-2 flex gap-2">
                   <button onClick={() => handleEdit(s._id)} className="px-3 py-1 rounded border border-gray-700 text-gray-200 hover:bg-gray-800 transition">
                     Edit
@@ -156,7 +154,7 @@ const AllStudents = () => {
                   </button>
                 </td>
               </tr>
-            ))
+})
           ) : (
             <tr>
               <td colSpan="8" className="text-center p-4 text-gray-400">No students found.</td>

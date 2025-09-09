@@ -81,7 +81,7 @@ const getSubjectsForClass = async (req, res) => {
     const classLevel = req.params.classLevel;
     // prefer the requester's school if available
     const schoolId = req.user?.school;
-    const school = schoolId ? await School.findById(schoolId) : await School.findOne();
+    const school = await School.findById(schoolId)
     if (!school) return res.status(404).json({ msg: "School not found" });
 
     // find matched subjects rules

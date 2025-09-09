@@ -8,7 +8,7 @@ const mongoose = require("mongoose");
 exports.saveAttendance = async (req, res) => {
   try {
     const { classLevel, date, records, notifyParents } = req.body;
-    const requester = await User.findOne({ email: req.user.email });
+    const requester = await User.findById(req.user.userId);
     const markedBy = requester._id;
 
     let attendanceClassLevel = classLevel;
@@ -26,12 +26,6 @@ exports.saveAttendance = async (req, res) => {
     for (const record of records) {
       const { studentId, status, reason } = record;
 
-      if (
-        studentId == "68bddf918a42a46eb237d8e8" ||
-        studentId == new mongoose.Types.ObjectId("68bddf918a42a46eb237d8e8")
-      ) {
-        console.log(record);
-      }
       if (requester.role === "teacher" && requester.isClassTeacher) {
         const student = await Student.findById(studentId);
         if (!student || student.classLevel !== requester.classLevel) continue;
@@ -75,7 +69,7 @@ exports.saveAttendance = async (req, res) => {
 exports.getAttendanceByDate = async (req, res) => {
   try {
     const { date } = req.query;
-    const requester = await User.findOne({ email: req.user.email });
+    const requester = await User.findById(req.user.userId);
 
     const filterDate = date ? new Date(date) : new Date();
     filterDate.setHours(0, 0, 0, 0);
@@ -90,6 +84,9 @@ exports.getAttendanceByDate = async (req, res) => {
     const studentFilter = {};
     if (requester.role === "teacher" && requester.isClassTeacher) {
       studentFilter.classLevel = requester.classLevel;
+    }
+    if (requester.role !== "superadmin") {
+      studentFilter.school = requester.school;
     }
     const students = await Student.find(studentFilter);
 
@@ -117,7 +114,7 @@ exports.getAttendanceByDate = async (req, res) => {
 exports.getStatsByRange = async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
-    const requester = await User.findOne({ email: req.user.email });
+    const requester = await User.findById(req.user.userId);
 
     const start = new Date(startDate);
     start.setHours(0, 0, 0, 0);
@@ -125,12 +122,14 @@ exports.getStatsByRange = async (req, res) => {
     end.setHours(23, 59, 59, 999);
 
     const filter = {
-      date: { $gte: start, $lte: end },
-      school: requester.school,
+      date: { $gte: start, $lte: end }
     };
     if (requester.role === "teacher" && requester.isClassTeacher) {
       filter.classLevel = requester.classLevel;
     }
+    if (requester.role !== "superadmin") {
+     filter.school = requester.school;
+   }
 
     const records = await Attendance.aggregate([
       { $match: filter },
@@ -157,7 +156,7 @@ exports.getStatsByRange = async (req, res) => {
 exports.getAbsenteeListRange = async (req, res) => {
   try {
     const { days = 7 } = req.query;
-    const requester = await User.findOne({ email: req.user.email });
+    const requester = await User.findById(req.user.userId);
 
     const since = new Date();
     since.setDate(since.getDate() - (days - 1));
@@ -166,11 +165,13 @@ exports.getAbsenteeListRange = async (req, res) => {
     const filter = {
       status: "absent",
       date: { $gte: since },
-      school: requester.school,
     };
     if (requester.role === "teacher" && requester.isClassTeacher) {
       filter.classLevel = requester.classLevel;
     }
+    if (requester.role !== "superadmin") {
+     filter.school = requester.school;
+   }
 
     const students = await Attendance.aggregate([
       { $match: filter },
@@ -208,8 +209,7 @@ exports.getAbsenteeListRange = async (req, res) => {
 exports.getClassStats = async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
-    const requester = await User.findOne({ email: req.user.email });
-
+    const requester = req.user
     if (!["admin", "superadmin"].includes(requester.role)) {
       return res.status(403).json({ msg: "Unauthorized" });
     }
@@ -221,8 +221,12 @@ exports.getClassStats = async (req, res) => {
 
     const filter = {
       date: { $gte: start, $lte: end },
-      school: requester.school,
+     
     };
+
+    if(requester.role !== 'superadmin'){
+       filter.school = requester.school
+    }
 
     const records = await Attendance.aggregate([
       { $match: filter },

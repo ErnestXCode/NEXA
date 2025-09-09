@@ -1,10 +1,11 @@
 const Activity = require("../../models/Activity");
 const School = require("../../models/School");
+const Student = require("../../models/Student");
 const User = require("../../models/User");
 const jwt = require("jsonwebtoken");
 
 const handleRegister = async (req, res) => {
-  console.log('hit register')
+  console.log("hit register");
   const content = req.body;
   const { name, email, password, role, children, phoneNumber } = content;
 
@@ -13,8 +14,7 @@ const handleRegister = async (req, res) => {
   let schoolDoc = null;
   let requesterDoc = null;
 
-
-    // Public first admin registration
+  // Public first admin registration
   if (!requester) {
     assignedRole = "admin";
     const schoolName = content.school;
@@ -31,13 +31,13 @@ const handleRegister = async (req, res) => {
           attendance: true,
           feeTracking: true,
           communication: true,
-        }
+        },
       });
       await schoolDoc.save();
     }
   } else {
     // Admin creating staff/parent
-    requesterDoc = await User.findOne({ email: requester.email });
+    requesterDoc = req.user;
 
     if (!["teacher", "bursar", "parent"].includes(role))
       return res.status(400).json({ msg: "Invalid role" });
@@ -46,8 +46,7 @@ const handleRegister = async (req, res) => {
     if (!schoolDoc) return res.status(400).json({ msg: "School not found" });
   }
 
-
-  if (!name || !email || !password, !phoneNumber) {
+  if ((!name || !email || !password, !phoneNumber)) {
     return res.status(400).json({ msg: "All inputs are mandatory" });
   }
 
@@ -60,22 +59,42 @@ const handleRegister = async (req, res) => {
     password,
     role: assignedRole,
     school: schoolDoc?._id,
-    phoneNumber
+    phoneNumber,
   });
-  console.log(phoneNumber)
+  console.log(phoneNumber);
   // Teacher-specific
   if (assignedRole === "teacher") {
     newUser.subjects = content.subjects || [];
     newUser.isClassTeacher = content.isClassTeacher || false;
-    newUser.classLevel = content.isClassTeacher ? content.classLevel || null : null;
+    newUser.classLevel = content.isClassTeacher
+      ? content.classLevel || null
+      : null;
   }
 
   // Parent-specific
   if (assignedRole === "parent") {
     if (!children || !Array.isArray(children) || children.length === 0) {
-      return res.status(400).json({ msg: "Parent must have at least one child" });
+      return res
+        .status(400)
+        .json({ msg: "Parent must have at least one child" });
     }
+
     newUser.children = children; // array of student _ids
+
+    // Update each student to set this parent as guardian
+    await Promise.all(
+      children.map(async (studentId) => {
+        const student = await Student.findById(
+          studentId
+        );
+        // console.log(student)
+        if (student) {
+          student.guardian = newUser._id;
+          const s = await student.save();
+          console.log(s)
+        }
+      })
+    );
   }
 
   await newUser.save();
@@ -85,7 +104,7 @@ const handleRegister = async (req, res) => {
     const newLog = new Activity({
       type: "personel",
       description: `New personnel ${newUser.name} registered`,
-      createdBy: requesterDoc?._id,
+      createdBy: requesterDoc?.userId,
       school: requesterDoc?.school,
     });
     await newLog.save();
@@ -113,7 +132,7 @@ const handleRegister = async (req, res) => {
   });
 
   const accessToken = jwt.sign(
-    { email, role: assignedRole, school: schoolDoc._id },
+    { email, role: assignedRole, school: schoolDoc._id, userId: newUser._id },
     process.env.ACCESS_SECRET,
     { expiresIn: "15m" }
   );
@@ -147,6 +166,5 @@ const handleRegister = async (req, res) => {
       },
     });
 };
-
 
 module.exports = handleRegister;

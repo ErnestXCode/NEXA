@@ -7,7 +7,7 @@ const handleLogout = require("../controllers/auth/logoutController");
 const authorize = require("../middleware/authorize");
 const handleBulkRegister = require("../controllers/auth/bulkRegisterController");
 const { bulkCreateParents } = require("../controllers/personel/parents/bulkParentController");
-const { forgotPassword, resetPassword } = require("../controllers/auth/forgotPasswordController");
+const { forgotPasswordInternal, resetPasswordInternal } = require("../controllers/auth/forgotPasswordController");
 
 const router = express.Router();
 
@@ -16,8 +16,8 @@ router.post("/login", handleLogin);
 router.post("/refresh", handleTokenRefresh);
 router.post("/logout", verifyJWT, handleLogout);
 
-router.post("/forgot-password", forgotPassword);
-router.post("/reset-password", resetPassword);
+router.post("/forgot-password", forgotPasswordInternal);
+router.post("/reset-password", resetPasswordInternal);
 
 router.post(
   "/registerpersonel",

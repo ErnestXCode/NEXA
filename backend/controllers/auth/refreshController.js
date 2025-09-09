@@ -17,7 +17,7 @@ const handleTokenRefresh = async (req, res) => {
     if(!decoded) return res.sendStatus(403)
     // ✅ Generate new tokens
     const newAccessToken = jwt.sign(
-      { email: user.email, role: user.role, school: user.school },
+      { email: user.email, role: user.role, school: user.school , userId: user._id},
       process.env.ACCESS_SECRET,
       { expiresIn: "15m" }
     );

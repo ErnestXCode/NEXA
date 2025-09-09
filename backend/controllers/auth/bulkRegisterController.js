@@ -2,9 +2,9 @@ const User = require("../../models/User");
 const School = require("../../models/School");
 const Activity = require("../../models/Activity");
 
-
 const handleBulkRegister = async (req, res) => {
   const requester = req.user;
+  console.log("requester", requester);
   const personnel = req.body.personnel; // array from frontend
 
   if (!Array.isArray(personnel) || personnel.length === 0) {
@@ -35,13 +35,19 @@ const handleBulkRegister = async (req, res) => {
       school: requester.school,
     });
 
+    if (role === "teacher") {
+      newUser.subjects = p.subjects || [];
+      newUser.isClassTeacher = p.isClassTeacher || false;
+      newUser.classLevel = p.isClassTeacher ? p.classLevel || null : null;
+    }
+
     await newUser.save();
 
     // Log activity
     const log = new Activity({
       type: "personel",
       description: `New personel ${name} registered via bulk upload`,
-      createdBy: requester._id,
+      createdBy: requester.userId,
       school: requester.school,
     });
     await log.save();

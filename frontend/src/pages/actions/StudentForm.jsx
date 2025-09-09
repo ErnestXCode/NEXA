@@ -6,7 +6,7 @@ import * as XLSX from "xlsx";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 const studentObj = {
-  admissionNumber: "",
+  middleName: "",
   firstName: "",
   lastName: "",
   gender: "",
@@ -18,7 +18,7 @@ const studentObj = {
 
 const normalizeStudentData = (data) => {
   return data.map((s) => ({
-    admissionNumber: s.admissionNumber?.trim() || "",
+    middleName: s.middleName?.trim() || "",
     firstName: s.firstName?.trim() || "",
     lastName: s.lastName?.trim() || "",
     gender:
@@ -123,8 +123,8 @@ const StudentForm = ({ onNext }) => {
           <label className="text-gray-300 text-sm mb-1">Admission Number</label>
           <input
             placeholder="e.g. 12345"
-            name="admissionNumber"
-            value={student.admissionNumber}
+            name="middleName"
+            value={student.middleName}
             onChange={handleChange}
             className="p-2 rounded bg-gray-800 text-white"
           />
@@ -221,7 +221,7 @@ const StudentForm = ({ onNext }) => {
           <p className="text-gray-400 text-sm mb-1">
             Expected columns for CSV / Excel: <br />
             <strong>
-              admissionNumber, firstName, lastName, gender, dateOfBirth,
+              middleName, firstName, lastName, gender, dateOfBirth,
               classLevel, guardianName, guardianPhone
             </strong>
           </p>
@@ -239,9 +239,9 @@ const StudentForm = ({ onNext }) => {
         {/* Submit button */}
         <button
           type="submit"
-          disabled={!file && !student.admissionNumber}
+          disabled={!file && !student.middleName}
           className={`py-2 rounded font-semibold col-span-2 ${
-            file || student.admissionNumber
+            file || student.middleName
               ? "bg-white text-black hover:bg-gray-200"
               : "bg-gray-500 cursor-not-allowed"
           }`}

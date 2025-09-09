@@ -81,7 +81,7 @@ const getAllParents = async (req, res) => {
 
 const getParentDashboard = async (req, res) => {
   try {
-    const parent = await User.findOne({ email: req.user.email }).populate({
+    const parent = await User.findById(req.user.userId).populate({
       path: "children",
       select:
         "firstName lastName classLevel stream admissionNumber school payments",
@@ -184,57 +184,10 @@ const getParentDashboard = async (req, res) => {
   }
 };
 
-// const getStudentAttendanceSummary = async (req, res) => {
-//   try {
-//     const parent = await User.findOne({ email: req.user.email }).populate("children");
-//     if (!parent || parent.role !== "parent") {
-//       return res.status(404).json({ msg: "Parent not found" });
-//     }
-
-//     const { studentId } = req.query;
-//     const student = parent.children.find(c => c._id.toString() === studentId);
-//     if (!student) {
-//       return res.status(404).json({ msg: "Student not found" });
-//     }
-
-//     // Normalize date to start of day for accurate counting
-//     const records = await Attendance.aggregate([
-//       { $match: { student: student._id } },
-//       {
-//         $group: {
-//           _id: { $dateToString: { format: "%Y-%m-%d", date: "$date" } }, // one per day
-//           status: { $first: "$status" }, // only one record per day should exist due to saveAttendance
-//         },
-//       },
-//     ]);
-
-//     const total = records.length;
-//     const present = records.filter(r => r.status === "present").length;
-//     const absent = records.filter(r => r.status === "absent").length;
-//     const late = records.filter(r => r.status === "late").length;
-
-//     console.log('absent', records)
-
-//     const summary = {
-//       total,
-//       present,
-//       absent,
-//       late,
-//       presentPct: total ? ((present / total) * 100).toFixed(1) : 0,
-//       absentPct: total ? ((absent / total) * 100).toFixed(1) : 0,
-//       latePct: total ? ((late / total) * 100).toFixed(1) : 0,
-//     };
-
-//     res.json(summary);
-//   } catch (err) {
-//     console.error(err);
-//     res.status(500).json({ msg: "Server error", error: err.message });
-//   }
-// };
 
 const getStudentAttendanceSummary = async (req, res) => {
   try {
-    const parent = await User.findOne({ email: req.user.email }).populate(
+    const parent = await User.findById(req.user.userId).populate(
       "children"
     );
     if (!parent || parent.role !== "parent") {
@@ -284,7 +237,7 @@ const getChildrenExams = async (req, res) => {
       return res.status(400).json({ msg: "studentId is required" });
 
     // Fetch parent and populate children
-    const parent = await User.findOne({ email: req.user.email }).populate(
+    const parent = await User.findById(req.user.userId).populate(
       "children"
     );
     if (!parent || parent.role !== "parent")

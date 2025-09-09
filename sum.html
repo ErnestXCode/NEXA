@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Generate Excel Files</title>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+  <h2>Generate Students & Parents Excel</h2>
+  <button onclick="downloadStudents()">Download Students Excel</button>
+  <button onclick="downloadParents()">Download Parents Excel</button>
+
+  <script>
+    function randomName() {
+      const firstNames = ["John", "Mary", "James", "Grace", "Peter", "Lucy", "Michael", "Sarah", "David", "Emily"];
+      const lastNames = ["Omondi", "Mwangi", "Kamau", "Njoroge", "Atieno", "Otieno", "Koech", "Mutiso", "Wanjiku", "Odhiambo"];
+      return firstNames[Math.floor(Math.random() * firstNames.length)] + " " +
+             lastNames[Math.floor(Math.random() * lastNames.length)];
+    }
+
+    function randomEmail(i) {
+      return `sodddmi${i}@example.com`;
+    }
+
+    function randomPhone(i) {
+      return `07${Math.floor(10000000 + Math.random() * 89999999)}`;
+    }
+
+    function randomGender() {
+      return Math.random() > 0.5 ? "male" : "female";
+    }
+
+    function randomClass() {
+      const levels = ["PP1", "PP2", "Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6"];
+      return levels[Math.floor(Math.random() * levels.length)];
+    }
+
+    // 📘 Generate Students Excel
+    function downloadStudents() {
+      let students = [];
+      for (let i = 1; i <= 100; i++) {
+        const fullName = randomName().split(" ");
+        students.push({
+          firstName: fullName[0],
+          middleName: "M.",
+          lastName: fullName[1],
+          gender: randomGender(),
+          dateOfBirth: `200${Math.floor(Math.random()*10)}-0${Math.floor(Math.random()*9+1)}-1${Math.floor(Math.random()*9)}`,
+          classLevel: randomClass()
+        });
+      }
+
+      const ws = XLSX.utils.json_to_sheet(students);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Students");
+      XLSX.writeFile(wb, "students.xlsx");
+    }
+
+    // 📘 Generate Parents Excel
+    function downloadParents() {
+      let parents = [];
+      for (let i = 1; i <= 80; i++) {
+        parents.push({
+          name: randomName(),
+          email: randomEmail(i),
+          phoneNumber: randomPhone(i),
+          role: "parent",
+          password: "password123",
+          children: `Student${(i % 100) + 1},Student${((i+1) % 100) + 1}`
+        });
+      }
+
+      const ws = XLSX.utils.json_to_sheet(parents);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Parents");
+      XLSX.writeFile(wb, "parents.xlsx");
+    }
+  </script>
+</body>
+</html>

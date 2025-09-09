@@ -3,7 +3,6 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 
 const handleLogin = async (req, res) => {
-  console.log("hit login");
   const deviceInfo = req.headers["user-agent"] || "unknown device";
 
   const { email, password } = req.body;
@@ -17,7 +16,7 @@ const handleLogin = async (req, res) => {
   if (!isMatch) return res.status(401).json({ msg: "Invalid credentials" });
 
   const accessToken = jwt.sign(
-    { email, role: foundUser.role, school: foundUser.school },
+    { email, role: foundUser.role, school: foundUser.school, userId: foundUser._id },
     process.env.ACCESS_SECRET,
     { expiresIn: "15m" }
   );

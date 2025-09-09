@@ -51,8 +51,8 @@ const StudentEditPage = () => {
         <form onSubmit={handleSubmit} className="space-y-3">
           <input
             placeholder="Admission Number"
-            name="admissionNumber"
-            value={student.admissionNumber}
+            name="middleName"
+            value={student.middleName}
             onChange={handleChange}
             className="w-full p-2 rounded bg-gray-800 text-white text-sm"
           />

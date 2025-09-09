@@ -9,18 +9,18 @@ sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 const sendMessage = async (req, res) => {
   try {
     const { subject, body, type } = req.body;
-    const sender = await User.findOne({email : req.user.email}) // from auth middleware
-
+    const sender = req.user;
     if (!body) {
       return res.status(400).json({ msg: "Message body required" });
     }
 
     // Save in DB (always, even emails, so there's a record)
     const newMessage = await Message.create({
-      sender: sender._id,
+      sender: sender.userId,
       subject,
       body,
       type,
+      school: sender.school,
     });
 
     // If it's an email, trigger SendGrid
@@ -48,7 +48,11 @@ const sendMessage = async (req, res) => {
 const getMessages = async (req, res) => {
   try {
     const { type } = req.query;
-    const filter = type ? { type , school: req.user.school} : {school: req.user.school};
+    const filter = type
+      ? { type, school: req.user.school }
+      : req.user.role === "superadmin"
+      ? {}
+      : { school: req.user.school };
     const messages = await Message.find(filter)
       .populate("sender", "name email role")
       .sort({ createdAt: -1 });

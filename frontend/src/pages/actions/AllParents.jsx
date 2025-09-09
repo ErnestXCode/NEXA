@@ -30,6 +30,7 @@ const AllParents = () => {
     queryFn: fetchParents,
   });
 
+
   const mutation = useMutation({
     mutationFn: deleteParent,
     onMutate: async (id) => {
@@ -122,8 +123,9 @@ const AllParents = () => {
           </thead>
           <tbody>
             {filteredParents.length > 0 ? (
-              filteredParents.map((p, i) => (
-                <tr
+              filteredParents.map((p, i) => {
+                console.log(p)
+                return <tr
                   key={p._id || i}
                   className={`${i % 2 === 0 ? "bg-gray-950" : "bg-gray-900"} hover:bg-gray-850 transition`}
                 >
@@ -150,7 +152,7 @@ const AllParents = () => {
                     </button>
                   </td>
                 </tr>
-              ))
+})
             ) : (
               <tr>
                 <td colSpan="5" className="text-center p-4 text-gray-400">

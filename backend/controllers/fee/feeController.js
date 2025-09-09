@@ -37,8 +37,8 @@ const addFee = async (req, res) => {
     const student = await Student.findById(studentId);
     if (!student) return res.status(404).json({ msg: "Student not found" });
 
-    // Find requester
-    const requesterDoc = await User.findOne({ email: requester.email });
+   
+   
     const school = await School.findById(student.school);
 
     // Validate term exists in school expectations
@@ -55,7 +55,7 @@ const addFee = async (req, res) => {
       type,
       method,
       note,
-      handledBy: requesterDoc._id,
+      handledBy: requester.userId,
       school: school._id,
       receiptGenerated: generateReceipt,
     });

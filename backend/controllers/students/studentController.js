@@ -9,7 +9,7 @@ const createStudent = async (req, res) => {
   try {
     const data = req.body;
     const requester = req.user; // logged-in admin or teacher
-    const requesterDoc = await User.findOne({ email: requester.email });
+    const requesterDoc = await User.findById(requester.userId);
 
     if (!data) return res.status(400).json({ msg: "No student data provided" });
 
@@ -42,20 +42,13 @@ const createStudent = async (req, res) => {
   }
 };
 
-const getRandStudent = async(req, res) => {
-  const sum1 = await Student.findById('68bc44a9bc63e6129552cfd4')
-  const sum2 = await Student.findById('68bddf918a42a46eb237d8e8')
-
-  console.log(sum1, sum2)
-  res.json(sum1, sum2)
-}
 
 // Get student by ID with role-based access
 const getStudentById = async (req, res) => {
   try {
     const { id } = req.params;
     const requester = req.user;
-    const requesterDoc = await User.findOne({ email: requester.email });
+    const requesterDoc = await User.findById(requester.userId);
 
     const student = await Student.findById(id);
     if (!student) return res.status(404).json({ msg: "Student not found" });
@@ -83,7 +76,7 @@ const updateStudent = async (req, res) => {
   try {
     const { id } = req.params;
     const requester = req.user;
-    const requesterDoc = await User.findOne({ email: requester.email });
+    const requesterDoc = await User.findById(requester.userId);
 
     const student = await Student.findById(id);
     if (!student) return res.status(404).json({ msg: "Student not found" });
@@ -118,7 +111,7 @@ const deleteStudent = async (req, res) => {
   try {
     const { id } = req.params;
     const requester = req.user;
-    const requesterDoc = await User.findOne({ email: requester.email });
+    const requesterDoc = await User.findById(requester.userId);
 
     const student = await Student.findById(id);
     if (!student) return res.status(404).json({ msg: "Student not found" });
@@ -147,7 +140,7 @@ const getAllStudents = async (req, res) => {
   try {
     const requester = req.user;
     let query = {};
-    const requesterDoc = await User.findOne({ email: requester.email });
+    const requesterDoc = await User.findById(req.user.userId);
 
     if (requester.role === "teacher" && requesterDoc.isClassTeacher) {
       query.classLevel = requesterDoc.classLevel;
@@ -174,13 +167,13 @@ const getStudentsWithSubjects = async (req, res) => {
     }
 
     const students = await Student.find({ school: req.user.school });
-    const requesterDoc = await User.findOne({ email: req.user.email });
+
 
     let subjects = school.subjects;
 
     // 🔒 If teacher, restrict to their subjects
     if (req.user.role === "teacher") {
-      const teacher = await User.findById(requesterDoc._id);
+      const teacher = await User.findById(req.user.userId);
       if (teacher && teacher.subjects.length > 0) {
         subjects = teacher.subjects;
       }
@@ -196,7 +189,6 @@ const getStudentsWithSubjects = async (req, res) => {
 module.exports = {
   createStudent,
   getStudentById,
-  getRandStudent,
   updateStudent,
   deleteStudent,
   getStudentsWithSubjects,

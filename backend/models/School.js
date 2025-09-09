@@ -12,15 +12,15 @@ const feeExpectationSchema = new mongoose.Schema({
   amount: { type: Number, required: true, default: 0 },
 });
 
-// fee rule for ranges (you already had this)
+// fee rule for ranges
 const feeRuleSchema = new mongoose.Schema({
-  fromClass: { type: String, required: true }, // e.g., "Grade 1"
-  toClass: { type: String, required: true },   // e.g., "Grade 3"
+  fromClass: { type: String, required: true },
+  toClass: { type: String, required: true },
   term: { type: String, enum: ["Term 1", "Term 2", "Term 3"], required: true },
   amount: { type: Number, required: true },
 });
 
-// subjects rule for ranges (NEW)
+// subjects rule for ranges
 const subjectsRuleSchema = new mongoose.Schema({
   fromClass: { type: String, required: true },
   toClass: { type: String, required: true },
@@ -28,9 +28,8 @@ const subjectsRuleSchema = new mongoose.Schema({
 });
 
 const classLevelSchema = new mongoose.Schema({
-  name: { type: String, required: true }, // e.g., "Grade 1"
+  name: { type: String, required: true },
   streams: [{ type: String }],
-  // Added per-class fee expectations (optional override)
   feeExpectations: { type: [feeExpectationSchema], default: [] },
 });
 
@@ -52,7 +51,7 @@ const schoolSchema = new mongoose.Schema(
     },
     subjects: { type: [String], default: () => School.defaultSubjects() },
 
-    // fallback general expectations (if no per-class or rule found)
+    // fallback general expectations
     feeExpectations: {
       type: [feeExpectationSchema],
       default: [
@@ -65,7 +64,7 @@ const schoolSchema = new mongoose.Schema(
     // feeRules allow ranges like Grade1-Grade3 → amount per term
     feeRules: { type: [feeRuleSchema], default: [] },
 
-    // NEW: subjectsByClass allow ranges with custom subject lists
+    // subjectsByClass allow ranges with custom subject lists
     subjectsByClass: { type: [subjectsRuleSchema], default: [] },
 
     // --- Optional modules ---
@@ -79,7 +78,7 @@ const schoolSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// keep your statics / defaults intact
+// ---------------- STATIC DEFAULTS ----------------
 schoolSchema.statics.defaultGradingSystem = function () {
   return [
     { min: 80, max: 100, grade: "A", remark: "Excellent" },
@@ -98,20 +97,18 @@ schoolSchema.statics.defaultGradingSystem = function () {
 
 schoolSchema.statics.defaultCBCLevels = function () {
   return [
-    { name: "Pre-Primary 1 (PP1)", streams: [] },
-    { name: "Pre-Primary 2 (PP2)", streams: [] },
+    { name: "PP1", streams: [] },
+    { name: "PP2", streams: [] },
     { name: "Grade 1", streams: [] },
     { name: "Grade 2", streams: [] },
     { name: "Grade 3", streams: [] },
     { name: "Grade 4", streams: [] },
     { name: "Grade 5", streams: [] },
     { name: "Grade 6", streams: [] },
-    { name: "Grade 7 (JSS1)", streams: [] },
-    { name: "Grade 8 (JSS2)", streams: [] },
-    { name: "Grade 9 (JSS3)", streams: [] },
-    { name: "Senior 1", streams: [] },
-    { name: "Senior 2", streams: [] },
-    { name: "Senior 3", streams: [] },
+    { name: "Grade 7", streams: [] },
+    { name: "Grade 8", streams: [] },
+    { name: "Grade 9", streams: [] },
+    { name: "Grade 10", streams: [] },
   ];
 };
 
@@ -127,6 +124,72 @@ schoolSchema.statics.defaultSubjects = function () {
     "Physical Education",
   ];
 };
+
+// ---------------- UTILITY FUNCTION ----------------
+const isClassInRange = (className, fromClass, toClass, allClasses = []) => {
+  const idx = allClasses.findIndex((c) => c.name === className);
+  const fromIdx = allClasses.findIndex((c) => c.name === fromClass);
+  const toIdx = allClasses.findIndex((c) => c.name === toClass);
+  if (idx === -1 || fromIdx === -1 || toIdx === -1) return false;
+  const min = Math.min(fromIdx, toIdx);
+  const max = Math.max(fromIdx, toIdx);
+  return idx >= min && idx <= max;
+};
+
+// ---------------- VALIDATOR STATIC ----------------
+schoolSchema.statics.validateClassLevel = async function (schoolId, className) {
+  const school = await this.findById(schoolId);
+  if (!school) return { valid: false, reason: "School not found" };
+
+  // 1️⃣ Check class exists
+  const cls = school.classLevels.find(c => c.name === className);
+  if (!cls) return { valid: false, reason: "Class level does not exist" };
+
+  // 2️⃣ Check subjects exist (either class-specific, by range, or global)
+  const subjectsByRange = school.subjectsByClass.filter(r =>
+    isClassInRange(className, r.fromClass, r.toClass, school.classLevels)
+  );
+  const subjects = Array.from(new Set([
+    ...(cls.subjects || []),
+    ...(subjectsByRange.flatMap(r => r.subjects || [])),
+    ...(school.subjects || [])
+  ]));
+  if (!subjects.length) return { valid: false, reason: "No subjects assigned for this class" };
+
+  // 3️⃣ Optional: check fee rules coverage
+  const feeRuleExists = school.feeRules.some(r => isClassInRange(className, r.fromClass, r.toClass, school.classLevels));
+  if (school.feeRules.length && !feeRuleExists) return { valid: false, reason: "No fee rule covers this class" };
+
+  return { valid: true, subjects };
+};
+
+
+// ---------------- SUBJECT VALIDATION ----------------
+/**
+ * Validate that a given subject exists for a school, either globally or in any class/range
+ * @param {String} schoolId - the School _id
+ * @param {String} subject - the subject name to validate
+ * @returns {Promise<{ valid: Boolean, reason?: String }>}
+ */
+schoolSchema.statics.validateSubject = async function (schoolId, subject) {
+  const school = await this.findById(schoolId);
+  if (!school) return { valid: false, reason: "School not found" };
+  if (!subject) return { valid: false, reason: "No subject provided" };
+
+  // 1️⃣ Check global subjects
+  if ((school.subjects || []).includes(subject)) return { valid: true };
+
+  // 2️⃣ Check class-specific subjects (if any)
+  const classSubjects = school.classLevels.flatMap(c => c.subjects || []);
+  if (classSubjects.includes(subject)) return { valid: true };
+
+  // 3️⃣ Check subjects by class range
+  const rangeSubjects = school.subjectsByClass.flatMap(r => r.subjects || []);
+  if (rangeSubjects.includes(subject)) return { valid: true };
+
+  return { valid: false, reason: "Subject does not exist in this school" };
+};
+
 
 const School = mongoose.model("School", schoolSchema);
 module.exports = School;
