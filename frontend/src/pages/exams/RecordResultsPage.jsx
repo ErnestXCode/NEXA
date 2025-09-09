@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import api from "../../api/axios";
+import { useSelector } from "react-redux";
+import {selectCurrentUser} from '../../redux/slices/authSlice'
 
 const RecordResultsPage = () => {
   const [exams, setExams] = useState([]);
@@ -10,6 +12,7 @@ const RecordResultsPage = () => {
   const [selectedSubject, setSelectedSubject] = useState("");
   const [results, setResults] = useState({});
   const [isDesktop, setIsDesktop] = useState(true);
+  const currentUser = useSelector(selectCurrentUser)
 
   // 🔹 Check if user is on desktop
   useEffect(() => {

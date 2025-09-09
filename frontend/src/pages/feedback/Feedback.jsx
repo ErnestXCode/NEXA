@@ -56,54 +56,43 @@ const Feedback = () => {
   }, []);
 
   return (
-    <div className="max-w-lg mx-auto p-6 bg-gray-800 text-white rounded-xl shadow-md">
-      <h2 className="text-2xl font-semibold mb-6">Contact Us</h2>
-
-      <form onSubmit={handleSubmit} className="flex flex-col">
-        <label htmlFor="name" className="mb-1 font-medium">
-          Name
-        </label>
+    <div className="max-w-lg mx-auto p-6 bg-gray-950 text-gray-200 rounded-2xl shadow-lg">
+      <form onSubmit={handleSubmit} className="flex flex-col space-y-4">
         <input
           ref={nameRef}
           name="name"
           type="text"
-          id="name"
+          placeholder="Your Name"
           required
           value={inputData.name}
           onChange={handleChange}
-          className="mb-4 p-2 rounded-lg bg-gray-700 border border-blue-600 focus:outline-none"
+          className="p-3 rounded-xl bg-gray-900 border border-gray-700 focus:border-blue-500 focus:ring focus:ring-blue-500/30 outline-none transition"
         />
 
-        <label htmlFor="email" className="mb-1 font-medium">
-          Email
-        </label>
         <input
           name="email"
           type="email"
-          id="email"
+          placeholder="Your Email"
           required
           value={inputData.email}
           onChange={handleChange}
-          className="mb-4 p-2 rounded-lg bg-gray-700 border border-blue-600 focus:outline-none"
+          className="p-3 rounded-xl bg-gray-900 border border-gray-700 focus:border-blue-500 focus:ring focus:ring-blue-500/30 outline-none transition"
         />
 
-        <label htmlFor="message" className="mb-1 font-medium">
-          Message
-        </label>
         <textarea
           name="message"
-          id="message"
+          placeholder="Your Message"
           rows="5"
           required
           value={inputData.message}
           onChange={handleChange}
-          className="mb-4 p-2 rounded-lg bg-gray-700 border border-blue-600 focus:outline-none"
+          className="p-3 rounded-xl bg-gray-900 border border-gray-700 focus:border-blue-500 focus:ring focus:ring-blue-500/30 outline-none transition"
         />
 
         <button
           type="submit"
           disabled={sending}
-          className={`p-2 rounded-lg bg-blue-600 hover:bg-blue-700 transition ${
+          className={`p-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-medium transition ${
             sending ? "opacity-50 cursor-not-allowed" : ""
           }`}
         >
