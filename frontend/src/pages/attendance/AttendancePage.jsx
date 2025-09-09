@@ -1,5 +1,10 @@
 import React, { useState, useEffect } from "react";
 import api from "../../api/axios";
+import {
+  saveAttendanceLocally,
+  getAllAttendanceRecords,
+  deleteAttendanceRecord,
+} from "../../utils/indexedDB";
 
 const AttendancePage = () => {
   const [students, setStudents] = useState([]);
@@ -9,8 +14,33 @@ const AttendancePage = () => {
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [records, setRecords] = useState({});
   const [notifyParents, setNotifyParents] = useState(false);
+  const [unsyncedCount, setUnsyncedCount] = useState(0);
 
-  // Fetch students when date or class changes
+  /** --- SYNC OFFLINE DATA --- */
+  const syncOfflineData = async () => {
+    const offlineRecords = await getAllAttendanceRecords();
+    let syncedCount = 0;
+
+    for (const record of offlineRecords) {
+      try {
+        await api.post("/attendance", record);
+        await deleteAttendanceRecord(record.id);
+        syncedCount++;
+      } catch (err) {
+        console.log("Sync failed, will retry later", err);
+      }
+    }
+
+    setUnsyncedCount(offlineRecords.length - syncedCount);
+  };
+
+  useEffect(() => {
+    window.addEventListener("online", syncOfflineData);
+    syncOfflineData();
+    return () => window.removeEventListener("online", syncOfflineData);
+  }, []);
+
+  /** --- FETCH STUDENTS --- */
   useEffect(() => {
     const fetchStudents = async () => {
       try {
@@ -18,18 +48,16 @@ const AttendancePage = () => {
         const allStudents = res.data;
         setStudents(allStudents);
 
-        // extract unique classLevels
         const levels = [...new Set(allStudents.map((s) => s.classLevel))];
         setClassLevels(levels);
 
-        // default filter
         const defaultClass = levels.length === 1 ? levels[0] : "";
         setSelectedClass(defaultClass);
 
-        // initialize records for that date
+        // Initialize records with string keys
         const initialRecords = Object.fromEntries(
           allStudents.map((s) => [
-            s._id,
+            s._id.toString(),
             {
               status: s.attendance?.status || "present",
               reason: s.attendance?.reason || "",
@@ -45,7 +73,7 @@ const AttendancePage = () => {
     fetchStudents();
   }, [date]);
 
-  // Filter students when selectedClass changes
+  /** --- FILTER STUDENTS BY CLASS --- */
   useEffect(() => {
     if (selectedClass) {
       setFilteredStudents(
@@ -56,37 +84,61 @@ const AttendancePage = () => {
     }
   }, [students, selectedClass]);
 
+  /** --- HANDLE CHANGE --- */
   const handleChange = (studentId, field, value) => {
+    const key = studentId.toString();
     setRecords((prev) => ({
       ...prev,
-      [studentId]: { ...prev[studentId], [field]: value },
+      [key]: { ...prev[key], [field]: value },
     }));
   };
 
+  /** --- HANDLE SUBMIT --- */
   const handleSubmit = async () => {
-    try {
-      const payload = {
-        classLevel: selectedClass || students[0]?.classLevel,
-        date,
-        records: Object.entries(records).map(([studentId, data]) => ({
-          studentId,
-          status: data.status || "present",
-          reason: data.reason || "",
-        })),
-        notifyParents,
-      };
+    const payload = {
+      classLevel: selectedClass || students[0]?.classLevel,
+      date,
+      records: Object.entries(records).map(([studentId, data]) => {
 
+        if(data.status === 'absent') console.log(data, studentId)
+        return {
+        studentId,
+        status: data.status,
+        reason: data.reason || "",
+      }
+      }),
+      notifyParents,
+    };
+
+    if (!navigator.onLine) {
+      await saveAttendanceLocally(payload);
+      setUnsyncedCount((prev) => prev + 1);
+      alert(
+        "Offline: Attendance saved locally and will sync automatically when online ✅"
+      );
+      return;
+    }
+
+    try {
       await api.post("/attendance", payload);
       alert(`Attendance saved for ${date} ✅`);
     } catch (err) {
       console.error("Error saving attendance", err);
-      alert("Error saving attendance");
+      alert("Error saving attendance, saved locally instead.");
+      await saveAttendanceLocally(payload);
+      setUnsyncedCount((prev) => prev + 1);
     }
   };
 
   return (
     <main className="p-4 md:p-6 bg-gray-950 min-h-screen text-white">
       <h1 className="text-2xl font-bold mb-4">Mark Attendance</h1>
+
+      {unsyncedCount > 0 && (
+        <div className="mb-4 p-2 bg-yellow-600 rounded">
+          ⚠ {unsyncedCount} record(s) waiting to sync.
+        </div>
+      )}
 
       {/* Controls */}
       <div className="flex flex-wrap items-center gap-4 mb-6">
@@ -117,7 +169,7 @@ const AttendancePage = () => {
             setRecords(
               Object.fromEntries(
                 filteredStudents.map((s) => [
-                  s._id,
+                  s._id.toString(),
                   { status: "present", reason: "" },
                 ])
               )
@@ -127,12 +179,14 @@ const AttendancePage = () => {
         >
           Mark All Present
         </button>
+
         <button
           onClick={handleSubmit}
           className="bg-blue-600 hover:bg-blue-700 p-2 rounded"
         >
           Save Attendance
         </button>
+
         <label className="flex items-center space-x-2">
           <input
             type="checkbox"
@@ -158,12 +212,13 @@ const AttendancePage = () => {
           <tbody>
             {filteredStudents.length > 0 ? (
               filteredStudents.map((s, i) => {
+                const key = s._id.toString();
                 const showReason =
-                  records[s._id]?.status === "absent" ||
-                  records[s._id]?.status === "late";
+                  records[key]?.status === "absent" ||
+                  records[key]?.status === "late";
                 return (
                   <tr
-                    key={s._id}
+                    key={key}
                     className={`${
                       i % 2 === 0 ? "bg-gray-950" : "bg-gray-900"
                     } hover:bg-gray-800 transition`}
@@ -176,9 +231,9 @@ const AttendancePage = () => {
                       {showReason && (
                         <input
                           type="text"
-                          value={records[s._id]?.reason || ""}
+                          value={records[key]?.reason || ""}
                           onChange={(e) =>
-                            handleChange(s._id, "reason", e.target.value)
+                            handleChange(key, "reason", e.target.value)
                           }
                           placeholder="Reason"
                           className="absolute inset-0 w-full border rounded px-2 py-1 bg-gray-800 text-white"
@@ -187,9 +242,9 @@ const AttendancePage = () => {
                     </td>
                     <td className="py-2 px-2">
                       <select
-                        value={records[s._id]?.status}
+                        value={records[key]?.status}
                         onChange={(e) =>
-                          handleChange(s._id, "status", e.target.value)
+                          handleChange(key, "status", e.target.value)
                         }
                         className="border rounded px-2 py-1 bg-gray-800 text-white"
                       >
@@ -216,33 +271,36 @@ const AttendancePage = () => {
       <div className="md:hidden flex flex-col gap-4">
         {filteredStudents.length > 0 ? (
           filteredStudents.map((s) => {
+            const key = s._id.toString();
             const showReason =
-              records[s._id]?.status === "absent" ||
-              records[s._id]?.status === "late";
+              records[key]?.status === "absent" ||
+              records[key]?.status === "late";
             return (
               <div
-                key={s._id}
+                key={key}
                 className="bg-gray-900 rounded-lg shadow p-4 flex flex-col gap-2"
               >
                 <div className="flex justify-between items-center">
-                  <span className="font-semibold">{s.firstName} {s.lastName}</span>
+                  <span className="font-semibold">
+                    {s.firstName} {s.lastName}
+                  </span>
                   <span className="text-gray-400 text-sm">{s.classLevel}</span>
                 </div>
                 {showReason && (
                   <input
                     type="text"
-                    value={records[s._id]?.reason || ""}
+                    value={records[key]?.reason || ""}
                     onChange={(e) =>
-                      handleChange(s._id, "reason", e.target.value)
+                      handleChange(key, "reason", e.target.value)
                     }
                     placeholder="Reason"
                     className="border rounded px-2 py-1 bg-gray-800 text-white w-full"
                   />
                 )}
                 <select
-                  value={records[s._id]?.status}
+                  value={records[key]?.status}
                   onChange={(e) =>
-                    handleChange(s._id, "status", e.target.value)
+                    handleChange(key, "status", e.target.value)
                   }
                   className="border rounded px-2 py-1 bg-gray-800 text-white w-full"
                 >

@@ -42,6 +42,14 @@ const createStudent = async (req, res) => {
   }
 };
 
+const getRandStudent = async(req, res) => {
+  const sum1 = await Student.findById('68bc44a9bc63e6129552cfd4')
+  const sum2 = await Student.findById('68bddf918a42a46eb237d8e8')
+
+  console.log(sum1, sum2)
+  res.json(sum1, sum2)
+}
+
 // Get student by ID with role-based access
 const getStudentById = async (req, res) => {
   try {
@@ -188,6 +196,7 @@ const getStudentsWithSubjects = async (req, res) => {
 module.exports = {
   createStudent,
   getStudentById,
+  getRandStudent,
   updateStudent,
   deleteStudent,
   getStudentsWithSubjects,

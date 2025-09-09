@@ -105,6 +105,26 @@ const SchoolSettings = () => {
     setSchool((prev) => ({ ...prev, subjectsByClass: newRules }));
   };
 
+  const handleExport = async () => {
+  try {
+    const res = await api.get(`/schools/export/${school._id}`, {
+      responseType: "blob", // important for downloading files
+    });
+
+    const blob = new Blob([res.data], { type: "application/zip" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `school_${school.name}_data.zip`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  } catch (err) {
+    console.error(err);
+    alert("Failed to export school data.");
+  }
+};
+
+
   const addSubjectToRule = (idx, subject) => {
     if (!subject) return;
     const newRules = [...(school.subjectsByClass || [])];
@@ -616,11 +636,20 @@ const SchoolSettings = () => {
           </section>
 
           <button
-            type="submit"
-            className="w-full py-2 rounded bg-blue-600 text-white font-medium text-sm hover:bg-blue-500"
-          >
-            💾 Save Settings
-          </button>
+    type="button"
+    onClick={handleExport}
+    className="w-full py-2 mb-3 rounded bg-green-600 text-white font-medium text-sm hover:bg-green-500"
+  >
+    ⬇️ Export School Data
+  </button>
+
+  {/* Save Settings Button */}
+  <button
+    type="submit"
+    className="w-full py-2 rounded bg-blue-600 text-white font-medium text-sm hover:bg-blue-500"
+  >
+    💾 Save Settings
+  </button>
         </form>
       </div>
     </main>

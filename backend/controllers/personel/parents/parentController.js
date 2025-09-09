@@ -1,6 +1,11 @@
 const mongoose = require("mongoose");
 const User = require("../../../models/User");
 const Student = require("../../../models/Student");
+const Term = require("../../../models/Term");
+const Fee = require("../../../models/Fee");
+const School = require("../../../models/School");
+const Attendance = require("../../../models/Attendance");
+const Exam = require("../../../models/Exam");
 
 // Get parent by ID
 const getParentById = async (req, res) => {
@@ -10,7 +15,7 @@ const getParentById = async (req, res) => {
       path: "children",
       select: "firstName lastName classLevel admissionNumber",
     });
-    console.log(parent)
+    console.log(parent);
 
     if (!parent || parent.role !== "parent")
       return res.status(404).json({ msg: "Parent not found" });
@@ -53,10 +58,10 @@ const getAllParents = async (req, res) => {
 
     let query = { role: "parent" };
 
-    console.log(requester.role)
+    console.log(requester.role);
 
-    if(requester.role !== 'admin' &&  requester.role !=='superadmin'){
-      return res.status(403).json({msg: 'Unauthorized'})
+    if (requester.role !== "admin" && requester.role !== "superadmin") {
+      return res.status(403).json({ msg: "Unauthorized" });
     }
 
     if (requester.role === "admin") {
@@ -76,38 +81,96 @@ const getAllParents = async (req, res) => {
 
 const getParentDashboard = async (req, res) => {
   try {
-
-    // Get parent's children
-    const parent = await User.findOne({email : req.user.email}).populate({
+    const parent = await User.findOne({ email: req.user.email }).populate({
       path: "children",
-      select: "firstName lastName classLevel stream admissionNumber",
+      select:
+        "firstName lastName classLevel stream admissionNumber school payments",
     });
 
     if (!parent || parent.role !== "parent") {
       return res.status(404).json({ msg: "Parent not found" });
     }
 
-    // Fetch detailed data for each child
     const childrenData = await Promise.all(
       parent.children.map(async (child) => {
-        const student = await Student.findById(child._id)
-          .select("-__v -createdAt -updatedAt")
-          .lean();
+        const schoolDoc = await School.findById(child.school).lean();
+        if (!schoolDoc) return child;
 
-        // Compute total fees paid and outstanding per term
-        const feesSummary = student.payments.reduce(
-          (acc, p) => {
-            if (p.category === "payment") acc.paid += p.amount;
-            else if (p.category === "adjustment") acc.adjustments += p.amount;
-            acc.total += p.amount;
-            return acc;
-          },
-          { paid: 0, adjustments: 0, total: 0 }
-        );
+        // find current term
+        const now = new Date();
+        const currentTermDoc = await Term.findOne({
+          school: child.school,
+          startDate: { $lte: now },
+          endDate: { $gte: now },
+        });
+        const currentTerm = currentTermDoc?.name || "Term 1";
+
+        // Determine expected fee (priority: feeRules -> class feeExpectations -> school.feeExpectations)
+        let expectations = [];
+
+        // 1️⃣ FeeRules
+        if (schoolDoc.feeRules?.length) {
+          const classIdx = schoolDoc.classLevels.findIndex(
+            (c) => c.name === child.classLevel
+          );
+          const matchedRules = schoolDoc.feeRules.filter((rule) => {
+            const fromIdx = schoolDoc.classLevels.findIndex(
+              (c) => c.name === rule.fromClass
+            );
+            const toIdx = schoolDoc.classLevels.findIndex(
+              (c) => c.name === rule.toClass
+            );
+            if (classIdx === -1 || fromIdx === -1 || toIdx === -1) return false;
+            const min = Math.min(fromIdx, toIdx);
+            const max = Math.max(fromIdx, toIdx);
+            return (
+              classIdx >= min && classIdx <= max && rule.term === currentTerm
+            );
+          });
+          if (matchedRules.length) expectations = matchedRules;
+        }
+
+        // 2️⃣ Class-level feeExpectations
+        if (!expectations.length) {
+          const classDef = schoolDoc.classLevels.find(
+            (c) => c.name === child.classLevel
+          );
+          if (classDef?.feeExpectations?.length) {
+            expectations = classDef.feeExpectations.filter(
+              (f) => f.term === currentTerm
+            );
+          }
+        }
+
+        // 3️⃣ School-level fallback
+        if (!expectations.length) {
+          expectations = schoolDoc.feeExpectations.filter(
+            (f) => f.term === currentTerm
+          );
+        }
+
+        const expectedFee = expectations[0]?.amount || 0;
+
+        // sum payments and adjustments for the current term
+        const payments = (child.payments || [])
+          .filter((p) => p.term === currentTerm && p.category === "payment")
+          .reduce((sum, p) => sum + p.amount, 0);
+
+        const adjustments = (child.payments || [])
+          .filter((p) => p.term === currentTerm && p.category === "adjustment")
+          .reduce((sum, p) => sum + p.amount, 0);
+
+        const outstanding = expectedFee - payments + adjustments;
 
         return {
-          ...student,
-          feesSummary,
+          ...child.toObject(),
+          currentTerm,
+          feesSummary: {
+            expected: expectedFee,
+            paid: payments,
+            adjustments,
+            outstanding,
+          },
         };
       })
     );
@@ -115,7 +178,144 @@ const getParentDashboard = async (req, res) => {
     res.status(200).json({ parent: parent._id, children: childrenData });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ msg: "Error fetching dashboard", error: err.message });
+    res
+      .status(500)
+      .json({ msg: "Error fetching dashboard", error: err.message });
+  }
+};
+
+// const getStudentAttendanceSummary = async (req, res) => {
+//   try {
+//     const parent = await User.findOne({ email: req.user.email }).populate("children");
+//     if (!parent || parent.role !== "parent") {
+//       return res.status(404).json({ msg: "Parent not found" });
+//     }
+
+//     const { studentId } = req.query;
+//     const student = parent.children.find(c => c._id.toString() === studentId);
+//     if (!student) {
+//       return res.status(404).json({ msg: "Student not found" });
+//     }
+
+//     // Normalize date to start of day for accurate counting
+//     const records = await Attendance.aggregate([
+//       { $match: { student: student._id } },
+//       {
+//         $group: {
+//           _id: { $dateToString: { format: "%Y-%m-%d", date: "$date" } }, // one per day
+//           status: { $first: "$status" }, // only one record per day should exist due to saveAttendance
+//         },
+//       },
+//     ]);
+
+//     const total = records.length;
+//     const present = records.filter(r => r.status === "present").length;
+//     const absent = records.filter(r => r.status === "absent").length;
+//     const late = records.filter(r => r.status === "late").length;
+
+//     console.log('absent', records)
+
+//     const summary = {
+//       total,
+//       present,
+//       absent,
+//       late,
+//       presentPct: total ? ((present / total) * 100).toFixed(1) : 0,
+//       absentPct: total ? ((absent / total) * 100).toFixed(1) : 0,
+//       latePct: total ? ((late / total) * 100).toFixed(1) : 0,
+//     };
+
+//     res.json(summary);
+//   } catch (err) {
+//     console.error(err);
+//     res.status(500).json({ msg: "Server error", error: err.message });
+//   }
+// };
+
+const getStudentAttendanceSummary = async (req, res) => {
+  try {
+    const parent = await User.findOne({ email: req.user.email }).populate(
+      "children"
+    );
+    if (!parent || parent.role !== "parent") {
+      return res.status(404).json({ msg: "Parent not found" });
+    }
+
+    const { studentId } = req.query;
+    const student = parent.children.find((c) => c._id.toString() === studentId);
+    if (!student) {
+      return res.status(404).json({ msg: "Student not found" });
+    }
+
+    // ensure ObjectId
+    const studentObjectId = new mongoose.Types.ObjectId(student._id);
+
+    // count absents
+    const absentCount = await Attendance.countDocuments({
+      student: studentObjectId,
+      status: "absent",
+    });
+    const presentCount = await Attendance.countDocuments({
+      student: studentObjectId,
+      status: "present",
+    });
+
+    // count late
+    const lateCount = await Attendance.countDocuments({
+      student: studentObjectId,
+      status: "late",
+    });
+
+    res.json({
+      present: presentCount,
+      absent: absentCount,
+      late: lateCount,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ msg: "Server error", error: err.message });
+  }
+};
+
+const getChildrenExams = async (req, res) => {
+  try {
+    const { studentId } = req.query;
+    if (!studentId)
+      return res.status(400).json({ msg: "studentId is required" });
+
+    // Fetch parent and populate children
+    const parent = await User.findOne({ email: req.user.email }).populate(
+      "children"
+    );
+    if (!parent || parent.role !== "parent")
+      return res.status(404).json({ msg: "Parent not found" });
+
+    // Find the child in parent's children array
+    const child = parent.children.find((c) => c._id.toString() === studentId);
+    if (!child)
+      return res.status(404).json({ msg: "Child not found for this parent" });
+
+    // Map exams for this child only
+    const examsWithResults = (child.examResults || []).map((er) => ({
+      examId: er.exam,
+      examName: er.examName || "Exam", // fallback if name not stored
+      term: er.term,
+      date: er.date,
+      subjects: er.subjects || [],
+      total: er.total || 0,
+      average: er.average || 0,
+      grade: er.grade || "N/A",
+      remark: er.remark || "",
+    }));
+
+    res.status(200).json({
+      studentId: child._id,
+      studentName: `${child.firstName} ${child.lastName}`,
+      results: examsWithResults,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ msg: "Server error", error: err.message });
   }
 };
 
@@ -125,5 +325,7 @@ module.exports = {
   getParentDashboard,
   updateParent,
   deleteParent,
+  getStudentAttendanceSummary,
+  getChildrenExams,
   getAllParents,
 };

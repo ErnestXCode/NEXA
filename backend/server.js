@@ -6,6 +6,7 @@ const cookieParser = require("cookie-parser");
 const cors = require("cors");
 const connectDB = require("./config/connectDB");
 
+
 console.log('mongo-----------------------------',process.env.MONGO_URI)
 
 
@@ -40,6 +41,8 @@ app.use("/api/activity", require("./routes/activity"));
 app.use("/api/term", require("./routes/term"));
 app.use("/api/settings", require("./routes/settings"));
 app.use("/api/reports", require("./routes/report"));
+
+
 
 const PORT = process.env.PORT || 5000;
 

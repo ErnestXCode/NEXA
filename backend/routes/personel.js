@@ -23,6 +23,8 @@ const {
   updateParent,
   deleteParent,
   getParentDashboard,
+  getChildrenExams,
+  getStudentAttendanceSummary,
 } = require("../controllers/personel/parents/parentController");
 const router = express.Router();
 
@@ -31,6 +33,9 @@ router.route("/teacher").get(verifyJWT, getAllTeachers);
 router.route("/parent").get(verifyJWT, getAllParents);
 
 router.route("/parent/dashboard").get(verifyJWT, getParentDashboard);
+router.route("/parent/attendance-summary").get(verifyJWT, getStudentAttendanceSummary);
+router.route("/parent/children-exams").get(verifyJWT, getChildrenExams);
+
 router
   .route("/parent/:id")
   .get(verifyJWT, getParentById)

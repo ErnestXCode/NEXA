@@ -39,6 +39,10 @@ import SchoolSettings from "./pages/settings/SchoolSettings";
 import ReportCardsPage from "./pages/exams/ReportCardsPage";
 import Analytics from "./components/analytics/Analytics";
 import Feedback from "./pages/feedback/Feedback";
+import NetworkStatusBanner from "./context/NetworkStatusBanner";
+
+// import NetworkStatusBanner from "./context/NetworkStatusBanner";
+// import { NetworkStatusProvider } from "./context/NetworkStatusCtx";
 const FeeHistoryWrapper = () => {
   const { studentId } = useParams();
   return <FeeHistory studentId={studentId} />;
@@ -46,8 +50,10 @@ const FeeHistoryWrapper = () => {
 
 function App() {
   return (
+
     <div className="bg-gray-950 text-white min-h-screen">
       <BrowserRouter>
+        <NetworkStatusBanner />
         <Analytics />
         <Routes>
           {/* Public routes */}
@@ -125,6 +131,7 @@ function App() {
         </Routes>
       </BrowserRouter>
     </div>
+
   );
 }
 

@@ -2,6 +2,7 @@ const Attendance = require("../../models/Attendance");
 const Student = require("../../models/Student");
 const User = require("../../models/User");
 const notificationService = require("../../services/notificationService");
+const mongoose = require("mongoose");
 
 // --- Save attendance ---
 exports.saveAttendance = async (req, res) => {
@@ -25,6 +26,12 @@ exports.saveAttendance = async (req, res) => {
     for (const record of records) {
       const { studentId, status, reason } = record;
 
+      if (
+        studentId == "68bddf918a42a46eb237d8e8" ||
+        studentId == new mongoose.Types.ObjectId("68bddf918a42a46eb237d8e8")
+      ) {
+        console.log(record);
+      }
       if (requester.role === "teacher" && requester.isClassTeacher) {
         const student = await Student.findById(studentId);
         if (!student || student.classLevel !== requester.classLevel) continue;
@@ -48,7 +55,11 @@ exports.saveAttendance = async (req, res) => {
       if (notifyParents && status === "absent") {
         const student = await Student.findById(studentId).populate("guardian");
         if (student?.guardian) {
-          notificationService.notifyParent(student.guardian, student, attendanceDate);
+          notificationService.notifyParent(
+            student.guardian,
+            student,
+            attendanceDate
+          );
         }
       }
     }
@@ -113,7 +124,10 @@ exports.getStatsByRange = async (req, res) => {
     const end = new Date(endDate);
     end.setHours(23, 59, 59, 999);
 
-    const filter = { date: { $gte: start, $lte: end }, school: requester.school };
+    const filter = {
+      date: { $gte: start, $lte: end },
+      school: requester.school,
+    };
     if (requester.role === "teacher" && requester.isClassTeacher) {
       filter.classLevel = requester.classLevel;
     }
@@ -138,7 +152,6 @@ exports.getStatsByRange = async (req, res) => {
     res.status(500).json({ msg: "Server error" });
   }
 };
-
 
 // --- Get chronic absentees ---
 exports.getAbsenteeListRange = async (req, res) => {
@@ -216,7 +229,10 @@ exports.getClassStats = async (req, res) => {
       // group by class + date first = one mark per class per day
       {
         $group: {
-          _id: { classLevel: "$classLevel", date: { $dateToString: { format: "%Y-%m-%d", date: "$date" } } },
+          _id: {
+            classLevel: "$classLevel",
+            date: { $dateToString: { format: "%Y-%m-%d", date: "$date" } },
+          },
           present: { $sum: { $cond: [{ $eq: ["$status", "present"] }, 1, 0] } },
           absent: { $sum: { $cond: [{ $eq: ["$status", "absent"] }, 1, 0] } },
           late: { $sum: { $cond: [{ $eq: ["$status", "late"] }, 1, 0] } },
@@ -243,4 +259,3 @@ exports.getClassStats = async (req, res) => {
     res.status(500).json({ msg: "Server error" });
   }
 };
-
