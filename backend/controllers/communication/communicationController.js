@@ -46,6 +46,7 @@ const sendMessage = async (req, res) => {
     // Send web push if type=chat
     if (type === "chat") {
       const subscriptions = await PushSubscription.find({ school: sender.school }).populate("user");
+      console.log('subscriptions', subscriptions)
       const payload = JSON.stringify({
         title: `New message from ${sender.name}`,
         body,

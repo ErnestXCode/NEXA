@@ -96,29 +96,36 @@ const AllBursars = () => {
   }
 
   return (
-    <main className="p-6 bg-gray-950 min-h-screen relative">
-      <h1 className="text-2xl font-bold mb-4 text-white">All Bursars</h1>
+    <main className="p-6 bg-gray-950 overflow-y-hidden relative">
+  <h1 className="text-2xl font-bold mb-4 text-white">All Bursars</h1>
 
-      {/* Search input */}
-      <div className="mb-4">
-        <input
-          type="text"
-          placeholder="Search by name..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full p-2 rounded bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-      </div>
+  {/* Search input */}
+  <div className="mb-4">
+    <input
+      type="text"
+      placeholder="Search by name..."
+      value={searchTerm}
+      onChange={(e) => setSearchTerm(e.target.value)}
+      className="w-full p-2 rounded bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+    />
+  </div>
 
-      <table className="w-full text-sm bg-gray-900 rounded-lg overflow-hidden">
-        <thead className="bg-gray-800">
-          <tr>
-            <th className="p-2 text-left text-white">Name</th>
-            <th className="p-2 text-left text-white">Email</th>
-            <th className="p-2 text-left text-white">Phone</th>
-            <th className="p-2 text-left text-white">Actions</th>
-          </tr>
-        </thead>
+  <div className="w-full bg-gray-900 rounded-lg overflow-hidden">
+    {/* Table header */}
+    <table className="w-full text-sm table-fixed">
+      <thead className="bg-gray-800 sticky top-0 z-10">
+        <tr>
+          <th className="p-2 text-left text-white">Name</th>
+          <th className="p-2 text-left text-white">Email</th>
+          <th className="p-2 text-left text-white">Phone</th>
+          <th className="p-2 text-left text-white">Actions</th>
+        </tr>
+      </thead>
+    </table>
+
+    {/* Scrollable table body */}
+    <div className="max-h-[500px] overflow-y-auto">
+      <table className="w-full text-sm table-fixed">
         <tbody>
           {filteredBursars.length > 0 ? (
             filteredBursars.map((b, i) => (
@@ -156,35 +163,38 @@ const AllBursars = () => {
           )}
         </tbody>
       </table>
+    </div>
+  </div>
 
-      {/* Delete Modal */}
-      {showModal && bursarToDelete && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-gray-900 rounded-lg p-6 w-80">
-            <h2 className="text-lg font-bold text-white mb-4">Delete Bursar</h2>
-            <p className="text-gray-300 mb-6">
-              Are you sure you want to delete{" "}
-              <span className="font-semibold">{bursarToDelete.name}</span>?
-            </p>
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={handleCancel}
-                className="px-4 py-2 rounded bg-gray-700 text-gray-200 hover:bg-gray-600 transition"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleDelete}
-                disabled={deleteMutation.isLoading}
-                className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-500 transition"
-              >
-                {deleteMutation.isLoading ? "Deleting..." : "Delete"}
-              </button>
-            </div>
-          </div>
+  {/* Delete Modal */}
+  {showModal && bursarToDelete && (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+      <div className="bg-gray-900 rounded-lg p-6 w-80">
+        <h2 className="text-lg font-bold text-white mb-4">Delete Bursar</h2>
+        <p className="text-gray-300 mb-6">
+          Are you sure you want to delete{" "}
+          <span className="font-semibold">{bursarToDelete.name}</span>?
+        </p>
+        <div className="flex justify-end gap-2">
+          <button
+            onClick={handleCancel}
+            className="px-4 py-2 rounded bg-gray-700 text-gray-200 hover:bg-gray-600 transition"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleDelete}
+            disabled={deleteMutation.isLoading}
+            className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-500 transition"
+          >
+            {deleteMutation.isLoading ? "Deleting..." : "Delete"}
+          </button>
         </div>
-      )}
-    </main>
+      </div>
+    </div>
+  )}
+</main>
+
   );
 };
 

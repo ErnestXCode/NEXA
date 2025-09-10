@@ -11,6 +11,9 @@ router.post("/subscribe",verifyJWT, async (req, res) => {
   try {
     const user = req.user; // make sure verifyJWT middleware is used
     const sub = req.body;
+    console.log('----------------------------')
+    console.log(req.user, req.body)
+    console.log('----------------------------')
     await pushSubscription.findOneAndUpdate(
       { user: user.userId },
       { user: user.userId, school: user.school, subscription: sub },

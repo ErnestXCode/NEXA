@@ -99,49 +99,54 @@ const AllStudents = () => {
   if (isError) return <main className="p-6 bg-gray-950 min-h-screen text-white">❌ Failed to load students.</main>;
 
   return (
-    <main className="p-6 bg-gray-950 min-h-screen relative">
-      <h1 className="text-2xl font-bold mb-4 text-white">All Students</h1>
+  <main className="p-6 bg-gray-950 overflow-y-hidden relative">
+  <h1 className="text-2xl font-bold mb-4 text-white">All Students</h1>
 
-      {/* Search inputs */}
-      <div className="mb-4 flex flex-col md:flex-row gap-2">
-        <input
-          type="text"
-          placeholder="Search by name..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="flex-1 p-2 rounded bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-        <input
-          type="text"
-          placeholder="Search by class..."
-          value={classFilter}
-          onChange={(e) => setClassFilter(e.target.value)}
-          className="flex-1 p-2 rounded bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-      </div>
+  {/* Search inputs */}
+  <div className="mb-4 flex flex-col md:flex-row gap-2">
+    <input
+      type="text"
+      placeholder="Search by name..."
+      value={searchTerm}
+      onChange={(e) => setSearchTerm(e.target.value)}
+      className="flex-1 p-2 rounded bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+    />
+    <input
+      type="text"
+      placeholder="Search by class..."
+      value={classFilter}
+      onChange={(e) => setClassFilter(e.target.value)}
+      className="flex-1 p-2 rounded bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+    />
+  </div>
 
-      <table className="w-full text-sm bg-gray-900 rounded-lg overflow-hidden">
-        <thead className="bg-gray-800">
-          <tr>
-       
-            <th className="p-2 text-left text-white">Name</th>
-            <th className="p-2 text-left text-white">Gender</th>
-            <th className="p-2 text-left text-white">DOB</th>
-            <th className="p-2 text-left text-white">Class</th>
-            <th className="p-2 text-left text-white">Guardian Name</th>
-            <th className="p-2 text-left text-white">Guardian Email</th>
-            <th className="p-2 text-left text-white">Guardian Phone</th>
-            <th className="p-2 text-left text-white">Actions</th>
-          </tr>
-        </thead>
+  <div className="w-full bg-gray-900 rounded-lg overflow-hidden">
+    {/* Table header */}
+    <table className="w-full text-sm table-fixed">
+      <thead className="bg-gray-800 sticky top-0 z-10">
+        <tr>
+          <th className="p-2 text-left text-white">Name</th>
+          <th className="p-2 text-left text-white">Gender</th>
+          <th className="p-2 text-left text-white">DOB</th>
+          <th className="p-2 text-left text-white">Class</th>
+          <th className="p-2 text-left text-white">Guardian Name</th>
+          <th className="p-2 text-left text-white">Guardian Email</th>
+          <th className="p-2 text-left text-white">Guardian Phone</th>
+          <th className="p-2 text-left text-white">Actions</th>
+        </tr>
+      </thead>
+    </table>
+
+    {/* Scrollable table body */}
+    <div className="max-h-[500px] overflow-y-auto">
+      <table className="w-full text-sm table-fixed">
         <tbody>
           {filteredStudents.length > 0 ? (
-            filteredStudents.map((s, i) => {
-              return <tr
+            filteredStudents.map((s, i) => (
+              <tr
                 key={s._id || i}
                 className={`${i % 2 === 0 ? "bg-gray-950" : "bg-gray-900"} hover:bg-gray-850 transition`}
               >
-               
                 <td className="p-2 text-white">{s.firstName} {s.middleName} {s.lastName}</td>
                 <td className="p-2 text-white">{s.gender}</td>
                 <td className="p-2 text-white">{formatDate(s.dateOfBirth)}</td>
@@ -149,7 +154,6 @@ const AllStudents = () => {
                 <td className="p-2 text-white">{s.guardian?.name}</td>
                 <td className="p-2 text-white">{s.guardian?.email}</td>
                 <td className="p-2 text-white">{s.guardian?.phoneNumber}</td>
-        
                 <td className="p-2 flex gap-2">
                   <button onClick={() => handleEdit(s._id)} className="px-3 py-1 rounded border border-gray-700 text-gray-200 hover:bg-gray-800 transition">
                     Edit
@@ -159,7 +163,7 @@ const AllStudents = () => {
                   </button>
                 </td>
               </tr>
-})
+            ))
           ) : (
             <tr>
               <td colSpan="8" className="text-center p-4 text-gray-400">No students found.</td>
@@ -167,25 +171,28 @@ const AllStudents = () => {
           )}
         </tbody>
       </table>
+    </div>
+  </div>
 
-      {/* Modal */}
-      {showModal && studentToDelete && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-gray-900 rounded-lg p-6 w-80">
-            <h2 className="text-lg font-bold text-white mb-4">Delete Student</h2>
-            <p className="text-gray-300 mb-6">
-              Are you sure you want to delete <span className="font-semibold">{studentToDelete.firstName} {studentToDelete.lastName}</span>?
-            </p>
-            <div className="flex justify-end gap-2">
-              <button onClick={handleCancel} className="px-4 py-2 rounded bg-gray-700 text-gray-200 hover:bg-gray-600 transition">Cancel</button>
-              <button onClick={handleDelete} disabled={deleteMutation.isLoading} className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-500 transition">
-                {deleteMutation.isLoading ? "Deleting..." : "Delete"}
-              </button>
-            </div>
-          </div>
+  {/* Delete Modal */}
+  {showModal && studentToDelete && (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+      <div className="bg-gray-900 rounded-lg p-6 w-80">
+        <h2 className="text-lg font-bold text-white mb-4">Delete Student</h2>
+        <p className="text-gray-300 mb-6">
+          Are you sure you want to delete <span className="font-semibold">{studentToDelete.firstName} {studentToDelete.lastName}</span>?
+        </p>
+        <div className="flex justify-end gap-2">
+          <button onClick={handleCancel} className="px-4 py-2 rounded bg-gray-700 text-gray-200 hover:bg-gray-600 transition">Cancel</button>
+          <button onClick={handleDelete} disabled={deleteMutation.isLoading} className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-500 transition">
+            {deleteMutation.isLoading ? "Deleting..." : "Delete"}
+          </button>
         </div>
-      )}
-    </main>
+      </div>
+    </div>
+  )}
+</main>
+
   );
 };
 
