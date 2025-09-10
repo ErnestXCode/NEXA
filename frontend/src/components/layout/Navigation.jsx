@@ -209,7 +209,7 @@ const Navigation = () => {
                 </div>
 
                 {/* Exams */}
-                <div className="mt-4">
+                {false && <div className="mt-4">
                   <h3 className="text-gray-400 uppercase text-xs mb-2">
                     Exams
                   </h3>
@@ -237,7 +237,7 @@ const Navigation = () => {
                   >
                     Report Cards
                   </NavLink>
-                </div>
+                </div>}
 
                 {/* Fees */}
                 <div className="mt-4">
@@ -304,7 +304,7 @@ const Navigation = () => {
                   </NavLink>
                 </div>
 
-                <div className="mt-4">
+                {false && <div className="mt-4">
                   <h3 className="text-gray-400 uppercase text-xs mb-2">
                     Exams
                   </h3>
@@ -316,7 +316,7 @@ const Navigation = () => {
                   >
                     Record Results
                   </NavLink>
-                </div>
+                </div>}
               </>
             )}
 

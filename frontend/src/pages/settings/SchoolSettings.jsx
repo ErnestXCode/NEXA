@@ -65,7 +65,7 @@ const SchoolSettings = ({ onNext }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     updateMutation.mutate(school);
-    // if (onNext) onNext();
+    navigate('/dashboard')
   };
 
   // --- Fee Rule helpers (already in your file) ---
@@ -208,7 +208,7 @@ const SchoolSettings = ({ onNext }) => {
           </section>
 
           {/* Subjects (global) */}
-          <section>
+          {false && <section>
             <h2 className="text-gray-200 font-semibold mb-3 border-b border-gray-700 pb-1">
               Subjects (Global)
             </h2>
@@ -241,7 +241,7 @@ const SchoolSettings = ({ onNext }) => {
                 className="flex-1 min-w-[120px] p-2 rounded bg-gray-700 text-white"
               />
             </div>
-          </section>
+          </section>}
 
           {/* Class Levels */}
           <section>
@@ -309,7 +309,7 @@ const SchoolSettings = ({ onNext }) => {
                         </button>
                       </span>
                     ))}
-                    <input
+                    {false && <input
                       type="text"
                       placeholder="Add stream"
                       onKeyDown={(e) => {
@@ -325,7 +325,7 @@ const SchoolSettings = ({ onNext }) => {
                         }
                       }}
                       className="flex-1 min-w-[120px] p-2 rounded bg-gray-700 text-white text-sm"
-                    />
+                    />}
                   </div>
                 </div>
               ))}
@@ -348,7 +348,7 @@ const SchoolSettings = ({ onNext }) => {
           </section>
 
           {/* Grading System */}
-          <section>
+         {false &&  <section>
             <h2 className="text-gray-200 font-semibold mb-3 border-b border-gray-700 pb-1">
               Grading System
             </h2>
@@ -467,7 +467,7 @@ const SchoolSettings = ({ onNext }) => {
                 ➕ Add Grade Row
               </button>
             </div>
-          </section>
+          </section>}
 
           {/* Fee Expectations */}
           <section>
@@ -586,7 +586,7 @@ const SchoolSettings = ({ onNext }) => {
           </section>
 
           {/* Subjects By Class Range (NEW) */}
-          <section>
+          {false && <section>
             <h2 className="text-gray-200 font-semibold mb-3 border-b border-gray-700 pb-1">
               Subjects by Class Range
             </h2>
@@ -691,10 +691,10 @@ const SchoolSettings = ({ onNext }) => {
                 ➕ Add Subjects Rule
               </button>
             </div>
-          </section>
+          </section>}
 
           {/* Optional Modules */}
-          <section>
+         {false && <section>
             <h2 className="text-gray-200 font-semibold mb-3 border-b border-gray-700 pb-1">
               Optional Modules
             </h2>
@@ -721,7 +721,7 @@ const SchoolSettings = ({ onNext }) => {
                 )
               )}
             </div>
-          </section>
+          </section>}
 
           <button
             type="button"

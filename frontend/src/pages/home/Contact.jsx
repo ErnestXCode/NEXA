@@ -1,8 +1,60 @@
-import React from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { NavLink, Link } from "react-router-dom";
-import Feedback from "../feedback/Feedback";
+import { useNavigate } from "react-router-dom";
+import emailjs from "@emailjs/browser";
 
 const Contact = () => {
+  const nameRef = useRef();
+  const navigate = useNavigate();
+  const [sending, setSending] = useState(false);
+
+  const [inputData, setInputData] = useState({
+    name: "",
+    email: "",
+    message: "",
+  });
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setInputData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+
+    if (!inputData.email.includes("@")) {
+      alert("Please enter a valid email.");
+      return;
+    }
+
+    setSending(true);
+
+    emailjs
+      .send(
+        "service_mvnuvug", // ✅ replace with your Service ID
+        "template_6ns9b4j", // ✅ replace with your Template ID
+        {
+          from_name: inputData.name,
+          reply_to: inputData.email,
+          message: inputData.message,
+        },
+        "f2ZFzPg9nvkUFnjIX" // ✅ replace with your Public Key
+      )
+      .then(() => {
+        alert("Message sent successfully!");
+        setInputData({ name: "", email: "", message: "" });
+        navigate("/");
+      })
+      .catch((error) => {
+        console.error("Failed to send message:", error);
+        alert("Something went wrong. Try again.");
+      })
+      .finally(() => setSending(false));
+  };
+
+  useEffect(() => {
+    nameRef.current?.focus();
+  }, []);
   return (
     <>
       {/* Navbar (same as Home/Features/Pricing) */}
@@ -14,7 +66,10 @@ const Contact = () => {
           <NavLink to="/" className="hover:text-white transition-colors">
             Home
           </NavLink>
-          <NavLink to="/features" className="hover:text-white transition-colors">
+          <NavLink
+            to="/features"
+            className="hover:text-white transition-colors"
+          >
             Features
           </NavLink>
           <NavLink to="/pricing" className="hover:text-white transition-colors">
@@ -49,24 +104,70 @@ const Contact = () => {
             <NavLink to="/" className="text-gray-300 hover:text-white text-sm">
               Home
             </NavLink>
-            <NavLink to="/features" className="text-gray-300 hover:text-white text-sm">
+            <NavLink
+              to="/features"
+              className="text-gray-300 hover:text-white text-sm"
+            >
               Features
             </NavLink>
-            <NavLink to="/pricing" className="text-gray-300 hover:text-white text-sm">
+            <NavLink
+              to="/pricing"
+              className="text-gray-300 hover:text-white text-sm"
+            >
               Pricing
             </NavLink>
-            <NavLink to="/contact" className="text-gray-300 hover:text-white text-sm">
+            <NavLink
+              to="/contact"
+              className="text-gray-300 hover:text-white text-sm"
+            >
               Contact
             </NavLink>
           </div>
         </section>
+        <div className="max-w-lg mx-auto p-6 bg-gray-950 text-gray-200 rounded-2xl shadow-lg">
+          <form onSubmit={handleSubmit} className="flex flex-col space-y-4">
+            <input
+              ref={nameRef}
+              name="name"
+              type="text"
+              placeholder="Your Name"
+              required
+              value={inputData.name}
+              onChange={handleChange}
+              className="p-3 rounded-xl bg-gray-900 border border-gray-700 focus:border-blue-500 focus:ring focus:ring-blue-500/30 outline-none transition"
+            />
 
-        {/* Contact Form Section */}
-        <section className="py-24 max-w-3xl mx-auto px-6">
-          <div className="p-8 bg-gray-900 rounded-2xl shadow border border-gray-800 hover:border-gray-700 transition-colors">
-            <Feedback />
-          </div>
-        </section>
+            <input
+              name="email"
+              type="email"
+              placeholder="Your Email"
+              required
+              value={inputData.email}
+              onChange={handleChange}
+              className="p-3 rounded-xl bg-gray-900 border border-gray-700 focus:border-blue-500 focus:ring focus:ring-blue-500/30 outline-none transition"
+            />
+
+            <textarea
+              name="message"
+              placeholder="Your Message"
+              rows="5"
+              required
+              value={inputData.message}
+              onChange={handleChange}
+              className="p-3 rounded-xl bg-gray-900 border border-gray-700 focus:border-blue-500 focus:ring focus:ring-blue-500/30 outline-none transition"
+            />
+
+            <button
+              type="submit"
+              disabled={sending}
+              className={`p-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-medium transition ${
+                sending ? "opacity-50 cursor-not-allowed" : ""
+              }`}
+            >
+              {sending ? "Sending..." : "Send Message"}
+            </button>
+          </form>
+        </div>
       </main>
 
       {/* Footer (same as others) */}

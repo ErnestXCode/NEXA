@@ -80,11 +80,11 @@ studentSchema.pre("save", async function (next) {
     const classValidation = await School.validateClassLevel(this.school, this.classLevel);
     if (!classValidation.valid) throw new Error(`Invalid classLevel: ${classValidation.reason}`);
 
-    // 2️⃣ Validate each subject
-    for (let subj of this.subjects || []) {
-      const subjectValidation = await School.validateSubject(this.school, subj);
-      if (!subjectValidation.valid) throw new Error(`Invalid subject "${subj}": ${subjectValidation.reason}`);
-    }
+    // // 2️⃣ Validate each subject
+    // for (let subj of this.subjects || []) {
+    //   const subjectValidation = await School.validateSubject(this.school, subj);
+    //   if (!subjectValidation.valid) throw new Error(`Invalid subject "${subj}": ${subjectValidation.reason}`);
+    // }
 
     next();
   } catch (err) {
