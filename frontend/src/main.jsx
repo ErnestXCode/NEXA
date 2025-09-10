@@ -32,6 +32,40 @@ persistQueryClient({
   persister,
 });
 
+// Register service worker and request push subscription
+if ("serviceWorker" in navigator && "PushManager" in window) {
+  window.addEventListener("load", async () => {
+    try {
+      const registration = await navigator.serviceWorker.register("/custom-sw.js");
+      console.log("Service Worker registered", registration);
+
+      // Request notification permission
+      const permission = await Notification.requestPermission();
+      if (permission === "granted") {
+        console.log("Notification permission granted.");
+
+        // Subscribe user to push
+        const subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: import.meta.env.VITE_VAPID_PUBLIC_KEY, // must be base64
+        });
+
+        // Send subscription to backend
+        await fetch("/api/push-subscribe", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(subscription),
+        });
+
+        console.log("Push subscription saved on server");
+      }
+    } catch (err) {
+      console.error("SW or Push registration failed:", err);
+    }
+  });
+}
+
+
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <Provider store={store}>
@@ -42,3 +76,4 @@ createRoot(document.getElementById("root")).render(
     </Provider>
   </StrictMode>
 );
+

@@ -12,7 +12,7 @@ const Communication = () => {
     currentUser?.role === "admin" || currentUser?.role === "superadmin";
 
   return (
-    <main className="p-6 bg-gray-950 text-white min-h-screen flex flex-col">
+    <main className="p-6 bg-gray-950 text-white  flex flex-col">
       {/* <h1 className="text-2xl md:text-3xl font-bold mb-6">📡 Communication</h1> */}
 
       {/* Tabs */}

@@ -112,7 +112,9 @@ const AdminDashboard = () => {
               teacher.email,
               teacher.phoneNumber || "-",
               teacher.subjects && teacher.subjects.length > 0
-                ? teacher.subjects.join(", ")
+                ? teacher.subjects.length > 1
+                  ? `${teacher.subjects[0]}...`
+                  : teacher.subjects[0]
                 : "-",
               teacher.isClassTeacher ? "Yes" : "No",
               teacher.isClassTeacher && teacher.classLevel
@@ -142,17 +144,16 @@ const AdminDashboard = () => {
           <ManagementTable
             title="Manage Students"
             data={students}
-            columns={["Admission #", "Name", "Gender", "Class", "Phone"]}
+            columns={["Name", "Gender", "Class", "Phone"]}
             viewAllLink="/dashboard/students"
             addLink="/dashboard/createStudent"
             addText="+ Add Student"
             minHeight="min-h-[350px]"
             rowRender={(student) => [
-              student.admissionNumber,
-              `${student.firstName} ${student.lastName}`,
+              `${student.firstName} ${student.middleName} ${student.lastName}`,
               student.gender,
               student.classLevel,
-              student.guardianPhone,
+              student.guardian?.phoneNumber || "-",
             ]}
           />
 
@@ -164,7 +165,11 @@ const AdminDashboard = () => {
             addLink="/dashboard/createParent"
             addText="+ Add Parent"
             minHeight="min-h-[300px]"
-            rowRender={(parent) => [parent.name, parent.email, parent.phone]}
+            rowRender={(parent) => [
+              parent.name,
+              parent.email,
+              parent.phoneNumber,
+            ]}
           />
         </div>
       </div>
@@ -218,7 +223,10 @@ const ManagementTable = ({
       >
         {addText}
       </Link>
-      <Link to={viewAllLink} className="text-blue-400 hover:underline">
+      <Link
+        to={viewAllLink}
+        className="px-4 py-2 rounded-lg bg-gray-800 text-gray-200 hover:bg-gray-700 transition"
+      >
         View All
       </Link>
     </div>

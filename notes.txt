@@ -7,3 +7,6 @@ complete email functionality
 finish forgot passwords email 
 finish email for admin 
 
+make nexa downloadable,
+grades to bew used in frontend as well 
+all affected subjects to be affected 

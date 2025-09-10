@@ -1,8 +1,12 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import api from "../../api/axios";
+import { useSelector } from "react-redux";
+import { selectCurrentUser } from "../../redux/slices/authSlice";
 
 const MessagesList = () => {
+  const currentUser = useSelector(selectCurrentUser);
+
   const { data: messages = [], isLoading } = useQuery({
     queryKey: ["messages"],
     queryFn: async () => {
@@ -21,8 +25,8 @@ const MessagesList = () => {
   }
 
   return (
-    <div className="flex flex-col h-[500px]">
-      <h2 className="text-lg font-semibold p-4 border-b border-gray-800">
+    <div className="flex flex-col h-[500px] border border-gray-800 rounded-2xl overflow-hidden bg-gray-950 shadow-md">
+      <h2 className="text-lg font-semibold p-4 border-b border-gray-800 bg-gray-900 text-white">
         In-App Chat
       </h2>
 
@@ -34,24 +38,29 @@ const MessagesList = () => {
             {messages.map((msg) => (
               <li
                 key={msg._id}
-                className="flex items-start gap-3 bg-gray-800 hover:bg-gray-700 transition-colors p-4 rounded-xl"
+                className="flex items-start gap-4 p-0"
               >
                 {/* Avatar */}
-                <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center font-bold">
+                <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white bg-gradient-to-br from-blue-500 to-purple-500 shadow-md flex-shrink-0 mt-1">
                   {msg.sender?.name?.[0]?.toUpperCase() || "U"}
                 </div>
 
-                {/* Message Body */}
+                {/* Message Bubble */}
                 <div className="flex-1">
-                  <div className="flex justify-between items-center text-xs text-gray-400">
-                    <span className="font-medium text-gray-200">
-                      {msg.sender?.name || "Unknown"}
+                  <div className="flex justify-between items-center text-xs text-gray-400 mb-1 px-4">
+                    <span className="font-medium text-white">
+                      [{currentUser.role}] {msg.sender?.name || "Unknown"}
                     </span>
-                    <span>{new Date(msg.createdAt).toLocaleTimeString()}</span>
+                    <span className="text-gray-500">
+                      {new Date(msg.createdAt).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
                   </div>
-                  <p className="mt-1 text-sm text-white leading-relaxed">
+                  <div className="bg-gray-900 text-gray-200 p-4 rounded-xl shadow-md break-words w-full">
                     {msg.body}
-                  </p>
+                  </div>
                 </div>
               </li>
             ))}

@@ -1,14 +1,52 @@
 import React from "react";
 import { Link, NavLink } from "react-router-dom";
+import {
+  LightBulbIcon,
+  Cog6ToothIcon,
+  ShieldCheckIcon,
+} from "@heroicons/react/24/outline";
 
 const Home = () => {
+  const features = [
+    {
+      title: "Easy to Use",
+      text: "An intuitive interface designed to make your experience seamless and enjoyable.",
+      icon: LightBulbIcon,
+      color: "text-yellow-400",
+    },
+    {
+      title: "Powerful Tools",
+      text: "Packed with features that empower you to get more done with fewer clicks.",
+      icon: Cog6ToothIcon,
+      color: "text-cyan-400",
+    },
+    {
+      title: "Secure & Reliable",
+      text: "Built with security in mind, ensuring your data is always safe and accessible.",
+      icon: ShieldCheckIcon,
+      color: "text-green-400",
+    },
+  ];
+
+  const testimonials = [
+    {
+      text: "Nexa completely changed how our team collaborates. Highly recommend!",
+      name: "Alex Johnson",
+      avatar: "/images/user1.jpg",
+    },
+    {
+      text: "The tools are simple yet powerful. We can’t imagine working without Nexa.",
+      name: "Sarah Lee",
+      avatar: "/images/user2.jpg",
+    },
+  ];
+
   return (
     <>
       {/* Navbar */}
       <nav className="flex justify-between items-center px-6 py-4 bg-gray-950 border-b border-gray-800">
         <h1 className="text-2xl font-bold text-white tracking-tight">Nexa</h1>
 
-        {/* Desktop Links */}
         <ul className="hidden md:flex gap-8 text-gray-400">
           <NavLink to="/" className="hover:text-white transition-colors">
             Home
@@ -24,7 +62,6 @@ const Home = () => {
           </NavLink>
         </ul>
 
-        {/* Sign Up Button */}
         <Link
           to="/register"
           className="px-5 py-2 bg-white font-semibold text-black rounded-xl hover:bg-gray-200 transition-colors"
@@ -49,7 +86,6 @@ const Home = () => {
           Get Started
         </Link>
 
-        {/* Mobile Links */}
         <div className="flex flex-row gap-6 mt-8 md:hidden justify-center">
           <NavLink to="/" className="text-gray-300 hover:text-white text-sm">
             Home
@@ -65,7 +101,13 @@ const Home = () => {
           </NavLink>
         </div>
 
-        <div className="mt-14 w-full md:w-3/4 h-72 bg-gray-800 rounded-2xl shadow-inner" />
+        <div className="mt-14 w-full md:w-3/4 mx-auto">
+          <img
+            src="/images/dashboardHero.png"
+            alt="Dashboard Preview"
+            className="w-full h-auto rounded-2xl shadow-inner"
+          />
+        </div>
       </section>
 
       {/* Features Section */}
@@ -75,17 +117,23 @@ const Home = () => {
             Why Choose Nexa?
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-            {[
-              { title: "Easy to Use", text: "An intuitive interface designed to make your experience seamless and enjoyable." },
-              { title: "Powerful Tools", text: "Packed with features that empower you to get more done with fewer clicks." },
-              { title: "Secure & Reliable", text: "Built with security in mind, ensuring your data is always safe and accessible." }
-            ].map((feature, i) => (
-              <div key={i} className="p-8 bg-gray-900 rounded-2xl shadow border border-gray-800 hover:border-gray-700 transition-colors">
-                <div className="w-20 h-20 mx-auto mb-6 bg-gray-700 rounded-full" />
-                <h3 className="font-semibold text-xl mb-3 text-white">{feature.title}</h3>
-                <p className="text-gray-400">{feature.text}</p>
-              </div>
-            ))}
+            {features.map((feature, i) => {
+              const Icon = feature.icon;
+              return (
+                <div
+                  key={i}
+                  className="p-8 bg-gray-900 rounded-2xl shadow border border-gray-800 hover:border-gray-700 transition-colors"
+                >
+                  <div className="w-20 h-20 mx-auto mb-6 rounded-full flex items-center justify-center bg-gray-800 shadow-inner">
+                    <Icon className={`w-10 h-10 ${feature.color}`} />
+                  </div>
+                  <h3 className="font-semibold text-xl mb-3 text-white">
+                    {feature.title}
+                  </h3>
+                  <p className="text-gray-400">{feature.text}</p>
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -97,12 +145,16 @@ const Home = () => {
             What Our Users Say
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-            {[
-              { text: "Nexa completely changed how our team collaborates. Highly recommend!", name: "Alex Johnson" },
-              { text: "The tools are simple yet powerful. We can’t imagine working without Nexa.", name: "Sarah Lee" }
-            ].map((t, i) => (
-              <div key={i} className="p-8 border border-gray-800 rounded-2xl shadow bg-gray-950 hover:border-gray-700 transition-colors">
-                <div className="w-16 h-16 bg-gray-700 rounded-full mx-auto mb-5" />
+            {testimonials.map((t, i) => (
+              <div
+                key={i}
+                className="p-8 border border-gray-800 rounded-2xl shadow bg-gray-950 hover:border-gray-700 transition-colors"
+              >
+                <img
+                  src={t.avatar}
+                  alt={t.name}
+                  className="w-16 h-16 rounded-full mx-auto mb-5 object-cover"
+                />
                 <p className="italic mb-3 text-gray-300">“{t.text}”</p>
                 <p className="font-semibold text-white">— {t.name}</p>
               </div>
@@ -113,7 +165,9 @@ const Home = () => {
 
       {/* CTA Section */}
       <section className="py-24 bg-gray-950 text-white text-center px-6">
-        <h2 className="text-3xl md:text-4xl font-semibold mb-6">Ready to get started?</h2>
+        <h2 className="text-3xl md:text-4xl font-semibold mb-6">
+          Ready to get started?
+        </h2>
         <p className="mb-10 text-gray-400">
           Join the growing community of schools using Nexa.
         </p>
