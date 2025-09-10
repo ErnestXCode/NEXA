@@ -6,7 +6,6 @@ import Features from "./pages/home/Features";
 import Contact from "./pages/home/Contact";
 import Pricing from "./pages/home/Pricing";
 import Communication from "./pages/communication/Communication";
-import Settings from "./pages/settings/Settings";
 import Dashboard from "./pages/home/Dashboard";
 import PersistLogin from "./pages/auth/PersistLogin";
 import PersonelForm from "./pages/actions/PersonelForm";
@@ -39,10 +38,7 @@ import SchoolSettings from "./pages/settings/SchoolSettings";
 import ReportCardsPage from "./pages/exams/ReportCardsPage";
 import Analytics from "./components/analytics/Analytics";
 import Feedback from "./pages/feedback/Feedback";
-import NetworkStatusBanner from "./context/NetworkStatusBanner";
 
-// import NetworkStatusBanner from "./context/NetworkStatusBanner";
-// import { NetworkStatusProvider } from "./context/NetworkStatusCtx";
 const FeeHistoryWrapper = () => {
   const { studentId } = useParams();
   return <FeeHistory studentId={studentId} />;
@@ -53,7 +49,7 @@ function App() {
 
     <div className="bg-gray-950 text-white min-h-screen">
       <BrowserRouter>
-        <NetworkStatusBanner />
+        
         <Analytics />
         <Routes>
           {/* Public routes */}

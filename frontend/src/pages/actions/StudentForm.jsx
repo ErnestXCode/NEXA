@@ -12,8 +12,7 @@ const studentObj = {
   gender: "",
   dateOfBirth: "",
   classLevel: "",
-  guardianName: "",
-  guardianPhone: "",
+ 
 };
 
 const normalizeStudentData = (data) => {
@@ -27,8 +26,7 @@ const normalizeStudentData = (data) => {
         : "male", // default to male if unknown
     dateOfBirth: s.dateOfBirth || "",
     classLevel: s.classLevel?.trim() || "",
-    guardianName: s.guardianName?.trim() || "",
-    guardianPhone: s.guardianPhone?.trim() || "",
+
   }));
 };
 
@@ -119,16 +117,6 @@ const StudentForm = ({ onNext }) => {
         </h1>
 
         {/* Single Entry Inputs with labels */}
-        <div className="col-span-1 flex flex-col">
-          <label className="text-gray-300 text-sm mb-1">Admission Number</label>
-          <input
-            placeholder="e.g. 12345"
-            name="middleName"
-            value={student.middleName}
-            onChange={handleChange}
-            className="p-2 rounded bg-gray-800 text-white"
-          />
-        </div>
 
         <div className="col-span-1 flex flex-col">
           <label className="text-gray-300 text-sm mb-1">First Name</label>
@@ -136,6 +124,16 @@ const StudentForm = ({ onNext }) => {
             placeholder="e.g. John"
             name="firstName"
             value={student.firstName}
+            onChange={handleChange}
+            className="p-2 rounded bg-gray-800 text-white"
+          />
+        </div>
+        <div className="col-span-1 flex flex-col">
+          <label className="text-gray-300 text-sm mb-1">Middle Name</label>
+          <input
+            placeholder="e.g Dan"
+            name="middleName"
+            value={student.middleName}
             onChange={handleChange}
             className="p-2 rounded bg-gray-800 text-white"
           />
@@ -194,35 +192,14 @@ const StudentForm = ({ onNext }) => {
           />
         </div>
 
-        <div className="col-span-1 flex flex-col">
-          <label className="text-gray-300 text-sm mb-1">Guardian Name</label>
-          <input
-            placeholder="e.g. Mary Doe"
-            name="guardianName"
-            value={student.guardianName}
-            onChange={handleChange}
-            className="p-2 rounded bg-gray-800 text-white"
-          />
-        </div>
-
-        <div className="col-span-1 flex flex-col">
-          <label className="text-gray-300 text-sm mb-1">Guardian Phone</label>
-          <input
-            placeholder="e.g. 0712345678"
-            name="guardianPhone"
-            value={student.guardianPhone}
-            onChange={handleChange}
-            className="p-2 rounded bg-gray-800 text-white"
-          />
-        </div>
-
+       
         {/* Bulk upload */}
         <div className="col-span-2">
           <p className="text-gray-400 text-sm mb-1">
             Expected columns for CSV / Excel: <br />
             <strong>
-              middleName, firstName, lastName, gender, dateOfBirth,
-              classLevel, guardianName, guardianPhone
+              firstName,middleName, lastName, gender, dateOfBirth,
+              classLevel
             </strong>
           </p>
           <label className="block text-gray-300 text-sm mb-1">
