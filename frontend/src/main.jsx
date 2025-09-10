@@ -6,16 +6,15 @@ import { Provider } from "react-redux";
 import { store } from "./redux/store.js";
 import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import {
-  persistQueryClient,
-} from "@tanstack/react-query-persist-client";
+import { persistQueryClient } from "@tanstack/react-query-persist-client";
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
+import api from "./api/axios.js";
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: Infinity, 
-      cacheTime: Infinity, 
+      staleTime: Infinity,
+      cacheTime: Infinity,
       refetchOnWindowFocus: false,
       refetchOnMount: false,
       refetchOnReconnect: false,
@@ -36,7 +35,9 @@ persistQueryClient({
 if ("serviceWorker" in navigator && "PushManager" in window) {
   window.addEventListener("load", async () => {
     try {
-      const registration = await navigator.serviceWorker.register("/custom-sw.js");
+      const registration = await navigator.serviceWorker.register(
+        "/custom-sw.js"
+      );
       console.log("Service Worker registered", registration);
 
       // Request notification permission
@@ -51,11 +52,9 @@ if ("serviceWorker" in navigator && "PushManager" in window) {
         });
 
         // Send subscription to backend
-        await fetch("/api/push/subscribe", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(subscription),
-        });
+        const res = await api("/push/subscribe", subscription);
+
+        console.log(res);
 
         console.log("Push subscription saved on server");
       }
@@ -64,7 +63,6 @@ if ("serviceWorker" in navigator && "PushManager" in window) {
     }
   });
 }
-
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
@@ -76,4 +74,3 @@ createRoot(document.getElementById("root")).render(
     </Provider>
   </StrictMode>
 );
-
