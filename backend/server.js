@@ -40,6 +40,7 @@ app.use("/api/communication", require("./routes/communication"));
 app.use("/api/activity", require("./routes/activity"));
 app.use("/api/term", require("./routes/term"));
 app.use("/api/reports", require("./routes/report"));
+app.use("/api/push", require("./routes/push"));
 
 
 

@@ -49,7 +49,7 @@ const MessagesList = () => {
                 <div className="flex-1">
                   <div className="flex justify-between items-center text-xs text-gray-400 mb-1 px-4">
                     <span className="font-medium text-white">
-                      [{currentUser.role}] {msg.sender?.name || "Unknown"}
+                      [{msg.sender?.role}] {msg.sender?.name || "Unknown"}
                     </span>
                     <span className="text-gray-500">
                       {new Date(msg.createdAt).toLocaleTimeString([], {

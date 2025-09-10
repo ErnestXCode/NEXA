@@ -51,7 +51,7 @@ if ("serviceWorker" in navigator && "PushManager" in window) {
         });
 
         // Send subscription to backend
-        await fetch("/api/push-subscribe", {
+        await fetch("/api/push/subscribe", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(subscription),
