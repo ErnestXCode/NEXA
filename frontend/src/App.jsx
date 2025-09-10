@@ -38,6 +38,7 @@ import SchoolSettings from "./pages/settings/SchoolSettings";
 import ReportCardsPage from "./pages/exams/ReportCardsPage";
 import Analytics from "./components/analytics/Analytics";
 import Feedback from "./pages/feedback/Feedback";
+import InstallPrompt from "./install/InstallPrompt";
 
 const FeeHistoryWrapper = () => {
   const { studentId } = useParams();
@@ -46,11 +47,10 @@ const FeeHistoryWrapper = () => {
 
 function App() {
   return (
-
     <div className="bg-gray-950 text-white min-h-screen">
       <BrowserRouter>
-        
         <Analytics />
+        <InstallPrompt />
         <Routes>
           {/* Public routes */}
           <Route path="/" element={<Home />} />
@@ -62,7 +62,7 @@ function App() {
 
           {/* Protected routes */}
           <Route element={<PersistLogin />}>
-          <Route path="/feedback" element={<Feedback />} />
+            <Route path="/feedback" element={<Feedback />} />
             <Route path="/dashboard">
               <Route index element={<Dashboard />} />
               <Route path="fees" element={<FeesPage />} />
@@ -127,7 +127,6 @@ function App() {
         </Routes>
       </BrowserRouter>
     </div>
-
   );
 }
 

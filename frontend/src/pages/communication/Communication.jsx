@@ -1,20 +1,49 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import SendMessageForm from "./SendMessageForm";
 import MessagesList from "./MessagesList";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "../../redux/slices/authSlice";
+import api from "../../api/axios.js";
 
 const Communication = () => {
   const currentUser = useSelector(selectCurrentUser);
   const [activeTab, setActiveTab] = useState("chat");
+  const [notificationsAllowed, setNotificationsAllowed] = useState(false);
 
   const showEmailTab =
     currentUser?.role === "admin" || currentUser?.role === "superadmin";
 
-  return (
-    <main className="p-6 bg-gray-950 text-white  flex flex-col">
-      {/* <h1 className="text-2xl md:text-3xl font-bold mb-6">📡 Communication</h1> */}
+  // Check if notifications are already granted
+  useEffect(() => {
+    if (Notification.permission === "granted") {
+      setNotificationsAllowed(true);
+    }
+  }, []);
 
+  // Function to request permission and subscribe user
+  const handleEnableNotifications = async () => {
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission !== "granted") return;
+
+      const registration = await navigator.serviceWorker.ready;
+      const subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: import.meta.env.VITE_VAPID_PUBLIC_KEY,
+      });
+
+      // Send subscription to backend
+      await api.post("/push/subscribe", subscription);
+
+      console.log("Push subscription saved on server");
+      setNotificationsAllowed(true); // hide the button
+    } catch (err) {
+      console.error("Push subscription failed:", err);
+    }
+  };
+
+  return (
+    <main className="p-6 bg-gray-950 text-white flex flex-col">
       {/* Tabs */}
       <div className="flex gap-3 mb-6 flex-wrap">
         <button
@@ -41,6 +70,18 @@ const Communication = () => {
           </button>
         )} */}
       </div>
+
+      {/* Enable Notifications Button */}
+      {!notificationsAllowed && "PushManager" in window && (
+        <div className="mb-4">
+          <button
+            onClick={handleEnableNotifications}
+            className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg font-medium transition"
+          >
+            Enable Notifications
+          </button>
+        </div>
+      )}
 
       {/* Chat Tab */}
       {activeTab === "chat" && (
