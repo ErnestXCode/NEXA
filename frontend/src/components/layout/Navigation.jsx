@@ -4,11 +4,13 @@ import { store } from "../../redux/store";
 import { logOut, selectCurrentUser } from "../../redux/slices/authSlice";
 import api from "../../api/axios";
 import { useNavigate, NavLink } from "react-router-dom";
+import useUnreadMessages from "../../hooks/useUnreadMessages"; // ✅ new
 
 const Navigation = () => {
   const [sidenav, setSidenav] = useState(false);
   const navigate = useNavigate();
   const currentUser = useSelector(selectCurrentUser);
+  const { unreadCount, resetUnread } = useUnreadMessages(); // ✅ hook
 
   const handleLogout = async () => {
     try {
@@ -23,7 +25,7 @@ const Navigation = () => {
   const handleCloseSidenav = () => setSidenav(false);
 
   const navLinkClasses = ({ isActive }) =>
-    `block py-2 px-4 rounded hover:bg-gray-800 transition ${
+    `relative block py-2 px-4 rounded hover:bg-gray-800 transition ${
       isActive ? "bg-gray-800" : ""
     }`;
 
@@ -71,7 +73,7 @@ const Navigation = () => {
           </div>
 
           <div className="flex flex-col gap-3 text-white">
-            {/* Dashboard - everyone */}
+            {/* Dashboard */}
             <NavLink
               end
               onClick={handleCloseSidenav}
@@ -81,21 +83,31 @@ const Navigation = () => {
               Dashboard
             </NavLink>
 
-            {/* Communication - everyone */}
+            {/* Messages - with badge */}
             <NavLink
               end
-              onClick={handleCloseSidenav}
+              onClick={() => {
+                handleCloseSidenav();
+                resetUnread(); // ✅ clear badge when user opens messages
+              }}
               to="/dashboard/communication"
               className={navLinkClasses}
             >
               Messages
+              {unreadCount > 0 && (
+                <span className="absolute top-2 right-2 h-3 w-3 rounded-full bg-red-600"></span>
+              )}
             </NavLink>
+
+            {/* ...the rest of your links stay the same */}
 
             {/* Admin/Superadmin: everything */}
             {isSuperAdminOrAdmin && (
               <>
                 <div className="mt-4">
-                  <h3 className="text-gray-400 uppercase text-xs mb-2">Forms</h3>
+                  <h3 className="text-gray-400 uppercase text-xs mb-2">
+                    Forms
+                  </h3>
                   <NavLink
                     end
                     onClick={handleCloseSidenav}
@@ -123,58 +135,61 @@ const Navigation = () => {
                 </div>
 
                 {/* Lists */}
-<div className="mt-4">
-  <h3 className="text-gray-400 uppercase text-xs mb-2">Lists</h3>
-  <NavLink
-    end
-    onClick={handleCloseSidenav}
-    to="/dashboard/teachers"
-    className={navLinkClasses}
-  >
-    All Teachers
-  </NavLink>
-  <NavLink
-    end
-    onClick={handleCloseSidenav}
-    to="/dashboard/bursars"
-    className={navLinkClasses}
-  >
-    All Bursars
-  </NavLink>
-  <NavLink
-    end
-    onClick={handleCloseSidenav}
-    to="/dashboard/students"
-    className={navLinkClasses}
-  >
-    All Students
-  </NavLink>
-  <NavLink
-    end
-    onClick={handleCloseSidenav}
-    to="/dashboard/parents"
-    className={navLinkClasses}
-  >
-    All Parents
-  </NavLink>
-  
-  {/* Only superadmin can see all schools */}
-  {role === "superadmin" && (
-    <NavLink
-      end
-      onClick={handleCloseSidenav}
-      to="/dashboard/schools"
-      className={navLinkClasses}
-    >
-      All Schools
-    </NavLink>
-  )}
-</div>
+                <div className="mt-4">
+                  <h3 className="text-gray-400 uppercase text-xs mb-2">
+                    Lists
+                  </h3>
+                  <NavLink
+                    end
+                    onClick={handleCloseSidenav}
+                    to="/dashboard/teachers"
+                    className={navLinkClasses}
+                  >
+                    All Teachers
+                  </NavLink>
+                  <NavLink
+                    end
+                    onClick={handleCloseSidenav}
+                    to="/dashboard/bursars"
+                    className={navLinkClasses}
+                  >
+                    All Bursars
+                  </NavLink>
+                  <NavLink
+                    end
+                    onClick={handleCloseSidenav}
+                    to="/dashboard/students"
+                    className={navLinkClasses}
+                  >
+                    All Students
+                  </NavLink>
+                  <NavLink
+                    end
+                    onClick={handleCloseSidenav}
+                    to="/dashboard/parents"
+                    className={navLinkClasses}
+                  >
+                    All Parents
+                  </NavLink>
 
+                  {/* Only superadmin can see all schools */}
+                  {role === "superadmin" && (
+                    <NavLink
+                      end
+                      onClick={handleCloseSidenav}
+                      to="/dashboard/schools"
+                      className={navLinkClasses}
+                    >
+                      All Schools
+                    </NavLink>
+                  )}
+                </div>
 
                 {/* Attendance */}
                 <div className="mt-4">
-                  <h3 className="text-gray-400 uppercase text-xs mb-2">Attendance</h3>
+                  <h3 className="text-gray-400 uppercase text-xs mb-2">
+                    Attendance
+                  </h3>
                   <NavLink
                     end
                     onClick={handleCloseSidenav}
@@ -195,7 +210,9 @@ const Navigation = () => {
 
                 {/* Exams */}
                 <div className="mt-4">
-                  <h3 className="text-gray-400 uppercase text-xs mb-2">Exams</h3>
+                  <h3 className="text-gray-400 uppercase text-xs mb-2">
+                    Exams
+                  </h3>
                   <NavLink
                     end
                     onClick={handleCloseSidenav}
@@ -266,7 +283,9 @@ const Navigation = () => {
             {isTeacher && !isSuperAdminOrAdmin && (
               <>
                 <div className="mt-4">
-                  <h3 className="text-gray-400 uppercase text-xs mb-2">Attendance</h3>
+                  <h3 className="text-gray-400 uppercase text-xs mb-2">
+                    Attendance
+                  </h3>
                   <NavLink
                     end
                     onClick={handleCloseSidenav}
@@ -286,7 +305,9 @@ const Navigation = () => {
                 </div>
 
                 <div className="mt-4">
-                  <h3 className="text-gray-400 uppercase text-xs mb-2">Exams</h3>
+                  <h3 className="text-gray-400 uppercase text-xs mb-2">
+                    Exams
+                  </h3>
                   <NavLink
                     end
                     onClick={handleCloseSidenav}
