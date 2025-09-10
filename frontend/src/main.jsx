@@ -52,7 +52,7 @@ if ("serviceWorker" in navigator && "PushManager" in window) {
         });
 
         // Send subscription to backend
-        const res = await api("/push/subscribe", subscription);
+        const res = await api.post("/push/subscribe", subscription);
 
         console.log(res);
 
