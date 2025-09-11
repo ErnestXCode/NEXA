@@ -13,6 +13,8 @@ router.get("/", verifyJWT, controller.getAttendanceByDate);
 // Stats for a date range (teacher: own class, admin: all classes)
 router.get("/range", verifyJWT, controller.getStatsByRange);
 
+router.get("/details", verifyJWT, controller.getAttendanceDetails);
+
 // Chronic absentees over last N days
 router.get("/absentees", verifyJWT, controller.getAbsenteeListRange);
 

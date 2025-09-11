@@ -16,7 +16,7 @@ const sendMessage = async (req, res) => {
   try {
     const { subject, body, type } = req.body;
     const sender = req.user;
-    const io = req.app.get("io"); // get Socket.IO instance
+    const io = req.app.get("io");
 
     if (!body) return res.status(400).json({ msg: "Message body required" });
 
@@ -31,29 +31,22 @@ const sendMessage = async (req, res) => {
 
     const senderDoc = await User.findById(sender.userId);
 
-    // Email logic
+    // Email notifications
     if (type === "email") {
-      try {
-        await sgMail.send({
+      sgMail
+        .send({
           to: process.env.TEST_EMAIL || "school@example.com",
           from: process.env.FROM_EMAIL || "noreply@schoolapp.com",
           subject: subject || "School Communication",
           text: body,
-        });
-      } catch (emailErr) {
-        console.error("Email send failed:", emailErr);
-      }
+        })
+        .catch((err) => console.error("Email send failed:", err));
     }
 
-    // Web push & websocket logic
+    // Real-time chat
     if (type === "chat") {
-      const subscriptions = await PushSubscription.find({
-        school: sender.school,
-      }).populate("user");
-
-      const recipients = subscriptions.filter(
-        (sub) => sub.user._id.toString() !== sender.userId.toString()
-      );
+      // Fetch all subscriptions once
+      const subscriptions = await PushSubscription.find({ school: sender.school }).populate("user");
 
       const payload = {
         title: `New message from [${senderDoc.role}] ${senderDoc.name}`,
@@ -64,17 +57,28 @@ const sendMessage = async (req, res) => {
         senderId: senderDoc._id,
       };
 
-      // Web push
-      recipients.forEach((sub) => {
-        try {
-          webpush.sendNotification(sub.subscription, JSON.stringify(payload)).catch(console.error);
-        } catch (err) {
-          console.error("Push send exception:", err);
+      subscriptions.forEach((sub) => {
+        const userId = sub.user._id.toString();
+
+        // Skip sender
+        if (userId === sender.userId) return;
+
+        // Web push only if offline (not connected via Socket.IO)
+        const isOnline = io.sockets.adapter.rooms.has(`user-${userId}`);
+        if (!isOnline) {
+          webpush
+            .sendNotification(sub.subscription, JSON.stringify(payload))
+            .catch((err) => console.error("Push failed:", err));
+        }
+
+        // Emit socket message if online
+        if (isOnline) {
+          io.to(`user-${userId}`).emit("newMessage", payload);
         }
       });
 
-      // Websocket
-      io.to(sender.school).emit("newMessage", payload);
+      // Emit to school room for anyone else listening (optional)
+      io.to(`school-${sender.school}`).emit("newMessage", payload);
     }
 
     res.status(201).json(newMessage);
@@ -84,19 +88,19 @@ const sendMessage = async (req, res) => {
   }
 };
 
-// GET /communication?type=chat
+// GET /communication?type=chat&since=timestamp
 const getMessages = async (req, res) => {
   try {
-    const { type } = req.query;
-    const filter = type
-      ? { type, school: req.user.school }
-      : req.user.role === "superadmin"
-      ? {}
-      : { school: req.user.school };
+    const { type, since, limit = 50 } = req.query;
+
+    const filter = { school: req.user.school };
+    if (type) filter.type = type;
+    if (since) filter.createdAt = { $gt: new Date(since) };
 
     const messages = await Message.find(filter)
       .populate("sender", "name email role")
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .limit(parseInt(limit));
 
     res.json(messages);
   } catch (err) {

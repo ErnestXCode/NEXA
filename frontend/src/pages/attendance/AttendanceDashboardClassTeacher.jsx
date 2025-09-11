@@ -10,6 +10,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
+import AttendanceDetails from "./AttendanceDetails";
 
 const MetricCard = ({ title, value, pct, bgColor }) => (
   <div className={`${bgColor} p-5 rounded-2xl shadow-xl flex flex-col items-center`}>
@@ -99,6 +100,8 @@ const AttendanceDashboardClassTeacher = () => {
         <MetricCard title="Late" value={totalLate} pct={latePct} bgColor="bg-yellow-700" />
         <MetricCard title="Total Records" value={totalStudents} bgColor="bg-gray-800" />
       </div>
+
+      <AttendanceDetails />
 
       {/* Attendance Trend */}
       <div className="bg-gray-950 shadow-xl rounded-2xl p-6">

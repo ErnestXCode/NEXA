@@ -102,12 +102,75 @@ exports.getAttendanceByDate = async (req, res) => {
       };
     });
 
+
     res.json(data);
   } catch (err) {
     console.error(err);
     res.status(500).json({ msg: "Server error" });
   }
 };
+
+
+
+    exports.getAttendanceDetails = async (req, res) => {
+      try {
+        const { days = 7 } = req.query;
+        const requester = await User.findById(req.user.userId);
+
+        const since = new Date();
+        since.setDate(since.getDate() - (days - 1));
+        since.setHours(0, 0, 0, 0);
+
+        const filter = {
+          status: { $in: ["absent", "late"] },
+          date: { $gte: since },
+        };
+
+        if (requester.role === "teacher" && requester.isClassTeacher) {
+          filter.classLevel = requester.classLevel;
+        }
+        if (requester.role !== "superadmin") {
+          filter.school = requester.school;
+        }
+
+        const records = await Attendance.aggregate([
+          { $match: filter },
+          {
+            $lookup: {
+              from: "students",
+              localField: "student",
+              foreignField: "_id",
+              as: "studentInfo",
+            },
+          },
+          { $unwind: "$studentInfo" },
+          {
+            $project: {
+              _id: 1,
+              status: 1,
+              reason: 1,
+              date: 1,
+              classLevel: "$studentInfo.classLevel",
+              studentName: {
+                $concat: [
+                  "$studentInfo.firstName",
+                  " ",
+                  "$studentInfo.middleName",
+                  " ",
+                  "$studentInfo.lastName",
+                ],
+              },
+            },
+          },
+          { $sort: { date: -1 } },
+        ]);
+
+        res.json(records);
+      } catch (err) {
+        console.error(err);
+        res.status(500).json({ msg: "Failed to fetch attendance details" });
+      }
+    };
 
 // --- Get stats by range ---
 // --- Get stats by range (daily trend) ---
@@ -122,14 +185,14 @@ exports.getStatsByRange = async (req, res) => {
     end.setHours(23, 59, 59, 999);
 
     const filter = {
-      date: { $gte: start, $lte: end }
+      date: { $gte: start, $lte: end },
     };
     if (requester.role === "teacher" && requester.isClassTeacher) {
       filter.classLevel = requester.classLevel;
     }
     if (requester.role !== "superadmin") {
-     filter.school = requester.school;
-   }
+      filter.school = requester.school;
+    }
 
     const records = await Attendance.aggregate([
       { $match: filter },
@@ -170,8 +233,8 @@ exports.getAbsenteeListRange = async (req, res) => {
       filter.classLevel = requester.classLevel;
     }
     if (requester.role !== "superadmin") {
-     filter.school = requester.school;
-   }
+      filter.school = requester.school;
+    }
 
     const students = await Attendance.aggregate([
       { $match: filter },
