@@ -57,8 +57,6 @@ const handleBulkRegister = async (req, res) => {
 
   res.status(201).json({
     msg: "Bulk upload completed",
-    createdCount: createdUsers.length,
-    users: createdUsers,
   });
 };
 

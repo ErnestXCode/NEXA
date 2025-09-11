@@ -1,14 +1,11 @@
 classes, stream and grading  
 polish parents portal and make it mobile friendly
 
-
-attendance for class teahcers only 
-error in fees marking 
-standalone only sending to / not /dashboard evry time you go in , in fact the webapp should check accessToken and take  you to /dashboard instead of / 
 posting to attendance is too long
-notificaion showing undefined 
-, nad popping for user sending it
 
-show who is absent and late and reason 
+badge and notifications dont work well 
+
+optimize backend
+
 
 i need optimistic returning/navigating from attendance
