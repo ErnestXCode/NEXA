@@ -63,7 +63,7 @@ app.use("/api/push", require("./routes/push"));
 
 
 
-app.get("/ping", (req, res) => {
+app.get("/api/ping", (req, res) => {
   return res.status(200).json({
     status: "ok",
     message: "Nexa is alive",
