@@ -211,7 +211,7 @@ const Navigation = () => {
                 </div>
 
                 {/* Exams */}
-                {false && (
+                {(
                   <div className="mt-4">
                     <h3 className="text-gray-400 uppercase text-xs mb-2">
                       Exams

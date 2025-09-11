@@ -73,14 +73,18 @@ const AttendanceDashboardAdmin = () => {
   ); // default last 7 days
   const [endDate, setEndDate] = useState(new Date().toISOString().slice(0, 10));
 
+  // 👇 Use actual values from context, Redux, or API if available
+  const academicYear = "2025";
+  const term = "Term 1";
+
   const fetchClassStats = async () => {
     try {
       const res = await api.get("/attendance/class-stats", {
-        params: { startDate, endDate },
+        params: { startDate, endDate, academicYear, term },
       });
       setClassStats(res.data);
     } catch (err) {
-      console.error(err);
+      console.error("Failed to fetch class stats", err);
     }
   };
 

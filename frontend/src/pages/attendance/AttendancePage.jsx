@@ -17,8 +17,18 @@ const AttendancePage = () => {
   const [notifyParents, setNotifyParents] = useState(false);
   const [unsyncedCount, setUnsyncedCount] = useState(0);
   const [feedbackMessage, setFeedbackMessage] = useState("");
+  const [academicYears, setAcademicYears] = useState([]);
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [terms] = useState(["Term 1", "Term 2", "Term 3"]);
+  const [selectedTerm, setSelectedTerm] = useState("Term 1");
 
   const navigate = useNavigate();
+
+  // --- Populate recent academic years ---
+  useEffect(() => {
+    const currentYear = new Date().getFullYear();
+    setAcademicYears([currentYear, currentYear - 1, currentYear - 2]);
+  }, []);
 
   // --- Sync offline attendance ---
   const syncOfflineData = async () => {
@@ -43,11 +53,13 @@ const AttendancePage = () => {
     return () => window.removeEventListener("online", syncOfflineData);
   }, []);
 
-  // --- Fetch students for selected date ---
+  // --- Fetch students for selected date, year, and term ---
   useEffect(() => {
     const fetchStudents = async () => {
       try {
-        const res = await api.get("/attendance", { params: { date } });
+        const res = await api.get("/attendance", {
+          params: { date, academicYear: selectedYear, term: selectedTerm },
+        });
         const allStudents = res.data;
         setStudents(allStudents);
 
@@ -73,7 +85,7 @@ const AttendancePage = () => {
     };
 
     fetchStudents();
-  }, [date]);
+  }, [date, selectedYear, selectedTerm]);
 
   // --- Filter students by class ---
   useEffect(() => {
@@ -93,61 +105,57 @@ const AttendancePage = () => {
     }));
   };
 
-  // --- Optimistic submit with feedback toast ---
+  // --- Submit attendance with optimistic feedback & offline support ---
   const handleSubmit = async () => {
-    const payload = {
-      classLevel: selectedClass || students[0]?.classLevel,
-      date,
-      records: Object.entries(records).map(([studentId, data]) => ({
-        studentId,
-        status: data.status,
-        reason: data.reason || "",
-      })),
-      notifyParents,
-    };
+  const payload = {
+    classLevel: selectedClass || students[0]?.classLevel || "Unknown",
+    date,
+    term: selectedTerm,
+    academicYear: selectedYear,
+    records: Object.entries(records).map(([studentId, data]) => ({
+      studentId,
+      status: data.status || "present",
+      reason: data.reason || "",
+    })),
+    notifyParents,
+  };
 
-    // Show feedback immediately
-    setFeedbackMessage(
-      navigator.onLine
-        ? "Saving attendance..."
-        : "You are offline. Attendance will sync when back online."
-    );
+  setFeedbackMessage(
+    navigator.onLine
+      ? "Saving attendance..."
+      : "You are offline. Attendance will sync when back online."
+  );
 
-    // Remove feedback after 1.5s
-    setTimeout(() => setFeedbackMessage(""), 1500);
+  if (!navigator.onLine) {
+    await saveAttendanceLocally(payload);
+    setUnsyncedCount((await getAllAttendanceRecords()).length);
+    return navigate("/dashboard", { replace: true });
+  }
 
-    // Short delay to let user see the feedback
+  try {
+    await api.post("/attendance", payload);
+    setFeedbackMessage("Attendance saved successfully ✅");
     setTimeout(() => {
       navigate("/dashboard", { replace: true });
     }, 800);
+  } catch (err) {
+    console.error("Error saving attendance", err);
+    await saveAttendanceLocally(payload);
+    setUnsyncedCount((await getAllAttendanceRecords()).length);
+    setFeedbackMessage("Saved offline. Will sync later.");
+    navigate("/dashboard", { replace: true });
+  }
+};
 
-    // Offline fallback
-    if (!navigator.onLine) {
-      await saveAttendanceLocally(payload);
-      setUnsyncedCount((prev) => prev + 1);
-      return;
-    }
-
-    // Post in background
-    try {
-      await api.post("/attendance", payload);
-    } catch (err) {
-      console.error("Error saving attendance", err);
-      await saveAttendanceLocally(payload);
-      setUnsyncedCount((prev) => prev + 1);
-    }
-  };
 
   return (
     <main className="flex flex-col overflow-y-hidden bg-gray-950 text-white relative">
-      {/* Feedback Toast */}
       {feedbackMessage && (
         <div className="fixed top-4 left-1/2 -translate-x-1/2 bg-blue-600 text-white px-4 py-2 rounded shadow z-50">
           {feedbackMessage}
         </div>
       )}
 
-      {/* Header & Controls */}
       <div className="p-4 md:p-6 flex-shrink-0 space-y-4">
         <h1 className="text-2xl font-bold">Mark Attendance</h1>
         {unsyncedCount > 0 && (
@@ -177,6 +185,28 @@ const AttendancePage = () => {
                 ))}
               </select>
             )}
+            <select
+              value={selectedTerm}
+              onChange={(e) => setSelectedTerm(e.target.value)}
+              className="p-2 rounded-lg bg-gray-800 border border-gray-700 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              {terms.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+            <select
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(Number(e.target.value))}
+              className="p-2 rounded-lg bg-gray-800 border border-gray-700 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              {academicYears.map((y) => (
+                <option key={y} value={y}>
+                  {y}
+                </option>
+              ))}
+            </select>
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <button
@@ -204,7 +234,6 @@ const AttendancePage = () => {
         </div>
       </div>
 
-      {/* Scrollable Section */}
       <div className="flex-1 overflow-y-auto px-4 md:px-6 pb-6">
         {/* Desktop Table */}
         <div className="hidden md:block bg-gray-900 rounded-lg shadow overflow-hidden">

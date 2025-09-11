@@ -5,12 +5,18 @@ const AttendanceDetails = ({ days = 7 }) => {
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // 👇 Use actual values from context, Redux, or API if available
+  const academicYear = "2025";
+  const term = "Term 1";
+
   const fetchData = async () => {
     try {
-      const res = await api.get("/attendance/details", { params: { days } });
+      const res = await api.get("/attendance/details", {
+        params: { days, academicYear, term },
+      });
       setRecords(res.data);
     } catch (err) {
-      console.error(err);
+      console.error("Failed to fetch attendance details", err);
     } finally {
       setLoading(false);
     }
@@ -39,23 +45,36 @@ const AttendanceDetails = ({ days = 7 }) => {
             </tr>
           </thead>
           <tbody>
-            {records.map((rec) => (
-              <tr key={rec._id} className="border-t border-gray-800">
-                <td className="px-4 py-2">{rec.studentName}</td>
-                <td className="px-4 py-2">{rec.classLevel}</td>
-                <td className="px-4 py-2">
-                  {new Date(rec.date).toLocaleDateString()}
-                </td>
+            {records.length === 0 ? (
+              <tr>
                 <td
-                  className={`px-4 py-2 font-semibold ${
-                    rec.status === "absent" ? "text-red-500" : "text-yellow-400"
-                  }`}
+                  colSpan="5"
+                  className="text-center py-4 text-gray-400"
                 >
-                  {rec.status}
+                  No records found
                 </td>
-                <td className="px-4 py-2">{rec.reason || "-"}</td>
               </tr>
-            ))}
+            ) : (
+              records.map((rec) => (
+                <tr key={rec._id} className="border-t border-gray-800">
+                  <td className="px-4 py-2">{rec.studentName}</td>
+                  <td className="px-4 py-2">{rec.classLevel}</td>
+                  <td className="px-4 py-2">
+                    {new Date(rec.date).toLocaleDateString()}
+                  </td>
+                  <td
+                    className={`px-4 py-2 font-semibold ${
+                      rec.status === "absent"
+                        ? "text-red-500"
+                        : "text-yellow-400"
+                    }`}
+                  >
+                    {rec.status}
+                  </td>
+                  <td className="px-4 py-2">{rec.reason || "-"}</td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>

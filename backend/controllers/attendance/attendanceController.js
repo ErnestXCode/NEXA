@@ -2,12 +2,19 @@ const Attendance = require("../../models/Attendance");
 const Student = require("../../models/Student");
 const User = require("../../models/User");
 const notificationService = require("../../services/notificationService");
-const mongoose = require("mongoose");
+const School = require("../../models/School");
+
+// Helper to set current academic year if not provided
+const getAcademicYear = (year) => year || School.currentAcademicYear();
+
+// --- Save attendance ---
+
+
 
 // --- Save attendance ---
 exports.saveAttendance = async (req, res) => {
   try {
-    const { classLevel, date, records, notifyParents } = req.body;
+    const { classLevel, date, term, records, notifyParents, academicYear } = req.body;
     const requester = await User.findById(req.user.userId);
     const markedBy = requester._id;
 
@@ -18,8 +25,9 @@ exports.saveAttendance = async (req, res) => {
       return res.status(403).json({ msg: "Unauthorized" });
     }
 
-    const attendanceDate = date ? new Date(date) : new Date();
-    attendanceDate.setHours(0, 0, 0, 0); // normalize
+    const attendanceDate = new Date(date);
+    attendanceDate.setHours(0, 0, 0, 0);
+    const year = getAcademicYear(academicYear);
 
     const results = [];
 
@@ -31,34 +39,36 @@ exports.saveAttendance = async (req, res) => {
         if (!student || student.classLevel !== requester.classLevel) continue;
       }
 
+      // Use $set to avoid duplicate key errors
       const doc = await Attendance.findOneAndUpdate(
-        { student: studentId, date: attendanceDate },
+        { student: studentId, date: attendanceDate, academicYear: year, term },
         {
-          student: studentId,
-          classLevel: attendanceClassLevel,
-          school: requester.school,
-          date: attendanceDate,
-          status,
-          reason,
-          markedBy,
+          $set: {
+            student: studentId,
+            classLevel: attendanceClassLevel,
+            school: requester.school,
+            date: attendanceDate,
+            term,
+            status,
+            reason,
+            markedBy,
+            academicYear: year,
+          },
         },
         { upsert: true, new: true }
       );
+
       results.push(doc);
 
       if (notifyParents && status === "absent") {
         const student = await Student.findById(studentId).populate("guardian");
         if (student?.guardian) {
-          notificationService.notifyParent(
-            student.guardian,
-            student,
-            attendanceDate
-          );
+          notificationService.notifyParent(student.guardian, student, attendanceDate);
         }
       }
     }
 
-    res.json({ msg: "Attendance saved" });
+    res.json({ msg: "Attendance saved", records: results });
   } catch (err) {
     console.error(err);
     res.status(500).json({ msg: "Server error" });
@@ -68,16 +78,20 @@ exports.saveAttendance = async (req, res) => {
 // --- Get attendance by date ---
 exports.getAttendanceByDate = async (req, res) => {
   try {
-    const { date } = req.query;
+    const { date, academicYear, term } = req.query;
     const requester = await User.findById(req.user.userId);
 
-    const filterDate = date ? new Date(date) : new Date();
+    const filterDate = new Date(date);
     filterDate.setHours(0, 0, 0, 0);
     const nextDay = new Date(filterDate);
     nextDay.setHours(23, 59, 59, 999);
 
+    const year = getAcademicYear(academicYear);
+
     const attendanceRecords = await Attendance.find({
       date: { $gte: filterDate, $lte: nextDay },
+      academicYear: year,
+      term,
       school: requester.school,
     });
 
@@ -88,6 +102,7 @@ exports.getAttendanceByDate = async (req, res) => {
     if (requester.role !== "superadmin") {
       studentFilter.school = requester.school;
     }
+
     const students = await Student.find(studentFilter);
 
     const data = students.map((s) => {
@@ -102,7 +117,6 @@ exports.getAttendanceByDate = async (req, res) => {
       };
     });
 
-
     res.json(data);
   } catch (err) {
     console.error(err);
@@ -111,139 +125,39 @@ exports.getAttendanceByDate = async (req, res) => {
 };
 
 
-
-    exports.getAttendanceDetails = async (req, res) => {
-      try {
-        const { days = 7 } = req.query;
-        const requester = await User.findById(req.user.userId);
-
-        const since = new Date();
-        since.setDate(since.getDate() - (days - 1));
-        since.setHours(0, 0, 0, 0);
-
-        const filter = {
-          status: { $in: ["absent", "late"] },
-          date: { $gte: since },
-        };
-
-        if (requester.role === "teacher" && requester.isClassTeacher) {
-          filter.classLevel = requester.classLevel;
-        }
-        if (requester.role !== "superadmin") {
-          filter.school = requester.school;
-        }
-
-        const records = await Attendance.aggregate([
-          { $match: filter },
-          {
-            $lookup: {
-              from: "students",
-              localField: "student",
-              foreignField: "_id",
-              as: "studentInfo",
-            },
-          },
-          { $unwind: "$studentInfo" },
-          {
-            $project: {
-              _id: 1,
-              status: 1,
-              reason: 1,
-              date: 1,
-              classLevel: "$studentInfo.classLevel",
-              studentName: {
-                $concat: [
-                  "$studentInfo.firstName",
-                  " ",
-                  "$studentInfo.middleName",
-                  " ",
-                  "$studentInfo.lastName",
-                ],
-              },
-            },
-          },
-          { $sort: { date: -1 } },
-        ]);
-
-        res.json(records);
-      } catch (err) {
-        console.error(err);
-        res.status(500).json({ msg: "Failed to fetch attendance details" });
-      }
-    };
-
-// --- Get stats by range ---
-// --- Get stats by range (daily trend) ---
-exports.getStatsByRange = async (req, res) => {
+// --- Get attendance details for recent days ---
+// --- Get attendance details for recent days ---
+exports.getAttendanceDetails = async (req, res) => {
   try {
-    const { startDate, endDate } = req.query;
-    const requester = await User.findById(req.user.userId);
-
-    const start = new Date(startDate);
-    start.setHours(0, 0, 0, 0);
-    const end = new Date(endDate);
-    end.setHours(23, 59, 59, 999);
-
-    const filter = {
-      date: { $gte: start, $lte: end },
-    };
-    if (requester.role === "teacher" && requester.isClassTeacher) {
-      filter.classLevel = requester.classLevel;
-    }
-    if (requester.role !== "superadmin") {
-      filter.school = requester.school;
-    }
-
-    const records = await Attendance.aggregate([
-      { $match: filter },
-      {
-        $group: {
-          _id: { $dateToString: { format: "%Y-%m-%d", date: "$date" } },
-          present: { $sum: { $cond: [{ $eq: ["$status", "present"] }, 1, 0] } },
-          absent: { $sum: { $cond: [{ $eq: ["$status", "absent"] }, 1, 0] } },
-          late: { $sum: { $cond: [{ $eq: ["$status", "late"] }, 1, 0] } },
-          lastMarked: { $max: "$updatedAt" },
-        },
-      },
-      { $sort: { _id: 1 } }, // sort by date
-    ]);
-
-    res.json(records);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ msg: "Server error" });
-  }
-};
-
-// --- Get chronic absentees ---
-exports.getAbsenteeListRange = async (req, res) => {
-  try {
-    const { days = 7 } = req.query;
+    const { days = 7, academicYear, term } = req.query;
     const requester = await User.findById(req.user.userId);
 
     const since = new Date();
     since.setDate(since.getDate() - (days - 1));
     since.setHours(0, 0, 0, 0);
 
+    const year = getAcademicYear(academicYear);
+
     const filter = {
-      status: "absent",
+      status: { $in: ["absent", "late"] },
       date: { $gte: since },
+      academicYear: year,
+      school: requester.school,
     };
+
+    // 🔹 include term in filter
+    if (term) filter.term = term;
+
     if (requester.role === "teacher" && requester.isClassTeacher) {
       filter.classLevel = requester.classLevel;
     }
-    if (requester.role !== "superadmin") {
-      filter.school = requester.school;
-    }
 
-    const students = await Attendance.aggregate([
+    const records = await Attendance.aggregate([
       { $match: filter },
-      { $group: { _id: "$student", count: { $sum: 1 } } },
-      { $match: { count: { $gt: 3 } } },
       {
         $lookup: {
           from: "students",
-          localField: "_id",
+          localField: "student",
           foreignField: "_id",
           as: "studentInfo",
         },
@@ -252,26 +166,132 @@ exports.getAbsenteeListRange = async (req, res) => {
       {
         $project: {
           _id: 1,
-          count: 1,
-          firstName: "$studentInfo.firstName",
-          lastName: "$studentInfo.lastName",
+          status: 1,
+          reason: 1,
+          date: 1,
           classLevel: "$studentInfo.classLevel",
+          studentName: {
+            $concat: [
+              "$studentInfo.firstName",
+              " ",
+              "$studentInfo.middleName",
+              " ",
+              "$studentInfo.lastName",
+            ],
+          },
         },
       },
+      { $sort: { date: -1 } },
     ]);
 
-    res.json(students);
+    res.json(records);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ msg: "Server error" });
+    res.status(500).json({ msg: "Failed to fetch attendance details" });
   }
 };
 
-// --- Admin: get class-level stats for dashboard ---
-// Get per-class stats for admin dashboard
+
+// --- Get stats by date range ---
+// --- Get stats by date range ---
+exports.getStatsByRange = async (req, res) => {
+  try {
+    console.log("hit range");
+    const { startDate, endDate, academicYear, term } = req.query;
+
+    console.log(req.query);
+
+    if (!startDate || !endDate || !academicYear || !term) {
+      return res.status(400).json({ error: "Missing required query params" });
+    }
+
+    const records = await Attendance.aggregate([
+      {
+        $match: {
+          date: { $gte: new Date(startDate), $lte: new Date(endDate) },
+          academicYear: academicYear, // ✅ keep as string
+          term,
+        },
+      },
+      {
+        $group: {
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$date" } },
+          present: { $sum: { $cond: [{ $eq: ["$status", "present"] }, 1, 0] } },
+          absent: { $sum: { $cond: [{ $eq: ["$status", "absent"] }, 1, 0] } },
+          late: { $sum: { $cond: [{ $eq: ["$status", "late"] }, 1, 0] } },
+        },
+      },
+      { $sort: { _id: 1 } },
+    ]);
+
+    console.log("records", records);
+    res.json(records);
+  } catch (err) {
+    console.error("Error in /attendance/range", err);
+    res.status(500).json({ error: "Server error" });
+  }
+};
+
+// --- Get chronic absentees ---
+exports.getAbsenteeListRange = async (req, res) => {
+  try {
+    console.log("hit absentees");
+    const { days = 7, academicYear, term } = req.query;
+    console.log(req.query);
+
+    if (!academicYear || !term) {
+      return res.status(400).json({ error: "Missing required query params" });
+    }
+
+    const sinceDate = new Date();
+    sinceDate.setDate(sinceDate.getDate() - Number(days));
+
+    const absentees = await Attendance.aggregate([
+      {
+        $match: {
+          date: { $gte: sinceDate },
+          academicYear: academicYear, // ✅ keep as string
+          term,
+          status: "absent",
+        },
+      },
+      {
+        $group: {
+          _id: "$student",
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { count: -1 } },
+      { $limit: 10 },
+    ]);
+
+    console.log("absentees", absentees);
+
+    const withStudents = await Student.populate(absentees, {
+      path: "_id",
+      select: "firstName lastName classLevel",
+    });
+
+    res.json(
+      withStudents.map((a) => ({
+        _id: a._id._id,
+        firstName: a._id.firstName,
+        lastName: a._id.lastName,
+        classLevel: a._id.classLevel,
+        count: a.count,
+      }))
+    );
+  } catch (err) {
+    console.error("Error in /attendance/absentees", err);
+    res.status(500).json({ error: "Server error" });
+  }
+};
+
+
+// --- Get class-level stats (admin dashboard) ---
 exports.getClassStats = async (req, res) => {
   try {
-    const { startDate, endDate } = req.query;
+    const { startDate, endDate, academicYear } = req.query;
     const requester = await User.findById(req.user.userId);
 
     if (!["admin", "superadmin"].includes(requester.role)) {
@@ -283,14 +303,16 @@ exports.getClassStats = async (req, res) => {
     const end = new Date(endDate);
     end.setHours(23, 59, 59, 999);
 
+    const year = getAcademicYear(academicYear);
+
     const filter = {
       date: { $gte: start, $lte: end },
+      academicYear: year,
       school: requester.school,
     };
 
     const records = await Attendance.aggregate([
       { $match: filter },
-      // group by class + date first = one mark per class per day
       {
         $group: {
           _id: {
@@ -303,14 +325,13 @@ exports.getClassStats = async (req, res) => {
           lastMarked: { $max: "$updatedAt" },
         },
       },
-      // now roll up per class
       {
         $group: {
           _id: "$_id.classLevel",
           present: { $sum: "$present" },
           absent: { $sum: "$absent" },
           late: { $sum: "$late" },
-          markCount: { $sum: 1 }, // only counts 1 per class per date
+          markCount: { $sum: 1 },
           lastMarked: { $max: "$lastMarked" },
         },
       },

@@ -2,26 +2,11 @@ const mongoose = require("mongoose");
 
 const messageSchema = new mongoose.Schema(
   {
-    sender: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
-    },
+    sender: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     school: { type: mongoose.Schema.Types.ObjectId, ref: "School" },
-
-    subject: {
-      type: String,
-      default: "",
-    },
-    body: {
-      type: String,
-      required: true,
-    },
-    type: {
-      type: String,
-      enum: ["chat", "email"],
-      default: "chat",
-    },
+    subject: { type: String, default: "" },
+    body: { type: String, required: true },
+    type: { type: String, enum: ["chat", "email"], default: "chat" },
   },
   { timestamps: true }
 );

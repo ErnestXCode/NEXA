@@ -24,17 +24,31 @@ const MetricCard = ({ title, value, pct, bgColor }) => (
 const AttendanceDashboardClassTeacher = () => {
   const [rangeStats, setRangeStats] = useState([]);
   const [absentees, setAbsentees] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // filters
+  const [academicYears, setAcademicYears] = useState([]);
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [terms] = useState(["Term 1", "Term 2", "Term 3"]);
+  const [selectedTerm, setSelectedTerm] = useState("Term 1");
+
   const [startDate, setStartDate] = useState(
-    new Date(new Date().setDate(new Date().getDate() - 6))
-      .toISOString()
-      .slice(0, 10)
-  ); // default last 7 days
+    new Date(new Date().setDate(new Date().getDate() - 6)).toISOString().slice(0, 10)
+  );
   const [endDate, setEndDate] = useState(new Date().toISOString().slice(0, 10));
+
+  // populate academic years
+  useEffect(() => {
+    const currentYear = new Date().getFullYear();
+    setAcademicYears([currentYear, currentYear - 1, currentYear - 2]);
+  }, []);
 
   const fetchData = async () => {
     try {
+      setLoading(true);
+
       const rangeRes = await api.get("/attendance/range", {
-        params: { startDate, endDate },
+        params: { startDate, endDate, academicYear: selectedYear, term: selectedTerm },
       });
       const chartData = rangeRes.data.map((d) => ({
         date: d._id,
@@ -45,17 +59,20 @@ const AttendanceDashboardClassTeacher = () => {
       setRangeStats(chartData);
 
       const absRes = await api.get("/attendance/absentees", {
-        params: { days: 7 },
+        params: { days: 7, academicYear: selectedYear, term: selectedTerm },
       });
       setAbsentees(absRes.data);
+
+      setLoading(false);
     } catch (err) {
-      console.error(err);
+      console.error("Error fetching data", err);
+      setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchData();
-  }, [startDate, endDate]);
+  }, [startDate, endDate, selectedYear, selectedTerm]);
 
   const totalStudents = rangeStats.reduce(
     (acc, day) => acc + day.present + day.absent + day.late,
@@ -69,10 +86,14 @@ const AttendanceDashboardClassTeacher = () => {
   const absentPct = totalStudents ? ((totalAbsent / totalStudents) * 100).toFixed(1) : 0;
   const latePct = totalStudents ? ((totalLate / totalStudents) * 100).toFixed(1) : 0;
 
+  if (loading) {
+    return <div className="p-6 text-gray-400">Loading attendance data...</div>;
+  }
+
   return (
     <div className="p-6 space-y-6">
-      {/* Date range selector */}
-      <div className="flex gap-4 mb-4 flex-wrap">
+      {/* Filters */}
+      <div className="flex flex-wrap gap-4 mb-4">
         <label className="flex items-center gap-2">
           Start:
           <input
@@ -91,6 +112,24 @@ const AttendanceDashboardClassTeacher = () => {
             className="ml-2 p-2 rounded bg-gray-900 text-white"
           />
         </label>
+        <select
+          value={selectedTerm}
+          onChange={(e) => setSelectedTerm(e.target.value)}
+          className="p-2 rounded bg-gray-900 text-white"
+        >
+          {terms.map((t) => (
+            <option key={t} value={t}>{t}</option>
+          ))}
+        </select>
+        <select
+          value={selectedYear}
+          onChange={(e) => setSelectedYear(Number(e.target.value))}
+          className="p-2 rounded bg-gray-900 text-white"
+        >
+          {academicYears.map((y) => (
+            <option key={y} value={y}>{y}</option>
+          ))}
+        </select>
       </div>
 
       {/* Summary cards */}
@@ -101,6 +140,7 @@ const AttendanceDashboardClassTeacher = () => {
         <MetricCard title="Total Records" value={totalStudents} bgColor="bg-gray-800" />
       </div>
 
+      {/* Detailed records */}
       <AttendanceDetails />
 
       {/* Attendance Trend */}
@@ -129,14 +169,23 @@ const AttendanceDashboardClassTeacher = () => {
           <table className="min-w-full border border-gray-800 text-white">
             <thead>
               <tr className="bg-gray-900 text-left">
-                <th className="px-4 py-2">Student ID</th>
+                <th className="px-4 py-2">Student</th>
+                <th className="px-4 py-2">Class</th>
                 <th className="px-4 py-2">Absences</th>
               </tr>
             </thead>
             <tbody>
+              {absentees.length === 0 && (
+                <tr>
+                  <td colSpan="3" className="text-center py-4 text-gray-400">
+                    No chronic absentees found
+                  </td>
+                </tr>
+              )}
               {absentees.map((s) => (
                 <tr key={s._id} className="border-t border-gray-800">
-                  <td className="px-4 py-2">{s._id}</td>
+                  <td className="px-4 py-2">{s.firstName} {s.lastName}</td>
+                  <td className="px-4 py-2">{s.classLevel}</td>
                   <td className="px-4 py-2">{s.count}</td>
                 </tr>
               ))}
