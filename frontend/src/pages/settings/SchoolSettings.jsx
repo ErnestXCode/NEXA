@@ -244,7 +244,7 @@ const SchoolSettings = ({ onNext }) => {
           </section>}
 
           {/* Class Levels */}
-          <section>
+          {false && <section>
             <h2 className="text-gray-200 font-semibold mb-3 border-b border-gray-700 pb-1">
               Class Levels & Streams
             </h2>
@@ -345,7 +345,7 @@ const SchoolSettings = ({ onNext }) => {
                 ➕ Add Level
               </button>
             </div>
-          </section>
+          </section>}
 
           {/* Grading System */}
          {false &&  <section>

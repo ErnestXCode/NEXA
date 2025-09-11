@@ -87,43 +87,19 @@ const ParentDashboard = () => {
             <div className="space-y-1 sm:space-y-2 text-sm sm:text-base">
               <p>
                 <span className="font-semibold text-gray-300">Name:</span>{" "}
-                {selectedChild.firstName} {selectedChild.lastName}
+                {selectedChild.firstName} {selectedChild.middleName} {selectedChild.lastName}
               </p>
-              <p>
-                <span className="font-semibold text-gray-300">
-                  Admission #:
-                </span>{" "}
-                {selectedChild.admissionNumber}
-              </p>
+      
               <p>
                 <span className="font-semibold text-gray-300">Class:</span>{" "}
                 {selectedChild.classLevel}
               </p>
-              <p>
+              {/* <p>
                 <span className="font-semibold text-gray-300">Stream:</span>{" "}
                 {selectedChild.stream || "-"}
-              </p>
+              </p> */}
             </div>
-            <div className="space-y-1 sm:space-y-2 text-sm sm:text-base">
-              <p>
-                <span className="font-semibold text-gray-300">Guardian:</span>{" "}
-                {selectedChild.guardianName}
-              </p>
-              <p>
-                <span className="font-semibold text-gray-300">Phone:</span>{" "}
-                {selectedChild.guardianPhone}
-              </p>
-              <p>
-                <span className="font-semibold text-gray-300">Email:</span>{" "}
-                {selectedChild.guardianEmail || "-"}
-              </p>
-              <p>
-                <span className="font-semibold text-gray-300">
-                  Relationship:
-                </span>{" "}
-                {selectedChild.relationship || "-"}
-              </p>
-            </div>
+           
           </div>
 
           {/* Fees Summary */}
@@ -196,10 +172,10 @@ const ParentDashboard = () => {
                         className={`font-bold text-${colors[idx]} mt-1 sm:mt-2`}
                       >
                         {status === "Present"
-                          ? `${attendanceSummary.present} (${attendanceSummary.presentPct}%)`
+                          ? `${attendanceSummary.present} (days)`
                           : status === "Absent"
-                          ? `${attendanceSummary.absent} (${attendanceSummary.absentPct}%)`
-                          : `${attendanceSummary.late} (${attendanceSummary.latePct}%)`}
+                          ? `${attendanceSummary.absent} (days)`
+                          : `${attendanceSummary.late} (days)`}
                       </p>
                     </div>
                   );
@@ -209,7 +185,7 @@ const ParentDashboard = () => {
           )}
 
           {/* Exams Section */}
-          {childExams.length > 0 && (
+          {/* {childExams.length > 0 && (
             <div className="space-y-4 sm:space-y-6">
               <h2 className="text-lg sm:text-xl font-semibold">
                 Exam Performance
@@ -264,7 +240,7 @@ const ParentDashboard = () => {
                 </div>
               )}
             </div>
-          )}
+          )} */}
         </div>
       )}
     </div>

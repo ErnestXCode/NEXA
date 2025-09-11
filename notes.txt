@@ -1,11 +1,17 @@
 classes, stream and grading  
 polish parents portal and make it mobile friendly
 
-posting to attendance is too long
-
 badge and notifications dont work well 
 
 optimize backend
 
+editable 'reason' for  attendance
 
-i need optimistic returning/navigating from attendance
+
+reviews section
+
+feedback should be seen in nav by every body
+
+parent to use bursars number....get rid of that part cleverly
+
+editable fees page amounts, and the slow outstanding is annoying
