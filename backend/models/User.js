@@ -48,29 +48,29 @@ userSchema.pre("save", async function (next) {
 });
 
 // ---------------- VALIDATION HOOK FOR TEACHERS ----------------
-userSchema.pre("save", async function (next) {
-  try {
-    if (this.role === "teacher") {
-      if (!this.school) throw new Error("Teacher must belong to a school");
+// userSchema.pre("save", async function (next) {
+//   try {
+//     if (this.role === "teacher") {
+//       if (!this.school) throw new Error("Teacher must belong to a school");
 
-      // 1️⃣ Validate classLevel if teacher is a class teacher
-      if (this.isClassTeacher && this.classLevel) {
-        const classValidation = await School.validateClassLevel(this.school, this.classLevel);
-        if (!classValidation.valid) throw new Error(`Invalid classLevel: ${classValidation.reason}`);
-      }
+//       // 1️⃣ Validate classLevel if teacher is a class teacher
+//       if (this.isClassTeacher && this.classLevel) {
+//         const classValidation = await School.validateClassLevel(this.school, this.classLevel);
+//         if (!classValidation.valid) throw new Error(`Invalid classLevel: ${classValidation.reason}`);
+//       }
 
-      // // 2️⃣ Validate subjects (if any)
-      // for (let subj of this.subjects || []) {
-      //   const subjectValidation = await School.validateSubject(this.school, subj);
-      //   if (!subjectValidation.valid) throw new Error(`Invalid subject "${subj}": ${subjectValidation.reason}`);
-      // }
-    }
+//       // // 2️⃣ Validate subjects (if any)
+//       // for (let subj of this.subjects || []) {
+//       //   const subjectValidation = await School.validateSubject(this.school, subj);
+//       //   if (!subjectValidation.valid) throw new Error(`Invalid subject "${subj}": ${subjectValidation.reason}`);
+//       // }
+//     }
 
-    next();
-  } catch (err) {
-    next(err);
-  }
-});
+//     next();
+//   } catch (err) {
+//     next(err);
+//   }
+// });
 
 const User = mongoose.model("User", userSchema);
 module.exports = User;

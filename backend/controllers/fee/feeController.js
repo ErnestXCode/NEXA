@@ -46,6 +46,8 @@ const addFee = async (req, res) => {
     if (!termExpectation)
       return res.status(400).json({ msg: `Term ${term} not set in school` });
 
+    console.log(student.classLevel)
+
     // Create Fee record
     const feeRecord = new Fee({
       student: student._id,

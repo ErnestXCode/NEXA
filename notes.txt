@@ -10,3 +10,5 @@ notificaion showing undefined
 , nad popping for user sending it
 
 show who is absent and late and reason 
+
+i need optimistic returning/navigating from attendance
