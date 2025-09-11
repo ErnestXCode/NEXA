@@ -47,15 +47,18 @@ const FeeHistoryWrapper = () => {
 };
 
 const HomeRedirect = () => {
-  const accessToken = useSelector((state) => state.auth?.accessToken);
+  const { accessToken } = useSelector((state) => state.auth);
 
-  // If user is logged in, go to dashboard, else show Home page
-  return accessToken ? <Navigate to="/dashboard" replace /> : <Navigate to="/home" replace />;
+  // Wait until PersistLogin has finished loading
+  if (accessToken === undefined) return null; // or a spinner
+
+  return accessToken ? <Navigate to="/dashboard" replace /> : <Home />;
 };
 
 
+
+
 function App() {
-  const accessToken = useSelector(state => state.auth)
   return (
     <div className="bg-gray-950 text-white min-h-screen">
       <BrowserRouter>
@@ -63,7 +66,9 @@ function App() {
         <InstallPrompt />
         <Routes>
           {/* Public routes */}
-          <Route path="/" element={<HomeRedirect />} />
+           <Route element={<PersistLogin />}>
+    <Route path="/" element={<HomeRedirect />} />
+  </Route>
           <Route path="/features" element={<Features />} />
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/contact" element={<Contact />} />

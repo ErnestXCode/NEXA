@@ -8,7 +8,7 @@ const FeesPage = () => {
   const [selectedClass, setSelectedClass] = useState("All");
   const [onlyWithBalance, setOnlyWithBalance] = useState(false);
   const [searchQuery, setSearchQuery] = useState(""); // 🔹 search input
-  const [totalOutstanding, setTotalOutstanding] = useState(0);
+  const [totalOutstanding, setTotalOutstanding] = useState('...');
 
   useEffect(() => {
     fetchStudents();

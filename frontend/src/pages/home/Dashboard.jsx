@@ -11,15 +11,15 @@ const Dashboard = () => {
   const currentUser = useSelector(selectCurrentUser);
   return (
     <>
-      {currentUser.role === "superadmin" ? (
+      {currentUser?.role === "superadmin" ? (
         <SuperAdminDashboard />
-      ) : currentUser.role === "admin" ? (
+      ) : currentUser?.role === "admin" ? (
         <AdminDashboard />
-      ) : currentUser.role === "teacher" ? (
+      ) : currentUser?.role === "teacher" ? (
         <TeacherDashboard />
-      ) : currentUser.role === "bursar" ? (
+      ) : currentUser?.role === "bursar" ? (
         <BursarDashboard />
-      ) : (
+      ) : currentUser?.role === 'parent' && (
         <ParentDashboard />
       )}
     </>
