@@ -7,34 +7,38 @@ const TeacherDashboard = () => {
   const currentUser = useSelector(selectCurrentUser);
 
   return (
-    <div className="min-h-screen bg-gray-950 p-4">
-      <main className="flex flex-col gap-4 max-w-md mx-auto">
+    <div className="min-h-screen bg-gray-950 p-6">
+      <main className="flex flex-col gap-6 max-w-md mx-auto">
         {/* Messages */}
         <NavLink
           to="/dashboard/communication"
-          className="bg-gray-900 hover:bg-gray-800 shadow-lg rounded-lg p-6 flex flex-col items-start transition transform hover:scale-105"
+          className="bg-gradient-to-r from-indigo-700 via-purple-700 to-pink-700 shadow-lg rounded-xl p-6 flex flex-col items-start transition transform hover:scale-105 hover:shadow-2xl hover:from-indigo-600 hover:via-purple-600 hover:to-pink-600 duration-300"
         >
-          <h2 className="text-white text-xl font-semibold mb-2">Messages</h2>
-          <p className="text-gray-400 text-sm">View and send messages</p>
+          <h2 className="text-white text-2xl font-bold mb-2">Messages</h2>
+          <p className="text-gray-200 text-sm">View and send messages</p>
         </NavLink>
 
         {/* Mark Attendance */}
-        <NavLink
-          to="/dashboard/attendance/mark"
-          className="bg-gray-900 hover:bg-gray-800 shadow-lg rounded-lg p-6 flex flex-col items-start transition transform hover:scale-105"
-        >
-          <h2 className="text-white text-xl font-semibold mb-2">Mark Attendance</h2>
-          <p className="text-gray-400 text-sm">Record student attendance</p>
-        </NavLink>
+        {currentUser.isClassTeacher && (
+          <NavLink
+            to="/dashboard/attendance/mark"
+            className="bg-gradient-to-r from-green-700 via-lime-600 to-emerald-500 shadow-lg rounded-xl p-6 flex flex-col items-start transition transform hover:scale-105 hover:shadow-2xl hover:from-green-600 hover:via-lime-500 hover:to-emerald-400 duration-300"
+          >
+            <h2 className="text-white text-2xl font-bold mb-2">
+              Mark Attendance
+            </h2>
+            <p className="text-gray-200 text-sm">Record student attendance</p>
+          </NavLink>
+        )}
 
         {/* Record Results */}
-        <NavLink
+        {false && <NavLink
           to="/dashboard/exams/record"
-          className="bg-gray-900 hover:bg-gray-800 shadow-lg rounded-lg p-6 flex flex-col items-start transition transform hover:scale-105"
+          className="bg-gradient-to-r from-yellow-600 via-orange-500 to-red-500 shadow-lg rounded-xl p-6 flex flex-col items-start transition transform hover:scale-105 hover:shadow-2xl hover:from-yellow-500 hover:via-orange-400 hover:to-red-400 duration-300"
         >
-          <h2 className="text-white text-xl font-semibold mb-2">Record Results</h2>
-          <p className="text-gray-400 text-sm">Enter exam scores</p>
-        </NavLink>
+          <h2 className="text-white text-2xl font-bold mb-2">Record Results</h2>
+          <p className="text-gray-200 text-sm">Enter exam scores</p>
+        </NavLink>}
       </main>
     </div>
   );

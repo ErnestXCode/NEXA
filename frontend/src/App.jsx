@@ -55,9 +55,6 @@ const HomeRedirect = () => {
   return accessToken ? <Navigate to="/dashboard" replace /> : <Home />;
 };
 
-
-
-
 function App() {
   return (
     <div className="bg-gray-950 text-white min-h-screen">
@@ -66,9 +63,9 @@ function App() {
         <InstallPrompt />
         <Routes>
           {/* Public routes */}
-           <Route element={<PersistLogin />}>
-    <Route path="/" element={<HomeRedirect />} />
-  </Route>
+          <Route element={<PersistLogin hideNav={true} />}>
+            <Route path="/" element={<HomeRedirect />} />
+          </Route>
           <Route path="/features" element={<Features />} />
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/contact" element={<Contact />} />

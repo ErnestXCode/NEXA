@@ -8,3 +8,5 @@ standalone only sending to / not /dashboard evry time you go in , in fact the we
 
 notificaion showing undefined 
 , nad popping for user sending it
+
+show who is absent and late and reason 

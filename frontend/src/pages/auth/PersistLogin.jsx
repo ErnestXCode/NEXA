@@ -5,7 +5,7 @@ import { setCredentials } from "../../redux/slices/authSlice";
 import api from "../../api/axios";
 import Navigation from "../../components/layout/Navigation";
 
-const PersistLogin = () => {
+const PersistLogin = ({hideNav}) => {
   const dispatch = useDispatch();
   const { accessToken, user } = useSelector((state) => state.auth);
   const [loading, setLoading] = useState(true);
@@ -44,7 +44,7 @@ const PersistLogin = () => {
 
   return (
     <>
-      <Navigation />
+      {!hideNav && <Navigation />}
       <Outlet />
     </>
   );
