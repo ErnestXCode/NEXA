@@ -50,7 +50,7 @@ const Login = () => {
         message: "✅ Logged in successfully!",
         type: "success",
       });
-      setTimeout(() => navigate("/dashboard"), 800);
+      setTimeout(() => navigate("/dashboard",  {replace: true}), 800);
     } catch (err) {
       setStatus({
         loading: false,

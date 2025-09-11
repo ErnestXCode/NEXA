@@ -163,6 +163,7 @@ const handleRegister = async (req, res) => {
         role: newUser.role,
         school: newUser.school,
         children: newUser.children || [],
+        isClassTeacher: newUser.isClassTeacher
       },
     });
 };

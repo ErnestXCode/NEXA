@@ -4,7 +4,6 @@ const PushSubscription = require("../../models/pushSubscription");
 const sgMail = require("@sendgrid/mail");
 const webpush = require("web-push");
 
-// ⚠️ Set SendGrid API key and VAPID keys in your .env
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 webpush.setVapidDetails(
   "mailto:noreply@schoolapp.com",
@@ -17,6 +16,7 @@ const sendMessage = async (req, res) => {
   try {
     const { subject, body, type } = req.body;
     const sender = req.user;
+    const io = req.app.get("io"); // get Socket.IO instance
 
     if (!body) return res.status(400).json({ msg: "Message body required" });
 
@@ -29,7 +29,9 @@ const sendMessage = async (req, res) => {
       school: sender.school,
     });
 
-    // Send email if type=email
+    const senderDoc = await User.findById(sender.userId);
+
+    // Email logic
     if (type === "email") {
       try {
         await sgMail.send({
@@ -43,25 +45,36 @@ const sendMessage = async (req, res) => {
       }
     }
 
-    // Send web push if type=chat
+    // Web push & websocket logic
     if (type === "chat") {
-      const subscriptions = await PushSubscription.find({ school: sender.school }).populate("user");
-      console.log('subscriptions', subscriptions)
-      const payload = JSON.stringify({
-        title: `New message from ${sender.name}`,
+      const subscriptions = await PushSubscription.find({
+        school: sender.school,
+      }).populate("user");
+
+      const recipients = subscriptions.filter(
+        (sub) => sub.user._id.toString() !== sender.userId.toString()
+      );
+
+      const payload = {
+        title: `New message from [${senderDoc.role}] ${senderDoc.name}`,
         body,
         url: "/dashboard/communication",
-      });
+        senderName: senderDoc.name,
+        senderRole: senderDoc.role,
+        senderId: senderDoc._id,
+      };
 
-      subscriptions.forEach((sub) => {
+      // Web push
+      recipients.forEach((sub) => {
         try {
-          webpush.sendNotification(sub.subscription, payload).catch((err) => {
-            console.error("Push failed:", err);
-          });
+          webpush.sendNotification(sub.subscription, JSON.stringify(payload)).catch(console.error);
         } catch (err) {
           console.error("Push send exception:", err);
         }
       });
+
+      // Websocket
+      io.to(sender.school).emit("newMessage", payload);
     }
 
     res.status(201).json(newMessage);
@@ -80,9 +93,11 @@ const getMessages = async (req, res) => {
       : req.user.role === "superadmin"
       ? {}
       : { school: req.user.school };
+
     const messages = await Message.find(filter)
       .populate("sender", "name email role")
       .sort({ createdAt: -1 });
+
     res.json(messages);
   } catch (err) {
     console.error(err);

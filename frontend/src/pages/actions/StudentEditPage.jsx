@@ -23,7 +23,7 @@ const StudentEditPage = () => {
     onSuccess: () => {
       queryClient.refetchQueries(["students"]);
       queryClient.refetchQueries(["student", id]);
-      navigate("/dashboard/students");
+      navigate("/dashboard/students",  {replace: true});
     },
   });
 

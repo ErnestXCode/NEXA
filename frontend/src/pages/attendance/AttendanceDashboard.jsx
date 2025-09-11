@@ -35,7 +35,7 @@ const AttendanceDashboard = () => {
     <>
       {currentUser.role === "admin" ? (
         <AttendanceDashboardAdmin />
-      ) : (
+      ) : currentUser.isClassTeacher && (
         <AttendanceDashboardClassTeacher />
       )}
     </>

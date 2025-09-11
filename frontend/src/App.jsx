@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Register from "./pages/auth/Register";
 import Login from "./pages/auth/Login";
 import Home from "./pages/home/Home";
@@ -39,13 +39,23 @@ import ReportCardsPage from "./pages/exams/ReportCardsPage";
 import Analytics from "./components/analytics/Analytics";
 import Feedback from "./pages/feedback/Feedback";
 import InstallPrompt from "./install/InstallPrompt";
+import { useSelector } from "react-redux";
 
 const FeeHistoryWrapper = () => {
   const { studentId } = useParams();
   return <FeeHistory studentId={studentId} />;
 };
 
+const HomeRedirect = () => {
+  const accessToken = useSelector((state) => state.auth?.accessToken);
+
+  // If user is logged in, go to dashboard, else show Home page
+  return accessToken ? <Navigate to="/dashboard" replace /> : <Navigate to="/home" replace />;
+};
+
+
 function App() {
+  const accessToken = useSelector(state => state.auth)
   return (
     <div className="bg-gray-950 text-white min-h-screen">
       <BrowserRouter>
@@ -53,7 +63,7 @@ function App() {
         <InstallPrompt />
         <Routes>
           {/* Public routes */}
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={<HomeRedirect />} />
           <Route path="/features" element={<Features />} />
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/contact" element={<Contact />} />

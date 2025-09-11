@@ -1,12 +1,10 @@
 classes, stream and grading  
-attendance for class teahcers only 
 polish parents portal and make it mobile friendly
 
-record results to look better for mobile 
-complete email functionality 
-finish forgot passwords email 
-finish email for admin 
 
-make nexa downloadable,
-grades to bew used in frontend as well 
-all affected subjects to be affected 
+attendance for class teahcers only 
+error in fees marking 
+standalone only sending to / not /dashboard evry time you go in , in fact the webapp should check accessToken and take  you to /dashboard instead of / 
+
+notificaion showing undefined 
+, nad popping for user sending it

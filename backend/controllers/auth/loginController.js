@@ -59,6 +59,8 @@ const handleLogin = async (req, res) => {
         email: foundUser.email,
         role: foundUser.role,
         school: foundUser.school,
+        isClassTeacher: foundUser.isClassTeacher
+
       },
     });
 };

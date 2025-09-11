@@ -1,30 +1,52 @@
-// src/hooks/useUnreadMessages.js
 import { useEffect, useState } from "react";
+import { io } from "socket.io-client";
 
-export default function useUnreadMessages() {
+let socket;
+
+export default function useUnreadMessages(currentUser) {
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
+    if (!currentUser?.school) return;
+
+    // initialize socket once
+    if (!socket) {
+      socket = io(import.meta.env.VITE_API_BASE_URL); // backend URL
+    }
+
+    socket.emit("joinSchool", currentUser.school);
+
+    const handler = (msg) => {
+      if (msg.senderId !== currentUser.userId) {
+        setUnreadCount((c) => c + 1);
+
+        if ("setAppBadge" in navigator) {
+          navigator.setAppBadge(unreadCount + 1).catch(() => {});
+        }
+      }
+    };
+
+    socket.on("newMessage", handler);
+
+    // Also handle service worker messages
     if ("serviceWorker" in navigator) {
-      const handler = (event) => {
+      const swHandler = (event) => {
         if (event.data?.type === "NEW_MESSAGE") {
           setUnreadCount((c) => c + 1);
-
-          // Also set OS/app icon badge (if supported)
           if ("setAppBadge" in navigator) {
             navigator.setAppBadge(unreadCount + 1).catch(() => {});
           }
         }
       };
-
-      navigator.serviceWorker.addEventListener("message", handler);
-
-      return () =>
-        navigator.serviceWorker.removeEventListener("message", handler);
+      navigator.serviceWorker.addEventListener("message", swHandler);
+      return () => navigator.serviceWorker.removeEventListener("message", swHandler);
     }
-  }, [unreadCount]);
 
-  // helper to reset when user opens messages
+    return () => {
+      socket.off("newMessage", handler);
+    };
+  }, [currentUser]);
+
   const resetUnread = () => {
     setUnreadCount(0);
     if ("clearAppBadge" in navigator) {

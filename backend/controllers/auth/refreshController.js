@@ -56,6 +56,8 @@ const handleTokenRefresh = async (req, res) => {
         email: user.email,
         role: user.role,
         school: user.school,
+        isClassTeacher: user.isClassTeacher
+
       },
     });
   } catch (err) {

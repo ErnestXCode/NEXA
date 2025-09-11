@@ -48,7 +48,7 @@ const Register = () => {
       dispatch(setCredentials(res.data));
       setStatus({ loading: false, message: "✅ Account created!", type: "success" });
 
-      setTimeout(() => navigate("/dashboard/setup"), 1000);
+      setTimeout(() => navigate("/dashboard/setup", {replace: true}), 1000);
     } catch (err) {
       setStatus({
         loading: false,

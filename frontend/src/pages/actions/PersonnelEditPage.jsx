@@ -37,7 +37,7 @@ const PersonnelEditPage = () => {
       queryClient.refetchQueries(["teachers"]);
       queryClient.refetchQueries(["bursars"]);
       queryClient.refetchQueries(["personnel", id]);
-      navigate("/dashboard");
+      navigate("/dashboard",  {replace: true});
     },
   });
 
