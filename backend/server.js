@@ -34,7 +34,7 @@ io.on("connection", (socket) => {
 // Export io for use in controllers
 app.set("io", io);
 
-const whiteList = [process.env.VITE_URL];
+const whiteList = [process.env.VITE_URL, 'https://cron-job.org'];
 const corsOptions = {
   origin: (origin, callback) => {
     if (whiteList.includes(origin) || !origin) callback(null, true);
@@ -60,6 +60,17 @@ app.use("/api/activity", require("./routes/activity"));
 app.use("/api/term", require("./routes/term"));
 app.use("/api/reports", require("./routes/report"));
 app.use("/api/push", require("./routes/push"));
+
+
+
+app.get("/ping", (req, res) => {
+  return res.status(200).json({
+    status: "ok",
+    message: "Nexa is alive",
+    timestamp: new Date().toISOString(),
+  });
+});
+
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {

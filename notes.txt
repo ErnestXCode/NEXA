@@ -15,3 +15,5 @@ feedback should be seen in nav by every body
 parent to use bursars number....get rid of that part cleverly
 
 editable fees page amounts, and the slow outstanding is annoying
+
+change to multi year /term

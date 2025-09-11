@@ -145,7 +145,7 @@ const ParentDashboard = () => {
               To pay your child's school fees, use MPESA and send the amount to:
             </p>
             <p className="font-bold text-blue-400 text-lg sm:text-xl">
-              +254 700 123 456
+              +254 xxx xxx xxx
             </p>
             <p className="text-gray-400 mt-2 text-sm sm:text-base">
               After payment, please inform the school to update your payment
