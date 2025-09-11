@@ -5,7 +5,7 @@ polish parents portal and make it mobile friendly
 attendance for class teahcers only 
 error in fees marking 
 standalone only sending to / not /dashboard evry time you go in , in fact the webapp should check accessToken and take  you to /dashboard instead of / 
-
+posting to attendance is too long
 notificaion showing undefined 
 , nad popping for user sending it
 

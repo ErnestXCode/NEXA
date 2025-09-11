@@ -62,13 +62,13 @@ const Navigation = () => {
           <div className="flex justify-between items-center mb-6">
             <button
               onClick={handleLogout}
-              className="bg-gray-100 text-black px-4 py-2 rounded hover:bg-black hover:text-white transition"
+              className="bg-gray-100 text-black px-4 py-2 rounded hover:bg-black hover:text-white cursor-pointer transition"
             >
               Logout
             </button>
             <button
               onClick={handleCloseSidenav}
-              className="text-white font-bold text-lg"
+              className="text-white font-bold text-lg cursor-pointer"
             >
               ×
             </button>

@@ -5,6 +5,7 @@ import {
   getAllAttendanceRecords,
   deleteAttendanceRecord,
 } from "../../utils/indexedDB";
+import { useNavigate } from "react-router-dom";
 
 const AttendancePage = () => {
   const [students, setStudents] = useState([]);
@@ -15,6 +16,7 @@ const AttendancePage = () => {
   const [records, setRecords] = useState({});
   const [notifyParents, setNotifyParents] = useState(false);
   const [unsyncedCount, setUnsyncedCount] = useState(0);
+  const navigate = useNavigate()
 
   /** --- SYNC OFFLINE DATA --- */
   const syncOfflineData = async () => {
@@ -122,12 +124,17 @@ const AttendancePage = () => {
     try {
       await api.post("/attendance", payload);
       alert(`Attendance saved for ${date} ✅`);
+      
     } catch (err) {
       console.error("Error saving attendance", err);
       alert("Error saving attendance, saved locally instead.");
       await saveAttendanceLocally(payload);
       setUnsyncedCount((prev) => prev + 1);
+    } finally {
+      setTimeout(() => navigate("/dashboard",  {replace: true}), 800);
+
     }
+
   };
 
   return (
