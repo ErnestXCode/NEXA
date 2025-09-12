@@ -101,6 +101,16 @@ const Navigation = () => {
               )}
             </NavLink>
 
+            <NavLink
+              end
+              onClick={handleCloseSidenav}
+              to="/dashboard/review"
+              className={navLinkClasses}
+            >
+              Reviews
+            </NavLink>
+
+
             {/* ...the rest of your links stay the same */}
 
             {/* Admin/Superadmin: everything */}

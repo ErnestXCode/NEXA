@@ -31,7 +31,9 @@ function drawResultsTable(doc, er, school) {
 
     // Alternate row background
     if (i % 2 === 0) {
-      doc.rect(startX, y, colWidths.reduce((a, b) => a + b, 0), rowHeight).fill("#f2f2f2").stroke();
+      doc.rect(startX, y, colWidths.reduce((a, b) => a + b, 0), rowHeight)
+        .fill("#f2f2f2")
+        .stroke();
       doc.fillColor("black");
     } else {
       doc.rect(startX, y, colWidths.reduce((a, b) => a + b, 0), rowHeight).stroke();
@@ -103,52 +105,71 @@ function drawSummaryTable(doc, er) {
 async function generateStudentReport(student, exam, school) {
   return new Promise((resolve, reject) => {
     try {
-      const doc = new PDFDocument({ margin: 40 });
+      const doc = new PDFDocument({ margin: 40, size: 'A4' });
       const chunks = [];
       doc.on("data", chunks.push.bind(chunks));
       doc.on("end", () => resolve(Buffer.concat(chunks)));
 
       // --- Header ---
+      const logoWidth = 60;
       if (school.logoUrl) {
         try {
-          doc.image(school.logoUrl, 50, 20, { width: 60 }).moveDown();
+          doc.image(school.logoUrl, 50, 30, { width: logoWidth });
         } catch (e) {
           console.warn("Logo not found:", e.message);
         }
       }
 
-      doc
-        .fontSize(18)
-        .text(school.name || "School Name", {
-          align: "center",
-          underline: true,
-        });
-      if (school.address) doc.text(school.address, { align: "center" });
-      if (school.phone) doc.text(`Tel: ${school.phone}`, { align: "center" });
+      doc.fontSize(20)
+         .font("Helvetica-Bold")
+         .text(school.name || "School Name", 0, 35, { align: 'center' });
+
+      if (school.address) doc.fontSize(10).text(school.address, { align: 'center' });
+      if (school.phone) doc.text(`Tel: ${school.phone}`, { align: 'center' });
+
+      doc.moveDown(0.5);
+      doc.strokeColor('#000').lineWidth(1).moveTo(50, doc.y).lineTo(550, doc.y).stroke();
+      doc.moveDown(1);
+
+      // --- Exam Title ---
+      doc.fontSize(14).font("Helvetica-Bold")
+         .text(`Exam Report: ${exam.name} (${exam.term})`, { align: "center" });
       doc.moveDown(1.5);
 
-      doc
-        .fontSize(14)
-        .text(`Exam Report: ${exam.name} (${exam.term})`, { align: "center" });
+      // --- Student Details ---
+      const studentInfo = [
+        ["Name:", `${student.firstName} ${student.lastName}`],
+        ["Admission No:", student.admissionNumber || "-"],
+        ["Class:", student.classLevel],
+        ["Stream:", student.stream || "-"],
+        ["Exam Date:", new Date(exam.date).toDateString()],
+      ];
+
+      const startX = 50;
+      let startY = doc.y;
+      const col1Width = 120;
+
+      doc.font("Helvetica").fontSize(11);
+      studentInfo.forEach(([label, value], i) => {
+        const y = startY + i * 18;
+        doc.font("Helvetica-Bold").text(label, startX, y);
+        doc.font("Helvetica").text(value, startX + col1Width, y);
+      });
+
       doc.moveDown(2);
-
-      // --- Student details ---
-      doc.fontSize(12).text(`Name: ${student.firstName} ${student.lastName}`);
-      doc.text(`Admission No: ${student.admissionNumber || "-"}`);
-      doc.text(`Class: ${student.classLevel}`);
-      if (student.stream) doc.text(`Stream: ${student.stream}`);
-      doc.text(`Exam Date: ${new Date(exam.date).toDateString()}`);
-      doc.moveDown(1.5);
 
       // --- Results Table ---
       const er = (student.examResults || []).find(
-        (r) => r.exam?.toString() === exam._id.toString()
+        (r) => r.exam?.toString() === exam._id.toString() &&
+               r.academicYear === exam.academicYear
       );
 
       if (!er) {
-        doc.text("⚠ No results found for this exam.");
+        doc.font("Helvetica-Oblique").fillColor("red")
+           .text("⚠ No results found for this exam.", { align: "center" });
       } else {
-        doc.fontSize(13).text("Subjects & Scores", { underline: true });
+        doc.fillColor("black").fontSize(12).font("Helvetica-Bold")
+           .text("Subjects & Scores", { underline: true, align: "left" });
         doc.moveDown(0.5);
 
         drawResultsTable(doc, er, school);
@@ -156,18 +177,24 @@ async function generateStudentReport(student, exam, school) {
         // --- Totals Summary Table ---
         drawSummaryTable(doc, er);
 
-        // Remark below the table
+        // Remark below the table in a shaded box
         if (er.remark) {
-          doc.font("Helvetica-Oblique").fontSize(12).text(`Remark: ${er.remark}`, {
-            align: "center",
-          });
+          doc.moveDown(0.5);
+          const remarkY = doc.y;
+          doc.rect(50, remarkY, 500, 25).fill("#e0f7fa").stroke();
+          doc.fillColor("black")
+             .font("Helvetica-Oblique")
+             .fontSize(12)
+             .text(`Remark: ${er.remark}`, 55, remarkY + 6);
+          doc.moveDown(2);
         }
       }
 
-      doc.moveDown(3);
+      // --- Footer ---
+      const bottom = doc.page.height - 120;
+      doc.font("Helvetica").fontSize(10)
+         .text(`Generated on: ${new Date().toDateString()}`, 50, bottom - 20);
 
-      // --- Footer Signatures ---
-      const bottom = doc.page.height - 150;
       doc.text("__________________", 60, bottom).text(
         "Class Teacher",
         70,
@@ -190,6 +217,7 @@ async function generateStudentReport(student, exam, school) {
     }
   });
 }
+
 
 /**
  * Download single student report

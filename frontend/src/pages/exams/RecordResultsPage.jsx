@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import api from "../../api/axios";
 import { useSelector } from "react-redux";
-import {selectCurrentUser} from '../../redux/slices/authSlice'
+import { selectCurrentUser } from "../../redux/slices/authSlice";
 
 const RecordResultsPage = () => {
   const [exams, setExams] = useState([]);
@@ -11,50 +11,43 @@ const RecordResultsPage = () => {
   const [selectedClass, setSelectedClass] = useState("");
   const [selectedSubject, setSelectedSubject] = useState("");
   const [results, setResults] = useState({});
+  const [academicYear, setAcademicYear] = useState(""); // ✅ New
   const [isDesktop, setIsDesktop] = useState(true);
-  const currentUser = useSelector(selectCurrentUser)
+  const currentUser = useSelector(selectCurrentUser);
 
   // 🔹 Check if user is on desktop
   useEffect(() => {
-    const checkScreenSize = () => {
-      setIsDesktop(window.innerWidth >= 1024); // lg breakpoint ~ 1024px
-    };
+    const checkScreenSize = () => setIsDesktop(window.innerWidth >= 1024);
     checkScreenSize();
     window.addEventListener("resize", checkScreenSize);
     return () => window.removeEventListener("resize", checkScreenSize);
   }, []);
 
-  // 🔹 If not desktop, block access
-
   // 🔹 Fetch exams & students (initial)
-  // 🔹 Fetch exams & students (initial)
-useEffect(() => {
-  const fetchExams = async () => {
-    try {
-      const res = await api.get("/exams");
-      setExams(res.data?.exams || res.data || []);
-    } catch (err) {
-      console.error("Failed to fetch exams", err);
-    }
-  };
+  useEffect(() => {
+    const fetchExams = async () => {
+      if (!academicYear) return;
+      try {
+        const res = await api.get("/exams", { params: { academicYear } });
+        setExams(res.data?.exams || res.data || []);
+      } catch (err) {
+        console.error("Failed to fetch exams", err);
+      }
+    };
 
-  const fetchStudents = async () => {
-    try {
-      const res = await api.get("/students/students-with-subjects");
-      setStudents(res.data?.students || []);
-      setSubjects(res.data?.subjects || []);
-    } catch (err) {
-      console.error("Failed to fetch students", err);
-    }
-  };
+    const fetchStudents = async () => {
+      try {
+        const res = await api.get("/students/students-with-subjects");
+        setStudents(res.data?.students || []);
+        setSubjects(res.data?.subjects || []);
+      } catch (err) {
+        console.error("Failed to fetch students", err);
+      }
+    };
 
-  fetchExams();
-  fetchStudents();
-}, []);
-
-
-  // 🔹 Fetch subjects for selected class (NEW)
-
+    fetchExams();
+    fetchStudents();
+  }, [academicYear]);
 
   // 🔹 Fetch saved results when exam/class changes
   useEffect(() => {
@@ -65,7 +58,6 @@ useEffect(() => {
           `/exams/results/${examId}/${encodeURIComponent(selectedClass)}`
         );
 
-        // Map each studentId → full result object
         const mapped = {};
         (res.data || []).forEach((r) => {
           mapped[r.studentId] = {
@@ -124,31 +116,18 @@ useEffect(() => {
 
         const total = subjectsArr.reduce((acc, s) => acc + (s.score || 0), 0);
         const average = subjectsArr.length ? total / subjectsArr.length : 0;
-        const grade =
-          average >= 80
-            ? "A"
-            : average >= 70
-            ? "B"
-            : average >= 60
-            ? "C"
-            : average >= 50
-            ? "D"
-            : "E";
 
         return {
           studentId: id,
           subjects: subjectsArr,
-          total,
-          average,
-          grade,
         };
       });
 
       await api.post("/exams/results", {
         examId,
         studentResults,
-        classLevel: selectedClass,
       });
+
       alert("Results saved!");
     } catch (err) {
       console.error(err);
@@ -156,9 +135,7 @@ useEffect(() => {
     }
   };
 
-  const classLevels = [
-    ...new Set(students.map((s) => s.classLevel || "Unassigned")),
-  ];
+  const classLevels = [...new Set(students.map((s) => s.classLevel || "Unassigned"))];
   const filteredStudents = students.filter(
     (s) => selectedClass && s.classLevel === selectedClass
   );
@@ -167,24 +144,41 @@ useEffect(() => {
     <div className="p-6 space-y-6">
       <h1 className="text-2xl font-bold">Record Results</h1>
 
-      {/* Step 1: Select Exam */}
-      <select
-        value={examId}
+      {/* Step 0: Select Academic Year */}
+      <input
+        type="text"
+        placeholder="Academic Year (e.g. 2025/2026)"
+        value={academicYear}
         onChange={(e) => {
-          setExamId(e.target.value);
+          setAcademicYear(e.target.value);
+          setExamId("");
           setSelectedClass("");
           setSelectedSubject("");
           setResults({});
         }}
         className="p-2 w-full rounded bg-gray-800 text-white"
-      >
-        <option value="">Select Exam</option>
-        {exams.map((e) => (
-          <option key={e._id} value={e._id}>
-            {e.name} - {e.term}
-          </option>
-        ))}
-      </select>
+      />
+
+      {/* Step 1: Select Exam */}
+      {academicYear && (
+        <select
+          value={examId}
+          onChange={(e) => {
+            setExamId(e.target.value);
+            setSelectedClass("");
+            setSelectedSubject("");
+            setResults({});
+          }}
+          className="p-2 w-full rounded bg-gray-800 text-white"
+        >
+          <option value="">Select Exam</option>
+          {exams.map((e) => (
+            <option key={e._id} value={e._id}>
+              {e.name} - {e.term} - {e.academicYear}
+            </option>
+          ))}
+        </select>
+      )}
 
       {/* Step 2: Select Class */}
       {examId && (
@@ -251,13 +245,8 @@ useEffect(() => {
                 const studentResult = results[student._id] || { subjects: [] };
                 const subjectsArr = studentResult.subjects || [];
 
-                const total = subjectsArr.reduce(
-                  (acc, s) => acc + (s.score || 0),
-                  0
-                );
-                const average = subjectsArr.length
-                  ? total / subjectsArr.length
-                  : 0;
+                const total = subjectsArr.reduce((acc, s) => acc + (s.score || 0), 0);
+                const average = subjectsArr.length ? total / subjectsArr.length : 0;
                 const grade =
                   average >= 80
                     ? "A"
@@ -281,15 +270,10 @@ useEffect(() => {
                           min="0"
                           max="100"
                           value={
-                            subjectsArr.find((s) => s.name === selectedSubject)
-                              ?.score ?? ""
+                            subjectsArr.find((s) => s.name === selectedSubject)?.score ?? ""
                           }
                           onChange={(e) =>
-                            handleScoreChange(
-                              student._id,
-                              selectedSubject,
-                              Number(e.target.value)
-                            )
+                            handleScoreChange(student._id, selectedSubject, Number(e.target.value))
                           }
                           className="p-1 w-20 rounded bg-gray-800 text-white no-spinner"
                         />
@@ -301,16 +285,9 @@ useEffect(() => {
                             type="number"
                             min="0"
                             max="100"
-                            value={
-                              subjectsArr.find((s) => s.name === subj)?.score ??
-                              ""
-                            }
+                            value={subjectsArr.find((s) => s.name === subj)?.score ?? ""}
                             onChange={(e) =>
-                              handleScoreChange(
-                                student._id,
-                                subj,
-                                Number(e.target.value)
-                              )
+                              handleScoreChange(student._id, subj, Number(e.target.value))
                             }
                             className="p-1 w-20 rounded bg-gray-800 text-white no-spinner"
                           />

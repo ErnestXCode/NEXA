@@ -40,6 +40,7 @@ import Analytics from "./components/analytics/Analytics";
 import Feedback from "./pages/feedback/Feedback";
 import InstallPrompt from "./install/InstallPrompt";
 import { useSelector } from "react-redux";
+import ReviewPage from "./pages/review/ReviewPage";
 
 const FeeHistoryWrapper = () => {
   const { studentId } = useParams();
@@ -134,6 +135,7 @@ function App() {
               <Route path="exams" element={<ExamsPage />} />
               <Route path="exams/record" element={<RecordResultsPage />} />
               <Route path="exams/report" element={<ReportCardsPage />} />
+              <Route path="review" element={<ReviewPage />} />
             </Route>
           </Route>
         </Routes>

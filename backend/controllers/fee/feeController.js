@@ -1,7 +1,6 @@
 const Fee = require("../../models/Fee");
 const Student = require("../../models/Student");
 const School = require("../../models/School");
-const User = require("../../models/User");
 
 // --- Get all fees ---
 const getAllFees = async (req, res) => {
@@ -19,69 +18,56 @@ const getAllFees = async (req, res) => {
 };
 
 // --- Add payment / adjustment ---
+// --- Add payment / adjustment ---
+// POST /fees
 const addFee = async (req, res) => {
   try {
-    const {
-      studentId,
-      amount,
-      term,
-      type = "payment",
-      method = "cash",
-      note,
-      generateReceipt = false,
-    } = req.body;
+    const { studentId, term, academicYear, amount, type, method, note } = req.body;
 
-    const requester = req.user;
+    if (!academicYear) {
+      return res.status(400).json({ message: "academicYear is required" });
+    }
 
-    // Find student
     const student = await Student.findById(studentId);
-    if (!student) return res.status(404).json({ msg: "Student not found" });
+    if (!student) {
+      return res.status(404).json({ message: "Student not found" });
+    }
 
-   
-   
-    const school = await School.findById(student.school);
-
-    // Validate term exists in school expectations
-    const termExpectation = school.feeExpectations.find((f) => f.term === term);
-    if (!termExpectation)
-      return res.status(400).json({ msg: `Term ${term} not set in school` });
-
-    console.log(student.classLevel)
-
-    // Create Fee record
-    const feeRecord = new Fee({
-      student: student._id,
+    const fee = new Fee({
+      student: studentId,
       term,
+      academicYear, // ✅ always stored
       classLevel: student.classLevel,
       amount,
       type,
       method,
       note,
-      handledBy: requester.userId,
-      school: school._id,
-      receiptGenerated: generateReceipt,
+      school: student.school,
+      handledBy: req.user.userId,
     });
-    await feeRecord.save();
 
-    // ALSO update student.payments array
+    await fee.save();
+
+    // also push into student.payments for quick lookups
     student.payments.push({
+      academicYear,
       term,
       amount,
-      category: type, // "payment" or "adjustment"
-      type: method, // "cash", "mpesa", "card"
+      category: type,
+      type: method,
       note,
-      date: new Date(),
     });
+
     await student.save();
 
-    res
-      .status(200)
-      .json({ msg: "Fee recorded successfully", feeRecord, student });
+    res.status(201).json(fee);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ msg: "Error adding fee", error: err.message });
+    console.error("addFee error:", err);
+    res.status(500).json({ message: "Server error" });
   }
 };
+
+
 
 // --- Get student fee history ---
 const getStudentFees = async (req, res) => {
@@ -117,89 +103,179 @@ const isClassInRange = (className, fromClass, toClass, allClasses = []) => {
 // 1) school.feeRules (ranges) -> if matched for student's class, use rule(s)
 // 2) class-level feeExpectations (if defined)
 // 3) fallback to school.feeExpectations
+// GET /fees/outstanding/:studentId?academicYear=2025/2026
 const getOutstandingFees = async (req, res) => {
   try {
-    const { term, classLevel } = req.query;
-    const schoolQuery =
-      req.user.role === "superadmin" ? {} : { school: req.user.school };
-    const studentQuery = { ...schoolQuery };
-    if (classLevel) studentQuery.classLevel = classLevel;
+    const { studentId } = req.params;
+    const { academicYear } = req.query;
 
-    const students = await Student.find(studentQuery).populate("school");
-    let totalOutstanding = 0;
-
-    for (const s of students) {
-      // ensure we have the school doc (populated or fetch)
-      let school = s.school;
-      if (!school || !school.classLevels) {
-        school = await School.findById(s.school);
-      }
-
-      // priority of expectation sources:
-      // 1) feeRules (ranges)
-      // 2) class-level feeExpectations
-      // 3) school.feeExpectations (fallback)
-      let expectations = [];
-
-      const allClassLevels = (school.classLevels || []).map((c) => ({ name: c.name }));
-
-      // find matching rules (if any)
-      if (Array.isArray(school.feeRules) && school.feeRules.length) {
-        const matchedRules = school.feeRules.filter((rule) =>
-          isClassInRange(s.classLevel, rule.fromClass, rule.toClass, school.classLevels)
-        );
-        if (matchedRules.length) {
-          expectations = matchedRules; // each has { fromClass,toClass,term,amount }
-        }
-      }
-
-      // if no matched rules, check class-level expectations
-      if (!expectations.length) {
-        const classDef = (school.classLevels || []).find((c) => c.name === s.classLevel);
-        if (classDef && Array.isArray(classDef.feeExpectations) && classDef.feeExpectations.length) {
-          expectations = classDef.feeExpectations;
-        } else {
-          expectations = school.feeExpectations || [];
-        }
-      }
-
-      if (term) {
-        // term-specific calculation
-        const expected = expectations.find((f) => f.term === term)?.amount || 0;
-        const payments = await Fee.find({ student: s._id, term });
-
-        const paid = payments
-          .filter((p) => p.type === "payment")
-          .reduce((sum, p) => sum + p.amount, 0);
-        const adjustments = payments
-          .filter((p) => p.type === "adjustment")
-          .reduce((sum, p) => sum + p.amount, 0);
-        totalOutstanding += expected - paid + adjustments;
-      } else {
-        // full-year (or all terms) calculation — iterate expectations available
-        for (const t of expectations) {
-          const expectedAmount = t.amount || 0;
-          const payments = await Fee.find({ student: s._id, term: t.term });
-
-          const paid = payments
-            .filter((p) => p.type === "payment")
-            .reduce((sum, p) => sum + p.amount, 0);
-          const adjustments = payments
-            .filter((p) => p.type === "adjustment")
-            .reduce((sum, p) => sum + p.amount, 0);
-
-          totalOutstanding += expectedAmount - paid + adjustments;
-        }
-      }
+    if (!academicYear) {
+      return res.status(400).json({ message: "academicYear query is required" });
     }
 
-    res.status(200).json({ totalOutstanding });
+    const student = await Student.findById(studentId).populate("school");
+    if (!student) {
+      return res.status(404).json({ message: "Student not found" });
+    }
+
+    const school = await School.findById(student.school);
+
+    // 1️⃣ expected amount for this class & year
+    const classExpectations = school.classLevels
+      .find((cl) => cl.name === student.classLevel)?.feeExpectations || [];
+
+    const expected = classExpectations
+      .filter((e) => e.academicYear === academicYear)
+      .reduce((acc, e) => acc + e.amount, 0);
+
+    // 2️⃣ payments so far in this year
+    const paid = student.payments
+      .filter((p) => p.academicYear === academicYear)
+      .reduce((acc, p) => acc + p.amount, 0);
+
+    res.json({
+      academicYear,
+      expected,
+      paid,
+      balance: expected - paid,
+    });
   } catch (err) {
-    console.error(err);
-    res
-      .status(500)
-      .json({ msg: "Error fetching outstanding fees", error: err.message });
+    console.error("getOutstandingFees error:", err);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
-module.exports = { addFee, getStudentFees, getOutstandingFees, getAllFees };
+
+const bulkUploadFees = async (req, res) => {
+  try {
+    const feeData = req.body; // array of fee objects
+
+    if (!Array.isArray(feeData) || !feeData.length) {
+      return res.status(400).json({ message: "No fee records provided" });
+    }
+
+    const results = [];
+
+    for (const f of feeData) {
+      const {
+        studentId,
+        term,
+        academicYear,
+        amount,
+        type = "payment",
+        method = "cash",
+        note,
+      } = f;
+
+      const student = await Student.findById(studentId);
+      if (!student) continue;
+
+      const fee = new Fee({
+        student: studentId,
+        term,
+        academicYear,
+        classLevel: student.classLevel,
+        amount,
+        type,
+        method,
+        note,
+        school: student.school,
+        handledBy: req.user.userId,
+      });
+      await fee.save();
+
+      // push into student payments
+      student.payments.push({
+        academicYear,
+        term,
+        amount,
+        category: type,
+        type: method,
+        note,
+      });
+      await student.save();
+
+      results.push({ studentId, success: true });
+    }
+
+    res.status(200).json({ message: "Bulk upload completed", results });
+  } catch (err) {
+    console.error("bulkUploadFees error:", err);
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+
+const bulkUploadStudentsWithFees = async (req, res) => {
+  try {
+    const studentsData = req.body; // array of student + fee data
+    const results = [];
+
+    for (const s of studentsData) {
+      const {
+        firstName,
+        lastName,
+        middleName,
+        gender,
+        dateOfBirth,
+        classLevel,
+        stream,
+        academicYear,
+        term,
+        amount,
+        method = "cash",
+        note,
+      } = s;
+
+      // Create student
+      const student = new Student({
+        firstName,
+        lastName,
+        middleName,
+        gender,
+        dateOfBirth,
+        classLevel,
+        stream,
+        school: req.user.school,
+      });
+      await student.save();
+
+      // Create initial fee
+      const fee = new Fee({
+        student: student._id,
+        term,
+        academicYear,
+        classLevel,
+        amount,
+        type: "payment",
+        method,
+        note,
+        school: req.user.school,
+        handledBy: req.user.userId,
+      });
+      await fee.save();
+
+      // push to student.payments
+      student.payments.push({
+        academicYear,
+        term,
+        amount,
+        category: "payment",
+        type: method,
+        note,
+      });
+      await student.save();
+
+      results.push({ studentId: student._id, feeId: fee._id });
+    }
+
+    res.status(200).json({ message: "Bulk upload completed", results });
+  } catch (err) {
+    console.error("bulkUploadStudentsWithFees error:", err);
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+
+
+
+
+module.exports = { addFee, getStudentFees, getOutstandingFees, getAllFees, bulkUploadFees, bulkUploadStudentsWithFees };

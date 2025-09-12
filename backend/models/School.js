@@ -50,13 +50,10 @@ const schoolSchema = new mongoose.Schema(
     },
     subjects: { type: [String], default: () => School.defaultSubjects() },
 
+    // global expectations
     feeExpectations: {
       type: [feeExpectationSchema],
-      default: [
-        { term: "Term 1", academicYear: "2025/2026", amount: 20000 },
-        { term: "Term 2", academicYear: "2025/2026", amount: 18000 },
-        { term: "Term 3", academicYear: "2025/2026", amount: 22000 },
-      ],
+      default: () => School.defaultFeeExpectations(),
     },
 
     feeRules: { type: [feeRuleSchema], default: [] },
@@ -71,6 +68,15 @@ const schoolSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+schoolSchema.statics.defaultFeeExpectations = function () {
+  const year = new Date().getFullYear();
+  return [
+    { term: "Term 1", academicYear: `${year}/${year + 1}`, amount: 20000 },
+    { term: "Term 2", academicYear: `${year}/${year + 1}`, amount: 18000 },
+    { term: "Term 3", academicYear: `${year}/${year + 1}`, amount: 22000 },
+  ];
+};
 
 schoolSchema.statics.defaultGradingSystem = function () {
   return [
@@ -105,18 +111,123 @@ schoolSchema.statics.defaultCBCLevels = function () {
   ];
 };
 
-schoolSchema.statics.defaultSubjects = function () {
+schoolSchema.statics.defaultCBCSubjectsByClass = function () {
   return [
-    "Mathematics",
-    "English",
-    "Kiswahili",
-    "Science",
-    "Social Studies",
-    "Religious Education",
-    "Creative Arts",
-    "Physical Education",
+    {
+      fromClass: "PP1",
+      toClass: "PP1",
+      subjects: [
+        "Language Activities",
+        "Mathematical Activities",
+        "Christian Religious Education",
+        "Islamic Religious Education",
+        "Environmental Activities",
+      ],
+    },
+    {
+      fromClass: "PP2",
+      toClass: "PP2",
+      subjects: [
+        "Language Activities",
+        "Mathematical Activities",
+        "Christian Religious Education",
+        "Islamic Religious Education",
+        "Environmental Activities",
+      ],
+    },
+    {
+      fromClass: "Grade 1",
+      toClass: "Grade 3",
+      subjects: [
+        "English",
+        "Kiswahili",
+        "Mathematical Activities",
+        "Christian Religious Education",
+        "Islamic Religious Education",
+        "Environmental Activities",
+      ],
+    },
+    {
+      fromClass: "Grade 4",
+      toClass: "Grade 4",
+      subjects: [
+        "English",
+        "Kiswahili",
+        "Mathematics",
+        "Social Studies",
+        "Science & Technology",
+        "Agriculture",
+        "Christian Religious Education",
+        "Islamic Religious Education",
+        "Arabic",
+        "French",
+      ],
+    },
+    {
+      fromClass: "Grade 5",
+      toClass: "Grade 6",
+      subjects: [
+        "English",
+        "Kiswahili",
+        "Mathematics",
+        "Social Studies",
+        "Science & Technology",
+        "Agriculture",
+        "Christian Religious Education",
+        "Islamic Religious Education",
+        "Arabic",
+      ],
+    },
+    {
+      fromClass: "Grade 7",
+      toClass: "Grade 8",
+      subjects: [
+        "English",
+        "Kiswahili",
+        "Mathematics",
+        "Integrated Science",
+        "Social Studies",
+        "Agriculture",
+        "Pre-Technical Studies",
+        "Christian Religious Education",
+        "Islamic Religious Education",
+        "Arabic",
+      ],
+    },
+    {
+      fromClass: "Grade 9",
+      toClass: "Grade 9",
+      subjects: [
+        "English",
+        "Kiswahili",
+        "Mathematics",
+        "Integrated Science",
+        "Social Studies",
+        "Agriculture",
+        "Pre-Technical Studies",
+        "Christian Religious Education",
+        "Islamic Religious Education",
+        "Arabic",
+        "French",
+      ],
+    },
   ];
 };
+
+
+schoolSchema.statics.defaultSubjects = function () {
+  // Get all subjects from CBC mapping
+  const allCBCSubjects = School.defaultCBCSubjectsByClass()
+    .flatMap(rule => rule.subjects);
+
+  // Add extra global subjects
+  const extras = ["Creative Arts", "Physical Education"];
+
+  // Deduplicate + return sorted for consistency
+  return [...new Set([...allCBCSubjects, ...extras])].sort();
+};
+
+
 
 schoolSchema.statics.currentAcademicYear = function () {
   const year = new Date().getFullYear();

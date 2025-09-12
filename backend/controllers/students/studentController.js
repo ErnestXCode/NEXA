@@ -156,6 +156,8 @@ const getAllStudents = async (req, res) => {
       select:
         "name email phoneNumber",
     });
+    console.log('req', students)
+
     res.status(200).json(students);
   } catch (err) {
     res

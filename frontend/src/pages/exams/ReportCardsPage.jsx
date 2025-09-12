@@ -15,6 +15,7 @@ import {
 } from "recharts";
 
 const ReportCardsPage = () => {
+  const [academicYear, setAcademicYear] = useState("");
   const [exams, setExams] = useState([]);
   const [students, setStudents] = useState([]);
   const [subjects, setSubjects] = useState([]);
@@ -25,16 +26,22 @@ const ReportCardsPage = () => {
   // colors for charts
   const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#C71585"];
 
-  // 🔹 Fetch exams & students
+  // 🔹 Fetch exams filtered by academicYear
   useEffect(() => {
     const fetchExams = async () => {
+      if (!academicYear) return;
       try {
-        const res = await api.get("/exams");
+        const res = await api.get("/exams", { params: { academicYear } });
         setExams(res.data?.exams || res.data || []);
       } catch (err) {
         console.error("Failed to fetch exams", err);
       }
     };
+    fetchExams();
+  }, [academicYear]);
+
+  // 🔹 Fetch students
+  useEffect(() => {
     const fetchStudents = async () => {
       try {
         const res = await api.get("/students");
@@ -43,7 +50,6 @@ const ReportCardsPage = () => {
         console.error("Failed to fetch students", err);
       }
     };
-    fetchExams();
     fetchStudents();
   }, []);
 
@@ -192,23 +198,39 @@ const ReportCardsPage = () => {
     <div className="p-6 space-y-6">
       <h1 className="text-2xl font-bold">Report Cards</h1>
 
-      {/* Select Exam */}
-      <select
-        value={examId}
+      {/* Academic Year */}
+      <input
+        type="text"
+        placeholder="Academic Year (e.g. 2025/2026)"
+        value={academicYear}
         onChange={(e) => {
-          setExamId(e.target.value);
+          setAcademicYear(e.target.value);
+          setExamId("");
           setSelectedClass("");
           setResults({});
         }}
         className="p-2 w-full rounded bg-gray-800 text-white"
-      >
-        <option value="">Select Exam</option>
-        {exams.map((e) => (
-          <option key={e._id} value={e._id}>
-            {e.name} - {e.term}
-          </option>
-        ))}
-      </select>
+      />
+
+      {/* Select Exam */}
+      {academicYear && (
+        <select
+          value={examId}
+          onChange={(e) => {
+            setExamId(e.target.value);
+            setSelectedClass("");
+            setResults({});
+          }}
+          className="p-2 w-full rounded bg-gray-800 text-white"
+        >
+          <option value="">Select Exam</option>
+          {exams.map((e) => (
+            <option key={e._id} value={e._id}>
+              {e.name} - {e.term}
+            </option>
+          ))}
+        </select>
+      )}
 
       {/* Select Class */}
       {examId && (

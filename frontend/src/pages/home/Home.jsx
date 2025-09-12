@@ -5,6 +5,9 @@ import {
   Cog6ToothIcon,
   ShieldCheckIcon,
 } from "@heroicons/react/24/outline";
+import { useEffect, useState } from "react";
+import api from "../../api/axios";
+
 
 const Home = () => {
   const features = [
@@ -28,18 +31,19 @@ const Home = () => {
     },
   ];
 
-  const testimonials = [
-    {
-      text: "Nexa completely changed how our team collaborates. Highly recommend!",
-      name: "Alex Johnson",
-      avatar: "/images/user1.jpg",
-    },
-    {
-      text: "The tools are simple yet powerful. We can’t imagine working without Nexa.",
-      name: "Sarah Lee",
-      avatar: "/images/user2.jpg",
-    },
-  ];
+  const [testimonials, setTestimonials] = useState([]);
+
+  useEffect(() => {
+    const fetchReviews = async () => {
+      try {
+        const res = await api.get("/reviews");
+        setTestimonials(res.data.reviews);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetchReviews();
+  }, []);
 
   return (
     <>
@@ -140,28 +144,31 @@ const Home = () => {
 
       {/* Testimonials Section */}
       <section className="py-24 bg-gray-900 px-6">
-        <div className="max-w-6xl mx-auto text-center">
-          <h2 className="text-3xl font-semibold mb-14 text-white">
-            What Our Users Say
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-            {testimonials.map((t, i) => (
-              <div
-                key={i}
-                className="p-8 border border-gray-800 rounded-2xl shadow bg-gray-950 hover:border-gray-700 transition-colors"
-              >
+      <div className="max-w-6xl mx-auto text-center">
+        <h2 className="text-3xl font-semibold mb-14 text-white">
+          What Our Users Say
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+          {testimonials.map((t, i) => (
+            <div
+              key={i}
+              className="p-8 border border-gray-800 rounded-2xl shadow bg-gray-950 hover:border-gray-700 transition-colors"
+            >
+              {t.avatar && (
                 <img
                   src={t.avatar}
                   alt={t.name}
                   className="w-16 h-16 rounded-full mx-auto mb-5 object-cover"
                 />
-                <p className="italic mb-3 text-gray-300">“{t.text}”</p>
-                <p className="font-semibold text-white">— {t.name}</p>
-              </div>
-            ))}
-          </div>
+              )}
+              <p className="italic mb-3 text-gray-300">“{t.message}”</p>
+              <p className="font-semibold text-white">— {t.name}</p>
+              {t.rating && <p className="text-yellow-400 mt-2">⭐ {t.rating}</p>}
+            </div>
+          ))}
         </div>
-      </section>
+      </div>
+    </section>
 
       {/* CTA Section */}
       <section className="py-24 bg-gray-950 text-white text-center px-6">
