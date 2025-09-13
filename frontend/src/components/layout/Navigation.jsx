@@ -108,6 +108,15 @@ const Navigation = () => {
               Reviews
             </NavLink>
 
+            <NavLink
+              end
+              onClick={handleCloseSidenav}
+              to="/feedback"
+              className={`${navLinkClasses}`}
+            >
+              Feedback
+            </NavLink>
+
             {/* Admin/Superadmin */}
             {isSuperAdminOrAdmin && (
               <>
@@ -270,14 +279,6 @@ const Navigation = () => {
                   </NavLink>
                 </div>
 
-                <NavLink
-                  end
-                  onClick={handleCloseSidenav}
-                  to="/feedback"
-                  className={`${navLinkClasses} mt-4`}
-                >
-                  Feedback
-                </NavLink>
                 <NavLink
                   end
                   onClick={handleCloseSidenav}

@@ -48,3 +48,8 @@ fee, exam, attendace , check if they are using term
 be able to enter students balances from excel or something
 
 loading could look better
+
+messages and badge on app and something
+
+
+a way to make overpayment to go to the next term or year

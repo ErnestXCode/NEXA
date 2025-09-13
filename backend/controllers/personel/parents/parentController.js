@@ -79,12 +79,16 @@ const getAllParents = async (req, res) => {
   }
 };
 
+// controllers/parentController.js (or wherever your function is)
+
+
+
 const getParentDashboard = async (req, res) => {
   try {
     const parent = await User.findById(req.user.userId).populate({
       path: "children",
       select:
-        "firstName lastName classLevel stream admissionNumber school payments",
+        "firstName middleName lastName classLevel stream admissionNumber school payments",
     });
 
     if (!parent || parent.role !== "parent") {
@@ -96,81 +100,70 @@ const getParentDashboard = async (req, res) => {
         const schoolDoc = await School.findById(child.school).lean();
         if (!schoolDoc) return child;
 
-        // find current term
-        const now = new Date();
-        const currentTermDoc = await Term.findOne({
-          school: child.school,
-          startDate: { $lte: now },
-          endDate: { $gte: now },
-        });
-        const currentTerm = currentTermDoc?.name || "Term 1";
+        const terms = ["Term 1", "Term 2", "Term 3"];
+        const feesByTerm = {};
 
-        // Determine expected fee (priority: feeRules -> class feeExpectations -> school.feeExpectations)
-        let expectations = [];
+        for (const term of terms) {
+          // Determine expected fee (priority: feeRules -> class feeExpectations -> school.feeExpectations)
+          let expectations = [];
 
-        // 1️⃣ FeeRules
-        if (schoolDoc.feeRules?.length) {
-          const classIdx = schoolDoc.classLevels.findIndex(
-            (c) => c.name === child.classLevel
-          );
-          const matchedRules = schoolDoc.feeRules.filter((rule) => {
-            const fromIdx = schoolDoc.classLevels.findIndex(
-              (c) => c.name === rule.fromClass
+          // 1️⃣ FeeRules
+          if (schoolDoc.feeRules?.length) {
+            const classIdx = schoolDoc.classLevels.findIndex(
+              (c) => c.name === child.classLevel
             );
-            const toIdx = schoolDoc.classLevels.findIndex(
-              (c) => c.name === rule.toClass
-            );
-            if (classIdx === -1 || fromIdx === -1 || toIdx === -1) return false;
-            const min = Math.min(fromIdx, toIdx);
-            const max = Math.max(fromIdx, toIdx);
-            return (
-              classIdx >= min && classIdx <= max && rule.term === currentTerm
-            );
-          });
-          if (matchedRules.length) expectations = matchedRules;
-        }
-
-        // 2️⃣ Class-level feeExpectations
-        if (!expectations.length) {
-          const classDef = schoolDoc.classLevels.find(
-            (c) => c.name === child.classLevel
-          );
-          if (classDef?.feeExpectations?.length) {
-            expectations = classDef.feeExpectations.filter(
-              (f) => f.term === currentTerm
-            );
+            const matchedRules = schoolDoc.feeRules.filter((rule) => {
+              const fromIdx = schoolDoc.classLevels.findIndex(
+                (c) => c.name === rule.fromClass
+              );
+              const toIdx = schoolDoc.classLevels.findIndex(
+                (c) => c.name === rule.toClass
+              );
+              if (classIdx === -1 || fromIdx === -1 || toIdx === -1) return false;
+              const min = Math.min(fromIdx, toIdx);
+              const max = Math.max(fromIdx, toIdx);
+              return classIdx >= min && classIdx <= max && rule.term === term;
+            });
+            if (matchedRules.length) expectations = matchedRules;
           }
-        }
 
-        // 3️⃣ School-level fallback
-        if (!expectations.length) {
-          expectations = schoolDoc.feeExpectations.filter(
-            (f) => f.term === currentTerm
-          );
-        }
+          // 2️⃣ Class-level feeExpectations
+          if (!expectations.length) {
+            const classDef = schoolDoc.classLevels.find(
+              (c) => c.name === child.classLevel
+            );
+            if (classDef?.feeExpectations?.length) {
+              expectations = classDef.feeExpectations.filter((f) => f.term === term);
+            }
+          }
 
-        const expectedFee = expectations[0]?.amount || 0;
+          // 3️⃣ School-level fallback
+          if (!expectations.length) {
+            expectations = schoolDoc.feeExpectations.filter((f) => f.term === term);
+          }
 
-        // sum payments and adjustments for the current term
-        const payments = (child.payments || [])
-          .filter((p) => p.term === currentTerm && p.category === "payment")
-          .reduce((sum, p) => sum + p.amount, 0);
+          const expectedFee = expectations[0]?.amount || 0;
 
-        const adjustments = (child.payments || [])
-          .filter((p) => p.term === currentTerm && p.category === "adjustment")
-          .reduce((sum, p) => sum + p.amount, 0);
+          // sum payments and adjustments for the term
+          const payments = (child.payments || [])
+            .filter((p) => p.term === term && p.category === "payment")
+            .reduce((sum, p) => sum + p.amount, 0);
 
-        const outstanding = expectedFee - payments + adjustments;
+          const adjustments = (child.payments || [])
+            .filter((p) => p.term === term && p.category === "adjustment")
+            .reduce((sum, p) => sum + p.amount, 0);
 
-        return {
-          ...child.toObject(),
-          currentTerm,
-          feesSummary: {
+          feesByTerm[term] = {
             expected: expectedFee,
             paid: payments,
             adjustments,
-            outstanding,
-          },
+            outstanding: expectedFee - payments + adjustments,
+          };
+        }
+
+        return {
+          ...child.toObject(),
+          feesByTerm,
         };
       })
     );
@@ -183,6 +176,9 @@ const getParentDashboard = async (req, res) => {
       .json({ msg: "Error fetching dashboard", error: err.message });
   }
 };
+
+
+
 
 
 const getStudentAttendanceSummary = async (req, res) => {

@@ -25,7 +25,7 @@ const forgotPasswordInternal = async (req, res) => {
       expiresIn: 3600
     });
   } catch (err) {
-    console.error(err);
+    console.error('err', err);
     res.status(500).json({ msg: "Server error", error: err.message });
   }
 };
