@@ -7,7 +7,8 @@ const {
   getOutstandingFees,
   getAllFees,
   bulkUploadFees,
-  bulkUploadStudentsWithFees
+  bulkUploadStudentsWithFees,
+  getTotalOutstanding
 } = require("../controllers/fee/feeController");
 
 const router = express.Router();
@@ -24,6 +25,13 @@ router.get(
   verifyJWT,
   authorize(["admin", "teacher", "bursar"]),
   getOutstandingFees
+);
+
+router.get(
+  "/total-outstanding",
+  verifyJWT,
+  authorize(["admin", "teacher", "bursar"]),
+  getTotalOutstanding
 );
 
 router.post(

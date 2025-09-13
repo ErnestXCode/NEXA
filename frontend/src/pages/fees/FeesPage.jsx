@@ -41,7 +41,7 @@ const FeesPage = () => {
     try {
       let query = `?term=${selectedTerm}`;
       if (selectedClass !== "All") query += `&classLevel=${selectedClass}`;
-      const res = await api.get(`/fees/outstanding${query}`);
+      const res = await api.get(`/fees/total-outstanding${query}`);
       setTotalOutstanding(res.data.totalOutstanding || 0);
     } catch (err) {
       console.error("Error fetching outstanding fees:", err);

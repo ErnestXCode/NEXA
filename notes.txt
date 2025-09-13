@@ -6,17 +6,9 @@ badge and notifications dont work well
 optimize backend
 
 editable 'reason' for  attendance
-
-
-reviews section
-
-feedback should be seen in nav by every body
+editable fees page amounts
 
 parent to use bursars number....get rid of that part cleverly
-
-editable fees page amounts, and the slow outstanding is annoying
-
-
 
 drop down in selecting subjects for teachers , na Class Level pia 
 
@@ -28,7 +20,6 @@ admin marking attendance is affecting others
 
 make the view attendance always default to one week before today
 
-admin should not be able to mark attendance
 
 reviews to use user datanot input data, stuff like school, and role, and name , only review is written and stars 
 

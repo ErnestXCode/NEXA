@@ -72,292 +72,156 @@ const Navigation = () => {
             </button>
           </div>
 
-          <div className="flex flex-col gap-3 text-white">
-            {/* Dashboard */}
-            <NavLink
-              end
-              onClick={handleCloseSidenav}
-              to="/dashboard"
-              className={navLinkClasses}
-            >
-              Dashboard
-            </NavLink>
+          <div className="flex flex-col gap-5 text-white">
+  {/* 🌍 Global (for all users) */}
+  <div>
+    <h3 className="text-gray-400 uppercase text-xs mb-2">General</h3>
+    <NavLink end onClick={handleCloseSidenav} to="/dashboard" className={navLinkClasses}>
+      Dashboard
+    </NavLink>
 
-            {/* Messages - with badge */}
-            <NavLink
-              end
-              onClick={() => {
-                handleCloseSidenav();
-                resetUnread();
-              }}
-              to="/dashboard/communication"
-              className={navLinkClasses}
-            >
-              Messages
-              {unreadCount > 0 && (
-                <span className="absolute top-2 right-2 h-3 w-3 rounded-full bg-red-600"></span>
-              )}
-            </NavLink>
+    <NavLink
+      end
+      onClick={() => {
+        handleCloseSidenav();
+        resetUnread();
+      }}
+      to="/dashboard/communication"
+      className={navLinkClasses}
+    >
+      Messages
+      {unreadCount > 0 && (
+        <span className="absolute top-2 right-2 h-3 w-3 rounded-full bg-red-600"></span>
+      )}
+    </NavLink>
 
-            <NavLink
-              end
-              onClick={handleCloseSidenav}
-              to="/dashboard/review"
-              className={navLinkClasses}
-            >
-              Reviews
-            </NavLink>
+    <NavLink end onClick={handleCloseSidenav} to="/dashboard/review" className={navLinkClasses}>
+      Reviews
+    </NavLink>
 
-            <NavLink
-              end
-              onClick={handleCloseSidenav}
-              to="/feedback"
-              className={`${navLinkClasses}`}
-            >
-              Feedback
-            </NavLink>
+    <NavLink end onClick={handleCloseSidenav} to="/feedback" className={navLinkClasses}>
+      Feedback
+    </NavLink>
+  </div>
 
-            {/* Admin/Superadmin */}
-            {isSuperAdminOrAdmin && (
-              <>
-                {/* Forms */}
-                <div className="mt-4">
-                  <h3 className="text-gray-400 uppercase text-xs mb-2">
-                    Forms
-                  </h3>
-                  <NavLink
-                    end
-                    onClick={handleCloseSidenav}
-                    to="/dashboard/createPersonel"
-                    className={navLinkClasses}
-                  >
-                    Add Teacher/Bursar
-                  </NavLink>
-                  <NavLink
-                    end
-                    onClick={handleCloseSidenav}
-                    to="/dashboard/createStudent"
-                    className={navLinkClasses}
-                  >
-                    Add Student
-                  </NavLink>
-                  <NavLink
-                    end
-                    onClick={handleCloseSidenav}
-                    to="/dashboard/createParent"
-                    className={navLinkClasses}
-                  >
-                    Add Parent
-                  </NavLink>
-                </div>
+  {/* 👑 Admin / Superadmin */}
+  {isSuperAdminOrAdmin && (
+    <>
+      <div>
+        <h3 className="text-gray-400 uppercase text-xs mb-2">Forms</h3>
+        <NavLink end onClick={handleCloseSidenav} to="/dashboard/createPersonel" className={navLinkClasses}>
+          Add Teacher/Bursar
+        </NavLink>
+        <NavLink end onClick={handleCloseSidenav} to="/dashboard/createStudent" className={navLinkClasses}>
+          Add Student
+        </NavLink>
+        <NavLink end onClick={handleCloseSidenav} to="/dashboard/createParent" className={navLinkClasses}>
+          Add Parent
+        </NavLink>
+      </div>
 
-                {/* Lists */}
-                <div className="mt-4">
-                  <h3 className="text-gray-400 uppercase text-xs mb-2">
-                    Lists
-                  </h3>
-                  <NavLink
-                    end
-                    onClick={handleCloseSidenav}
-                    to="/dashboard/teachers"
-                    className={navLinkClasses}
-                  >
-                    All Teachers
-                  </NavLink>
-                  <NavLink
-                    end
-                    onClick={handleCloseSidenav}
-                    to="/dashboard/bursars"
-                    className={navLinkClasses}
-                  >
-                    All Bursars
-                  </NavLink>
-                  <NavLink
-                    end
-                    onClick={handleCloseSidenav}
-                    to="/dashboard/students"
-                    className={navLinkClasses}
-                  >
-                    All Students
-                  </NavLink>
-                  <NavLink
-                    end
-                    onClick={handleCloseSidenav}
-                    to="/dashboard/parents"
-                    className={navLinkClasses}
-                  >
-                    All Parents
-                  </NavLink>
+      <div>
+        <h3 className="text-gray-400 uppercase text-xs mb-2">Lists</h3>
+        <NavLink end onClick={handleCloseSidenav} to="/dashboard/teachers" className={navLinkClasses}>
+          All Teachers
+        </NavLink>
+        <NavLink end onClick={handleCloseSidenav} to="/dashboard/bursars" className={navLinkClasses}>
+          All Bursars
+        </NavLink>
+        <NavLink end onClick={handleCloseSidenav} to="/dashboard/students" className={navLinkClasses}>
+          All Students
+        </NavLink>
+        <NavLink end onClick={handleCloseSidenav} to="/dashboard/parents" className={navLinkClasses}>
+          All Parents
+        </NavLink>
+        {role === "superadmin" && (
+          <NavLink end onClick={handleCloseSidenav} to="/dashboard/schools" className={navLinkClasses}>
+            All Schools
+          </NavLink>
+        )}
+      </div>
 
-                  {role === "superadmin" && (
-                    <NavLink
-                      end
-                      onClick={handleCloseSidenav}
-                      to="/dashboard/schools"
-                      className={navLinkClasses}
-                    >
-                      All Schools
-                    </NavLink>
-                  )}
-                </div>
+      <div>
+        <h3 className="text-gray-400 uppercase text-xs mb-2">Attendance</h3>
+        <NavLink end onClick={handleCloseSidenav} to="/dashboard/attendance" className={navLinkClasses}>
+          View Attendance
+        </NavLink>
+        {role !== "admin" && (
+          <NavLink end onClick={handleCloseSidenav} to="/dashboard/attendance/mark" className={navLinkClasses}>
+            Mark Attendance
+          </NavLink>
+        )}
+      </div>
 
-                {/* Attendance */}
-                <div className="mt-4">
-                  <h3 className="text-gray-400 uppercase text-xs mb-2">
-                    Attendance
-                  </h3>
-                  <NavLink
-                    end
-                    onClick={handleCloseSidenav}
-                    to="/dashboard/attendance"
-                    className={navLinkClasses}
-                  >
-                    View Attendance
-                  </NavLink>
-                  {/* Only admin is restricted, superadmin still sees it */}
-                  {role !== "admin" && (
-                    <NavLink
-                      end
-                      onClick={handleCloseSidenav}
-                      to="/dashboard/attendance/mark"
-                      className={navLinkClasses}
-                    >
-                      Mark Attendance
-                    </NavLink>
-                  )}
-                </div>
+      <div>
+        <h3 className="text-gray-400 uppercase text-xs mb-2">Exams</h3>
+        <NavLink end onClick={handleCloseSidenav} to="/dashboard/exams" className={navLinkClasses}>
+          Exams
+        </NavLink>
+        <NavLink end onClick={handleCloseSidenav} to="/dashboard/exams/record" className={navLinkClasses}>
+          Record Results
+        </NavLink>
+        <NavLink end onClick={handleCloseSidenav} to="/dashboard/exams/report" className={navLinkClasses}>
+          Report Cards
+        </NavLink>
+      </div>
 
-                {/* Exams */}
-                <div className="mt-4">
-                  <h3 className="text-gray-400 uppercase text-xs mb-2">
-                    Exams
-                  </h3>
-                  <NavLink
-                    end
-                    onClick={handleCloseSidenav}
-                    to="/dashboard/exams"
-                    className={navLinkClasses}
-                  >
-                    Exams
-                  </NavLink>
-                  <NavLink
-                    end
-                    onClick={handleCloseSidenav}
-                    to="/dashboard/exams/record"
-                    className={navLinkClasses}
-                  >
-                    Record Results
-                  </NavLink>
-                  <NavLink
-                    end
-                    onClick={handleCloseSidenav}
-                    to="/dashboard/exams/report"
-                    className={navLinkClasses}
-                  >
-                    Report Cards
-                  </NavLink>
-                </div>
+      <div>
+        <h3 className="text-gray-400 uppercase text-xs mb-2">Fees</h3>
+        <NavLink end onClick={handleCloseSidenav} to="/dashboard/fees" className={navLinkClasses}>
+          Fees
+        </NavLink>
+        <NavLink end onClick={handleCloseSidenav} to="/dashboard/fees/add" className={navLinkClasses}>
+          Record Payment
+        </NavLink>
+      </div>
 
-                {/* Fees */}
-                <div className="mt-4">
-                  <h3 className="text-gray-400 uppercase text-xs mb-2">Fees</h3>
-                  <NavLink
-                    end
-                    onClick={handleCloseSidenav}
-                    to="/dashboard/fees"
-                    className={navLinkClasses}
-                  >
-                    Fees
-                  </NavLink>
-                  <NavLink
-                    end
-                    onClick={handleCloseSidenav}
-                    to="/dashboard/fees/add"
-                    className={navLinkClasses}
-                  >
-                    Record Payment
-                  </NavLink>
-                </div>
+      <div>
+        <h3 className="text-gray-400 uppercase text-xs mb-2">System</h3>
+        <NavLink end onClick={handleCloseSidenav} to="/dashboard/settings" className={navLinkClasses}>
+          Settings
+        </NavLink>
+      </div>
+    </>
+  )}
 
-                <NavLink
-                  end
-                  onClick={handleCloseSidenav}
-                  to="/dashboard/settings"
-                  className={`${navLinkClasses} mt-4`}
-                >
-                  Settings
-                </NavLink>
-              </>
-            )}
+  {/* 👨‍🏫 Teacher */}
+  {isTeacher && (
+    <>
+      <div>
+        <h3 className="text-gray-400 uppercase text-xs mb-2">Exams</h3>
+        <NavLink end onClick={handleCloseSidenav} to="/dashboard/exams/record" className={navLinkClasses}>
+          Record Results
+        </NavLink>
+      </div>
+      {isClassTeacher && (
+        <div>
+          <h3 className="text-gray-400 uppercase text-xs mb-2">Attendance</h3>
+          <NavLink end onClick={handleCloseSidenav} to="/dashboard/attendance" className={navLinkClasses}>
+            View Attendance
+          </NavLink>
+          <NavLink end onClick={handleCloseSidenav} to="/dashboard/attendance/mark" className={navLinkClasses}>
+            Mark Attendance
+          </NavLink>
+        </div>
+      )}
+    </>
+  )}
 
-            {/* Teacher: Exams + Attendance only if class teacher */}
-            {isTeacher && (
-              <>
-                {/* Exams */}
-                <div className="mt-4">
-                  <h3 className="text-gray-400 uppercase text-xs mb-2">
-                    Exams
-                  </h3>
-                  <NavLink
-                    end
-                    onClick={handleCloseSidenav}
-                    to="/dashboard/exams/record"
-                    className={navLinkClasses}
-                  >
-                    Record Results
-                  </NavLink>
-                </div>
+  {/* 💰 Bursar */}
+  {isBursar && !isSuperAdminOrAdmin && (
+    <div>
+      <h3 className="text-gray-400 uppercase text-xs mb-2">Fees</h3>
+      <NavLink end onClick={handleCloseSidenav} to="/dashboard/fees" className={navLinkClasses}>
+        Fees
+      </NavLink>
+      <NavLink end onClick={handleCloseSidenav} to="/dashboard/fees/add" className={navLinkClasses}>
+        Record Payment
+      </NavLink>
+    </div>
+  )}
+</div>
 
-                {/* Attendance */}
-                {isClassTeacher && (
-                  <div className="mt-4">
-                    <h3 className="text-gray-400 uppercase text-xs mb-2">
-                      Attendance
-                    </h3>
-                    <NavLink
-                      end
-                      onClick={handleCloseSidenav}
-                      to="/dashboard/attendance"
-                      className={navLinkClasses}
-                    >
-                      View Attendance
-                    </NavLink>
-                    <NavLink
-                      end
-                      onClick={handleCloseSidenav}
-                      to="/dashboard/attendance/mark"
-                      className={navLinkClasses}
-                    >
-                      Mark Attendance
-                    </NavLink>
-                  </div>
-                )}
-              </>
-            )}
-
-            {/* Bursar: Fees only */}
-            {isBursar && !isSuperAdminOrAdmin && (
-              <div className="mt-4">
-                <h3 className="text-gray-400 uppercase text-xs mb-2">Fees</h3>
-                <NavLink
-                  end
-                  onClick={handleCloseSidenav}
-                  to="/dashboard/fees"
-                  className={navLinkClasses}
-                >
-                  Fees
-                </NavLink>
-                <NavLink
-                  end
-                  onClick={handleCloseSidenav}
-                  to="/dashboard/fees/add"
-                  className={navLinkClasses}
-                >
-                  Record Payment
-                </NavLink>
-              </div>
-            )}
-          </div>
         </div>
       )}
     </nav>

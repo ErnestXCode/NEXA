@@ -145,6 +145,83 @@ const getOutstandingFees = async (req, res) => {
   }
 };
 
+const getTotalOutstanding = async (req, res) => {
+  try {
+    const { term, classLevel } = req.query;
+    if (!term) {
+      return res.status(400).json({ message: "term query is required" });
+    }
+
+    // Fetch all students, optionally filter by class
+    const students = await Student.find(
+      classLevel && classLevel !== "All" ? { classLevel } : {}
+    ).populate("school");
+
+    let totalOutstanding = 0;
+
+    for (const student of students) {
+      const school = student.school;
+
+      // find expected amount (same logic you used in frontend)
+      let expectations = [];
+
+      const idx = school.classLevels.findIndex(
+        (c) => c.name === student.classLevel
+      );
+
+      const matchedRules = school.feeRules?.filter((rule) => {
+        const fromIdx = school.classLevels.findIndex(
+          (c) => c.name === rule.fromClass
+        );
+        const toIdx = school.classLevels.findIndex(
+          (c) => c.name === rule.toClass
+        );
+        if (idx === -1 || fromIdx === -1 || toIdx === -1) return false;
+        const min = Math.min(fromIdx, toIdx);
+        const max = Math.max(fromIdx, toIdx);
+        return idx >= min && idx <= max && rule.term === term;
+      });
+
+      if (matchedRules?.length) expectations = matchedRules;
+
+      if (!expectations.length) {
+        const classDef = (school.classLevels || []).find(
+          (c) => c.name === student.classLevel
+        );
+        if (classDef?.feeExpectations?.length) {
+          expectations = classDef.feeExpectations.filter(
+            (f) => f.term === term
+          );
+        }
+      }
+
+      if (!expectations.length) {
+        expectations = (school.feeExpectations || []).filter(
+          (f) => f.term === term
+        );
+      }
+
+      const expected = expectations[0]?.amount || 0;
+
+      const payments = student.payments
+        .filter((p) => p.term === term && p.category === "payment")
+        .reduce((sum, p) => sum + p.amount, 0);
+
+      const adjustments = student.payments
+        .filter((p) => p.term === term && p.category === "adjustment")
+        .reduce((sum, p) => sum + p.amount, 0);
+
+      const balance = expected - payments + adjustments;
+      if (balance > 0) totalOutstanding += balance; // only debts
+    }
+
+    res.json({ term, classLevel, totalOutstanding });
+  } catch (err) {
+    console.error("getTotalOutstanding error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 
 const bulkUploadFees = async (req, res) => {
   try {
@@ -278,4 +355,4 @@ const bulkUploadStudentsWithFees = async (req, res) => {
 
 
 
-module.exports = { addFee, getStudentFees, getOutstandingFees, getAllFees, bulkUploadFees, bulkUploadStudentsWithFees };
+module.exports = { addFee, getStudentFees, getOutstandingFees, getAllFees, bulkUploadFees, bulkUploadStudentsWithFees, getTotalOutstanding };
