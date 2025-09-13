@@ -1,15 +1,29 @@
-// src/pages/dashboard/Dashboard.jsx
-import React from "react";
+import React, { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "../../redux/slices/authSlice";
 import { useQuery } from "@tanstack/react-query";
 import api from "../../api/axios";
+import {
+  PieChart,
+  Pie,
+  Cell,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  LineChart,
+  Line,
+} from "recharts";
 
 const AdminDashboard = () => {
   const currentUser = useSelector(selectCurrentUser);
 
-  // Queries
+  // ================= Queries =================
   const teachersQuery = useQuery({
     queryKey: ["teachers"],
     queryFn: () => api.get("/personel/teacher").then((res) => res.data),
@@ -35,19 +49,6 @@ const AdminDashboard = () => {
     queryFn: () => api.get("/activity").then((res) => res.data),
   });
 
-  // Derived values
-  const teachers = teachersQuery.data?.slice(0, 3) || [];
-  const bursars = bursarsQuery.data?.slice(0, 3) || [];
-  const students = studentsQuery.data?.slice(0, 3) || [];
-  const parents = parentsQuery.data?.slice(0, 3) || [];
-
-  const teachersLength = teachersQuery.data?.length || 0;
-  const bursarsLength = bursarsQuery.data?.length || 0;
-  const studentsLength = studentsQuery.data?.length || 0;
-  const parentsLength = parentsQuery.data?.length || 0;
-
-  const recentActivities = activityQuery.data?.slice(0, 5) || [];
-
   if (
     teachersQuery.isLoading ||
     bursarsQuery.isLoading ||
@@ -68,9 +69,81 @@ const AdminDashboard = () => {
     return <p className="p-6 text-red-500">❌ Error loading dashboard data</p>;
   }
 
+  // ================= Derived Data =================
+  const teachers = teachersQuery.data || [];
+  const bursars = bursarsQuery.data || [];
+  const students = studentsQuery.data || [];
+  const parents = parentsQuery.data || [];
+  const activities = activityQuery.data || [];
+
+  const teachersLength = teachers.length;
+  const bursarsLength = bursars.length;
+  const studentsLength = students.length;
+  const parentsLength = parents.length;
+
+  const recentActivities = activities
+    .sort((a, b) => new Date(b.date) - new Date(a.date))
+    .slice(0, 5);
+
+  // ================= Charts Data =================
+  const GENDER_COLORS = ["#22d3ee", "#f43f5e"];
+  const genderData = useMemo(() => {
+    const males = students.filter((s) => s.gender === "male").length;
+    const females = students.filter((s) => s.gender === "female").length;
+    return [
+      { name: "Male", value: males },
+      { name: "Female", value: females },
+    ];
+  }, [students]);
+
+  const studentsPerClass = useMemo(() => {
+    const counts = {};
+    students.forEach((s) => {
+      const cls = s.classLevel || "Unassigned";
+      counts[cls] = (counts[cls] || 0) + 1;
+    });
+    return Object.keys(counts).map((cls) => ({
+      class: cls,
+      count: counts[cls],
+    }));
+  }, [students]);
+
+  const teachersPerSubject = useMemo(() => {
+    const counts = {};
+    teachers.forEach((t) => {
+      (t.subjects || []).forEach((subj) => {
+        counts[subj] = (counts[subj] || 0) + 1;
+      });
+    });
+    return Object.keys(counts).map((subj) => ({
+      subject: subj,
+      count: counts[subj],
+    }));
+  }, [teachers]);
+
+  const activitiesTrend = useMemo(() => {
+    const today = new Date();
+    const last7Days = Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(today);
+      d.setDate(today.getDate() - i);
+      return d.toISOString().split("T")[0];
+    }).reverse();
+
+    const counts = last7Days.map((date) => ({
+      date,
+      count: activities.filter(
+        (a) => new Date(a.date).toISOString().split("T")[0] === date
+      ).length,
+    }));
+
+    return counts;
+  }, [activities]);
+
+  const COLORS = ["#22d3ee", "#4ade80", "#facc15", "#f43f5e", "#a855f7"];
+
   return (
-    <main className="p-6 bg-gray-950 text-white min-h-screen space-y-8">
-      {/* Top Summary Cards */}
+    <main className="p-6 bg-gray-950 text-white min-h-screen space-y-10">
+      {/* ================= Summary Cards ================= */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
         {[
           { label: "Students", value: studentsLength },
@@ -80,7 +153,7 @@ const AdminDashboard = () => {
         ].map((card, i) => (
           <div
             key={i}
-            className="bg-gray-900 p-6 rounded-lg shadow-lg border border-gray-800 flex flex-col justify-center items-center text-center hover:bg-gray-850 transition"
+            className="bg-gray-900 p-6 rounded-2xl shadow-lg border border-gray-800 flex flex-col justify-center items-center text-center hover:bg-gray-850 hover:scale-105 transition-transform duration-300"
           >
             <p className="text-gray-400 text-sm uppercase mb-2">{card.label}</p>
             <p className="text-2xl font-bold">{card.value}</p>
@@ -88,13 +161,13 @@ const AdminDashboard = () => {
         ))}
       </div>
 
-      {/* Management Tables - 2 Column Layout */}
+      {/* ================= Management Tables ================= */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left Column */}
         <div className="space-y-6">
           <ManagementTable
             title="Manage Teachers"
-            data={teachers}
+            data={teachers.slice(0, 3)}
             columns={[
               "Name",
               "Email",
@@ -125,7 +198,7 @@ const AdminDashboard = () => {
 
           <ManagementTable
             title="Manage Bursars"
-            data={bursars}
+            data={bursars.slice(0, 3)}
             columns={["Name", "Email", "Phone"]}
             viewAllLink="/dashboard/bursars"
             addLink="/dashboard/createPersonel"
@@ -143,7 +216,7 @@ const AdminDashboard = () => {
         <div className="space-y-6">
           <ManagementTable
             title="Manage Students"
-            data={students}
+            data={students.slice(0, 3)}
             columns={["Name", "Gender", "Class", "Phone"]}
             viewAllLink="/dashboard/students"
             addLink="/dashboard/createStudent"
@@ -159,7 +232,7 @@ const AdminDashboard = () => {
 
           <ManagementTable
             title="Manage Parents"
-            data={parents}
+            data={parents.slice(0, 3)}
             columns={["Name", "Email", "Phone"]}
             viewAllLink="/dashboard/parents"
             addLink="/dashboard/createParent"
@@ -174,8 +247,84 @@ const AdminDashboard = () => {
         </div>
       </div>
 
-      {/* Recent Activities */}
-      <section className="bg-gray-900 p-6 rounded-lg shadow-lg border border-gray-800">
+      {/* ================= Charts Section ================= */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {[{
+          title: "Students by Gender",
+          content: (
+            <ResponsiveContainer width="100%" height={250}>
+              <PieChart>
+                <Pie
+                  data={genderData}
+                  dataKey="value"
+                  nameKey="name"
+                  outerRadius={80}
+                  label
+                >
+                  {genderData.map((entry, index) => (
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={GENDER_COLORS[index % GENDER_COLORS.length]}
+                    />
+                  ))}
+                </Pie>
+                <Tooltip />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          ),
+        },{
+          title: "Students per Class",
+          content: (
+            <ResponsiveContainer width="100%" height={250}>
+              <BarChart data={studentsPerClass}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#444"/>
+                <XAxis dataKey="class" stroke="#bbb"/>
+                <YAxis stroke="#bbb"/>
+                <Tooltip />
+                <Legend />
+                <Bar dataKey="count" fill="#22d3ee" />
+              </BarChart>
+            </ResponsiveContainer>
+          ),
+        },{
+          title: "Teachers per Subject",
+          content: (
+            <ResponsiveContainer width="100%" height={250}>
+              <BarChart data={teachersPerSubject}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#444"/>
+                <XAxis dataKey="subject" interval={0} angle={-30} textAnchor="end" stroke="#bbb"/>
+                <YAxis stroke="#bbb"/>
+                <Tooltip />
+                <Legend />
+                <Bar dataKey="count" fill="#facc15" />
+              </BarChart>
+            </ResponsiveContainer>
+          ),
+        },{
+          title: "Activities Trend (Last 7 Days)",
+          content: (
+            <ResponsiveContainer width="100%" height={250}>
+              <LineChart data={activitiesTrend}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#444"/>
+                <XAxis dataKey="date" stroke="#bbb"/>
+                <YAxis allowDecimals={false} stroke="#bbb"/>
+                <Tooltip />
+                <Legend />
+                <Line type="monotone" dataKey="count" stroke="#f43f5e" strokeWidth={2}/>
+              </LineChart>
+            </ResponsiveContainer>
+          ),
+        }].map((chart,i)=>(
+          <div key={i} className="bg-gray-900 p-4 rounded-2xl shadow-lg border border-gray-800">
+            <h3 className="text-lg font-semibold mb-2">{chart.title}</h3>
+            {chart.content}
+          </div>
+        ))}
+      </div>
+
+      {/* ================= Recent Activities ================= */}
+      <section className="bg-gray-900 p-6 rounded-2xl shadow-lg border border-gray-800">
         <h2 className="text-xl font-bold mb-4">Recent Activity</h2>
         <ul className="space-y-3 text-sm">
           {recentActivities.length > 0 ? (
@@ -201,7 +350,7 @@ const AdminDashboard = () => {
 
 export default AdminDashboard;
 
-// Reusable Management Table Component
+// ================= Management Table =================
 const ManagementTable = ({
   title,
   data,
@@ -213,13 +362,13 @@ const ManagementTable = ({
   minHeight,
 }) => (
   <section
-    className={`bg-gray-900 p-6 rounded-lg shadow-lg border border-gray-800 ${minHeight}`}
+    className={`bg-gray-900 p-6 rounded-2xl shadow-lg border border-gray-800 ${minHeight}`}
   >
     <h2 className="text-xl font-bold mb-4">{title}</h2>
     <div className="flex justify-between items-center mb-4">
       <Link
         to={addLink}
-        className="bg-white text-black px-4 py-2 rounded hover:bg-gray-100 transition"
+        className="bg-white text-black px-4 py-2 rounded-xl hover:bg-gray-100 transition"
       >
         {addText}
       </Link>
