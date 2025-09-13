@@ -20,21 +20,31 @@ self.addEventListener("push", (event) => {
     data: data.url || "/dashboard/communication",
   };
 
-  // Show system notification
-  event.waitUntil(self.registration.showNotification(title, options));
-
-  // 🔴 Notify any open app windows (React will catch this)
   event.waitUntil(
-    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {
+    (async () => {
+      // Show system notification
+      await self.registration.showNotification(title, options);
+
+      // Update the app icon badge (Badging API)
+      if ("setAppBadge" in navigator) {
+        const prev = self.unreadCount || 0;
+        self.unreadCount = prev + 1;
+        try {
+          navigator.setAppBadge(self.unreadCount);
+        } catch (err) {
+          console.error("App badge failed:", err);
+        }
+      }
+
+      // Notify any open clients
+      const clients = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
       clients.forEach((client) => {
-        client.postMessage({
-          type: "NEW_MESSAGE",
-          payload: { url: data.url, body: data.body },
-        });
+        client.postMessage({ type: "NEW_MESSAGE", payload: data });
       });
-    })
+    })()
   );
 });
+
 
 // Handle notification clicks
 self.addEventListener("notificationclick", (event) => {

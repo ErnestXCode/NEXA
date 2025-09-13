@@ -2,9 +2,11 @@ import React from "react";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "../../redux/slices/authSlice";
 import { NavLink } from "react-router-dom";
+import useUnreadMessages from "../../hooks/useUnreadMessages";
 
 const TeacherDashboard = () => {
   const currentUser = useSelector(selectCurrentUser);
+  const { unreadCount } = useUnreadMessages(currentUser);
 
   return (
     <div className="min-h-screen bg-gray-950 p-6">
@@ -12,10 +14,14 @@ const TeacherDashboard = () => {
         {/* Messages */}
         <NavLink
           to="/dashboard/communication"
-          className="bg-gradient-to-r from-indigo-700 via-purple-700 to-pink-700 shadow-lg rounded-xl p-6 flex flex-col items-start transition transform hover:scale-105 hover:shadow-2xl hover:from-indigo-600 hover:via-purple-600 hover:to-pink-600 duration-300"
+          className="relative bg-gradient-to-r from-indigo-700 via-purple-700 to-pink-700 shadow-lg rounded-xl p-6 flex flex-col items-start transition transform hover:scale-105 hover:shadow-2xl hover:from-indigo-600 hover:via-purple-600 hover:to-pink-600 duration-300"
         >
           <h2 className="text-white text-2xl font-bold mb-2">Messages</h2>
           <p className="text-gray-200 text-sm">View and send messages</p>
+
+          {unreadCount > 0 && (
+            <span className="absolute top-4 right-4 h-3 w-3 rounded-full bg-red-600 animate-pulse"></span>
+          )}
         </NavLink>
 
         {/* Mark Attendance */}
@@ -32,13 +38,15 @@ const TeacherDashboard = () => {
         )}
 
         {/* View Attendance */}
-        <NavLink
-          to="/dashboard/attendance"
-          className="bg-gradient-to-r from-blue-700 via-cyan-600 to-sky-500 shadow-lg rounded-xl p-6 flex flex-col items-start transition transform hover:scale-105 hover:shadow-2xl hover:from-blue-600 hover:via-cyan-500 hover:to-sky-400 duration-300"
-        >
-          <h2 className="text-white text-2xl font-bold mb-2">View Attendance</h2>
-          <p className="text-gray-200 text-sm">Check attendance records</p>
-        </NavLink>
+        {currentUser.isClassTeacher && (
+          <NavLink
+            to="/dashboard/attendance"
+            className="bg-gradient-to-r from-blue-700 via-cyan-600 to-sky-500 shadow-lg rounded-xl p-6 flex flex-col items-start transition transform hover:scale-105 hover:shadow-2xl hover:from-blue-600 hover:via-cyan-500 hover:to-sky-400 duration-300"
+          >
+            <h2 className="text-white text-2xl font-bold mb-2">View Attendance</h2>
+            <p className="text-gray-200 text-sm">Check attendance records</p>
+          </NavLink>
+        )}
 
         {/* Record Results */}
         <NavLink

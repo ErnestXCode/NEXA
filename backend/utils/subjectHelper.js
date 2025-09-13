@@ -10,17 +10,22 @@ function isClassInRange(className, fromClass, toClass, allClasses = []) {
 }
 
 function getAllowedSubjectsForClass(school, classLevel) {
-  // find rules covering this class
   const rules = (school.subjectsByClass || []).filter((r) =>
     isClassInRange(classLevel, r.fromClass, r.toClass, school.classLevels)
   );
 
+  let subjects;
   if (rules.length > 0) {
-    return [...new Set(rules.flatMap((r) => r.subjects))];
+    subjects = [...new Set(rules.flatMap((r) => r.subjects))];
+  } else {
+    subjects = [...new Set(school.subjects || [])];
   }
 
-  // fallback to global
-  return [...new Set(school.subjects || [])];
+  // 🔹 Enforce global subjects
+  subjects = subjects.filter((s) => school.subjects.includes(s));
+
+  return subjects;
 }
+
 
 module.exports = { getAllowedSubjectsForClass };

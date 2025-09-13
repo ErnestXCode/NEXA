@@ -32,14 +32,18 @@ export default function useUnreadMessages(currentUser) {
     if ("serviceWorker" in navigator) {
       const swHandler = (event) => {
         if (event.data?.type === "NEW_MESSAGE") {
-          setUnreadCount((c) => c + 1);
-          if ("setAppBadge" in navigator) {
-            navigator.setAppBadge(unreadCount + 1).catch(() => {});
-          }
+          setUnreadCount((prev) => {
+            const newCount = prev + 1;
+            if ("setAppBadge" in navigator) {
+              navigator.setAppBadge(newCount).catch(() => {});
+            }
+            return newCount;
+          });
         }
       };
       navigator.serviceWorker.addEventListener("message", swHandler);
-      return () => navigator.serviceWorker.removeEventListener("message", swHandler);
+      return () =>
+        navigator.serviceWorker.removeEventListener("message", swHandler);
     }
 
     return () => {

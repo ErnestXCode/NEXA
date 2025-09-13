@@ -6,7 +6,7 @@ import { selectCurrentUser } from "../../redux/slices/authSlice";
 const RecordResultsPage = () => {
   const [exams, setExams] = useState([]);
   const [students, setStudents] = useState([]);
-  const [subjectsByClass, setSubjectsByClass] = useState({}); // 🔹 changed from []
+  const [subjectsByClass, setSubjectsByClass] = useState({});
   const [examId, setExamId] = useState("");
   const [selectedClass, setSelectedClass] = useState("");
   const [selectedSubject, setSelectedSubject] = useState("");
@@ -14,6 +14,13 @@ const RecordResultsPage = () => {
   const [academicYear, setAcademicYear] = useState("");
   const [isDesktop, setIsDesktop] = useState(true);
   const currentUser = useSelector(selectCurrentUser);
+
+  // 🔹 Set default academic year (currentYear/nextYear)
+  useEffect(() => {
+    const now = new Date();
+    const year = now.getFullYear();
+    setAcademicYear(`${year}/${year + 1}`);
+  }, []);
 
   // 🔹 Check if user is on desktop
   useEffect(() => {
@@ -23,7 +30,7 @@ const RecordResultsPage = () => {
     return () => window.removeEventListener("resize", checkScreenSize);
   }, []);
 
-  // 🔹 Fetch exams & students (initial)
+  // 🔹 Fetch exams & students
   useEffect(() => {
     const fetchExams = async () => {
       if (!academicYear) return;
@@ -39,7 +46,7 @@ const RecordResultsPage = () => {
       try {
         const res = await api.get("/students/students-with-subjects");
         setStudents(res.data?.students || []);
-        setSubjectsByClass(res.data?.subjectsByClass || {}); // 🔹 changed
+        setSubjectsByClass(res.data?.subjectsByClass || {});
       } catch (err) {
         console.error("Failed to fetch students", err);
       }
@@ -140,23 +147,23 @@ const RecordResultsPage = () => {
     (s) => selectedClass && s.classLevel === selectedClass
   );
 
+  // 🔹 Role-based academic year edit
+  const isEditableYear = ["admin", "superadmin"].includes(currentUser?.role);
+
   return (
     <div className="p-6 space-y-6">
       <h1 className="text-2xl font-bold">Record Results</h1>
 
-      {/* Step 0: Select Academic Year */}
+      {/* Step 0: Academic Year */}
       <input
         type="text"
         placeholder="Academic Year (e.g. 2025/2026)"
         value={academicYear}
-        onChange={(e) => {
-          setAcademicYear(e.target.value);
-          setExamId("");
-          setSelectedClass("");
-          setSelectedSubject("");
-          setResults({});
-        }}
-        className="p-2 w-full rounded bg-gray-800 text-white"
+        onChange={(e) => isEditableYear && setAcademicYear(e.target.value)}
+        className={`p-2 w-full rounded bg-gray-800 text-white ${
+          !isEditableYear ? "opacity-50 cursor-not-allowed" : ""
+        }`}
+        disabled={!isEditableYear}
       />
 
       {/* Step 1: Select Exam */}

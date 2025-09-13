@@ -22,7 +22,6 @@ import {
 
 const AdminDashboard = () => {
   const currentUser = useSelector(selectCurrentUser);
-
   // ================= Queries =================
   const teachersQuery = useQuery({
     queryKey: ["teachers"],
@@ -48,6 +47,73 @@ const AdminDashboard = () => {
     queryKey: ["activities"],
     queryFn: () => api.get("/activity").then((res) => res.data),
   });
+  const activities = useMemo(() => activityQuery.data || [], [activityQuery.data]);
+  const teachers = useMemo(() => teachersQuery.data || [], [teachersQuery.data]);
+  const bursars = useMemo(() => bursarsQuery.data || [], [bursarsQuery.data]);
+  const students = useMemo(() => studentsQuery.data || [], [studentsQuery.data]);
+  const parents = useMemo(() => parentsQuery.data || [], [parentsQuery.data]);
+
+
+  const GENDER_COLORS = ["#22d3ee", "#f43f5e"];
+  const genderData = useMemo(() => {
+    const males = students.filter((s) => s.gender === "male").length;
+    const females = students.filter((s) => s.gender === "female").length;
+    return [
+      { name: "Male", value: males },
+      { name: "Female", value: females },
+    ];
+  }, [students]);
+  
+ const studentsPerClass = useMemo(() => {
+  // count students per class
+  const counts = {};
+  students.forEach((s) => {
+    const cls = s.classLevel || "Unassigned";
+    counts[cls] = (counts[cls] || 0) + 1;
+  });
+
+  // dynamically get all unique classes from students data
+  const allClasses = Array.from(new Set(students.map((s) => s.classLevel || "Unassigned")));
+
+  // map to chart data, ensuring each class appears
+  return allClasses.map((cls) => ({
+    class: cls,
+    count: counts[cls] || 0,
+  }));
+}, [students]);
+;
+  
+  const teachersPerSubject = useMemo(() => {
+    const counts = {};
+    teachers.forEach((t) => {
+      (t.subjects || []).forEach((subj) => {
+        counts[subj] = (counts[subj] || 0) + 1;
+      });
+    });
+    return Object.keys(counts).map((subj) => ({
+      subject: subj,
+      count: counts[subj],
+    }));
+  }, [teachers]);
+  
+  const activitiesTrend = useMemo(() => {
+    const today = new Date();
+    const last7Days = Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(today);
+      d.setDate(today.getDate() - i);
+      return d.toISOString().split("T")[0];
+    }).reverse();
+  
+    const counts = last7Days.map((date) => ({
+      date,
+      count: activities.filter(
+        (a) => new Date(a.date).toISOString().split("T")[0] === date
+      ).length,
+    }));
+  
+    return counts;
+  }, [activities]);
+
 
   if (
     teachersQuery.isLoading ||
@@ -70,11 +136,8 @@ const AdminDashboard = () => {
   }
 
   // ================= Derived Data =================
-  const teachers = teachersQuery.data || [];
-  const bursars = bursarsQuery.data || [];
-  const students = studentsQuery.data || [];
-  const parents = parentsQuery.data || [];
-  const activities = activityQuery.data || [];
+  
+
 
   const teachersLength = teachers.length;
   const bursarsLength = bursars.length;
@@ -85,59 +148,6 @@ const AdminDashboard = () => {
     .sort((a, b) => new Date(b.date) - new Date(a.date))
     .slice(0, 5);
 
-  // ================= Charts Data =================
-  const GENDER_COLORS = ["#22d3ee", "#f43f5e"];
-  const genderData = useMemo(() => {
-    const males = students.filter((s) => s.gender === "male").length;
-    const females = students.filter((s) => s.gender === "female").length;
-    return [
-      { name: "Male", value: males },
-      { name: "Female", value: females },
-    ];
-  }, [students]);
-
-  const studentsPerClass = useMemo(() => {
-    const counts = {};
-    students.forEach((s) => {
-      const cls = s.classLevel || "Unassigned";
-      counts[cls] = (counts[cls] || 0) + 1;
-    });
-    return Object.keys(counts).map((cls) => ({
-      class: cls,
-      count: counts[cls],
-    }));
-  }, [students]);
-
-  const teachersPerSubject = useMemo(() => {
-    const counts = {};
-    teachers.forEach((t) => {
-      (t.subjects || []).forEach((subj) => {
-        counts[subj] = (counts[subj] || 0) + 1;
-      });
-    });
-    return Object.keys(counts).map((subj) => ({
-      subject: subj,
-      count: counts[subj],
-    }));
-  }, [teachers]);
-
-  const activitiesTrend = useMemo(() => {
-    const today = new Date();
-    const last7Days = Array.from({ length: 7 }, (_, i) => {
-      const d = new Date(today);
-      d.setDate(today.getDate() - i);
-      return d.toISOString().split("T")[0];
-    }).reverse();
-
-    const counts = last7Days.map((date) => ({
-      date,
-      count: activities.filter(
-        (a) => new Date(a.date).toISOString().split("T")[0] === date
-      ).length,
-    }));
-
-    return counts;
-  }, [activities]);
 
   const COLORS = ["#22d3ee", "#4ade80", "#facc15", "#f43f5e", "#a855f7"];
 
@@ -279,7 +289,8 @@ const AdminDashboard = () => {
             <ResponsiveContainer width="100%" height={250}>
               <BarChart data={studentsPerClass}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#444"/>
-                <XAxis dataKey="class" stroke="#bbb"/>
+             <XAxis dataKey="class" stroke="#bbb" interval={0} angle={-30} textAnchor="end"/>
+
                 <YAxis stroke="#bbb"/>
                 <Tooltip />
                 <Legend />

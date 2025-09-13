@@ -15,7 +15,7 @@ import {
 } from "recharts";
 
 const ReportCardsPage = () => {
-  const [academicYear, setAcademicYear] = useState("");
+  const [academicYear, setAcademicYear] = useState("2025/2026");
   const [exams, setExams] = useState([]);
   const [students, setStudents] = useState([]);
   const [subjectsByClass, setSubjectsByClass] = useState({});

@@ -65,7 +65,7 @@ const SchoolSettings = ({ onNext }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     updateMutation.mutate(school);
-    navigate('/dashboard')
+    navigate("/dashboard");
   };
 
   // --- Fee Rule helpers (already in your file) ---
@@ -207,15 +207,15 @@ const SchoolSettings = ({ onNext }) => {
             </div>
           </section>
 
-          {/* Subjects (global) */}
-          {false && <section>
+          {/* Global Subjects */}
+          <section>
             <h2 className="text-gray-200 font-semibold mb-3 border-b border-gray-700 pb-1">
-              Subjects (Global)
+              Global Subjects
             </h2>
             <div className="flex flex-wrap gap-2 mb-3">
-              {school.subjects.map((subj, idx) => (
+              {school.subjects.map((subj) => (
                 <span
-                  key={idx}
+                  key={subj}
                   className="bg-blue-600 text-white px-2 py-1 rounded-full text-sm flex items-center gap-1"
                 >
                   {subj}
@@ -237,237 +237,249 @@ const SchoolSettings = ({ onNext }) => {
                     e.target.value = "";
                   }
                 }}
-                placeholder="Type subject and press Enter"
-                className="flex-1 min-w-[120px] p-2 rounded bg-gray-700 text-white"
+                placeholder="Add global subject and press Enter"
+                className="flex-1 min-w-[120px] p-2 rounded bg-gray-700 text-white text-sm"
               />
             </div>
-          </section>}
+          </section>
 
           {/* Class Levels */}
-          {false && <section>
-            <h2 className="text-gray-200 font-semibold mb-3 border-b border-gray-700 pb-1">
-              Class Levels & Streams
-            </h2>
-            <div className="space-y-3">
-              {school.classLevels.map((cls, idx) => (
-                <div
-                  key={idx}
-                  className="bg-gray-800 p-3 rounded border border-gray-700"
-                >
-                  <div className="flex justify-between items-center mb-2">
-                    <input
-                      value={cls.name}
-                      onChange={(e) => {
-                        const newLevels = [...school.classLevels];
-                        newLevels[idx].name = e.target.value;
-                        setSchool((prev) => ({
-                          ...prev,
-                          classLevels: newLevels,
-                        }));
-                      }}
-                      className="flex-1 mr-2 p-2 rounded bg-gray-700 text-white text-sm"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const newLevels = school.classLevels.filter(
-                          (_, i) => i !== idx
-                        );
-                        setSchool((prev) => ({
-                          ...prev,
-                          classLevels: newLevels,
-                        }));
-                      }}
-                      className="text-red-400 hover:text-red-600 text-sm"
-                    >
-                      ✕ Remove
-                    </button>
-                  </div>
-
-                  <div className="flex flex-wrap gap-2">
-                    {cls.streams.map((s, i) => (
-                      <span
-                        key={i}
-                        className="bg-green-600 text-white px-2 py-1 rounded-full text-sm flex items-center gap-1"
-                      >
-                        {s}
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const newLevels = [...school.classLevels];
-                            newLevels[idx].streams = newLevels[
-                              idx
-                            ].streams.filter((_, si) => si !== i);
-                            setSchool((prev) => ({
-                              ...prev,
-                              classLevels: newLevels,
-                            }));
-                          }}
-                          className="ml-1 text-xs text-red-200 hover:text-red-400"
-                        >
-                          ✕
-                        </button>
-                      </span>
-                    ))}
-                    {false && <input
-                      type="text"
-                      placeholder="Add stream"
-                      onKeyDown={(e) => {
-                        if (["Enter", ","].includes(e.key)) {
-                          e.preventDefault();
+          {false && (
+            <section>
+              <h2 className="text-gray-200 font-semibold mb-3 border-b border-gray-700 pb-1">
+                Class Levels & Streams
+              </h2>
+              <div className="space-y-3">
+                {school.classLevels.map((cls, idx) => (
+                  <div
+                    key={idx}
+                    className="bg-gray-800 p-3 rounded border border-gray-700"
+                  >
+                    <div className="flex justify-between items-center mb-2">
+                      <input
+                        value={cls.name}
+                        onChange={(e) => {
                           const newLevels = [...school.classLevels];
-                          newLevels[idx].streams.push(e.target.value.trim());
+                          newLevels[idx].name = e.target.value;
                           setSchool((prev) => ({
                             ...prev,
                             classLevels: newLevels,
                           }));
-                          e.target.value = "";
-                        }
-                      }}
-                      className="flex-1 min-w-[120px] p-2 rounded bg-gray-700 text-white text-sm"
-                    />}
+                        }}
+                        className="flex-1 mr-2 p-2 rounded bg-gray-700 text-white text-sm"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const newLevels = school.classLevels.filter(
+                            (_, i) => i !== idx
+                          );
+                          setSchool((prev) => ({
+                            ...prev,
+                            classLevels: newLevels,
+                          }));
+                        }}
+                        className="text-red-400 hover:text-red-600 text-sm"
+                      >
+                        ✕ Remove
+                      </button>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2">
+                      {cls.streams.map((s, i) => (
+                        <span
+                          key={i}
+                          className="bg-green-600 text-white px-2 py-1 rounded-full text-sm flex items-center gap-1"
+                        >
+                          {s}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newLevels = [...school.classLevels];
+                              newLevels[idx].streams = newLevels[
+                                idx
+                              ].streams.filter((_, si) => si !== i);
+                              setSchool((prev) => ({
+                                ...prev,
+                                classLevels: newLevels,
+                              }));
+                            }}
+                            className="ml-1 text-xs text-red-200 hover:text-red-400"
+                          >
+                            ✕
+                          </button>
+                        </span>
+                      ))}
+                      {false && (
+                        <input
+                          type="text"
+                          placeholder="Add stream"
+                          onKeyDown={(e) => {
+                            if (["Enter", ","].includes(e.key)) {
+                              e.preventDefault();
+                              const newLevels = [...school.classLevels];
+                              newLevels[idx].streams.push(
+                                e.target.value.trim()
+                              );
+                              setSchool((prev) => ({
+                                ...prev,
+                                classLevels: newLevels,
+                              }));
+                              e.target.value = "";
+                            }
+                          }}
+                          className="flex-1 min-w-[120px] p-2 rounded bg-gray-700 text-white text-sm"
+                        />
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
-              <button
-                type="button"
-                onClick={() =>
-                  setSchool((prev) => ({
-                    ...prev,
-                    classLevels: [
-                      ...prev.classLevels,
-                      { name: "New Class", streams: [] },
-                    ],
-                  }))
-                }
-                className="px-3 py-1 bg-gray-700 text-white rounded hover:bg-gray-600 text-sm"
-              >
-                ➕ Add Level
-              </button>
-            </div>
-          </section>}
+                ))}
+                <button
+                  type="button"
+                  onClick={() =>
+                    setSchool((prev) => ({
+                      ...prev,
+                      classLevels: [
+                        ...prev.classLevels,
+                        { name: "New Class", streams: [] },
+                      ],
+                    }))
+                  }
+                  className="px-3 py-1 bg-gray-700 text-white rounded hover:bg-gray-600 text-sm"
+                >
+                  ➕ Add Level
+                </button>
+              </div>
+            </section>
+          )}
 
           {/* Grading System */}
-         {false &&  <section>
-            <h2 className="text-gray-200 font-semibold mb-3 border-b border-gray-700 pb-1">
-              Grading System
-            </h2>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm text-left text-gray-300 border border-gray-700">
-                <thead className="bg-gray-800">
-                  <tr>
-                    <th className="px-3 py-2 border-b border-gray-700">Min</th>
-                    <th className="px-3 py-2 border-b border-gray-700">Max</th>
-                    <th className="px-3 py-2 border-b border-gray-700">
-                      Grade
-                    </th>
-                    <th className="px-3 py-2 border-b border-gray-700">
-                      Remark
-                    </th>
-                    <th className="px-3 py-2 border-b border-gray-700">
-                      Action
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {school.gradingSystem.map((g, idx) => (
-                    <tr key={idx} className="hover:bg-gray-800/50">
-                      <td className="px-3 py-2">
-                        <input
-                          type="number"
-                          value={g.min}
-                          onChange={(e) => {
-                            const newGrades = [...school.gradingSystem];
-                            newGrades[idx].min = Number(e.target.value);
-                            setSchool((prev) => ({
-                              ...prev,
-                              gradingSystem: newGrades,
-                            }));
-                          }}
-                          className="w-20 p-1 rounded bg-gray-800 text-white text-xs"
-                        />
-                      </td>
-                      <td className="px-3 py-2">
-                        <input
-                          type="number"
-                          value={g.max}
-                          onChange={(e) => {
-                            const newGrades = [...school.gradingSystem];
-                            newGrades[idx].max = Number(e.target.value);
-                            setSchool((prev) => ({
-                              ...prev,
-                              gradingSystem: newGrades,
-                            }));
-                          }}
-                          className="w-20 p-1 rounded bg-gray-800 text-white text-xs"
-                        />
-                      </td>
-                      <td className="px-3 py-2">
-                        <input
-                          value={g.grade}
-                          onChange={(e) => {
-                            const newGrades = [...school.gradingSystem];
-                            newGrades[idx].grade = e.target.value;
-                            setSchool((prev) => ({
-                              ...prev,
-                              gradingSystem: newGrades,
-                            }));
-                          }}
-                          className="w-20 p-1 rounded bg-gray-800 text-white text-xs"
-                        />
-                      </td>
-                      <td className="px-3 py-2">
-                        <input
-                          value={g.remark || ""}
-                          onChange={(e) => {
-                            const newGrades = [...school.gradingSystem];
-                            newGrades[idx].remark = e.target.value;
-                            setSchool((prev) => ({
-                              ...prev,
-                              gradingSystem: newGrades,
-                            }));
-                          }}
-                          className="w-28 p-1 rounded bg-gray-800 text-white text-xs"
-                        />
-                      </td>
-                      <td className="px-3 py-2">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const newGrades = school.gradingSystem.filter(
-                              (_, i) => i !== idx
-                            );
-                            setSchool((prev) => ({
-                              ...prev,
-                              gradingSystem: newGrades,
-                            }));
-                          }}
-                          className="text-red-400 hover:text-red-600 text-xs"
-                        >
-                          ✕ Delete
-                        </button>
-                      </td>
+          {false && (
+            <section>
+              <h2 className="text-gray-200 font-semibold mb-3 border-b border-gray-700 pb-1">
+                Grading System
+              </h2>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm text-left text-gray-300 border border-gray-700">
+                  <thead className="bg-gray-800">
+                    <tr>
+                      <th className="px-3 py-2 border-b border-gray-700">
+                        Min
+                      </th>
+                      <th className="px-3 py-2 border-b border-gray-700">
+                        Max
+                      </th>
+                      <th className="px-3 py-2 border-b border-gray-700">
+                        Grade
+                      </th>
+                      <th className="px-3 py-2 border-b border-gray-700">
+                        Remark
+                      </th>
+                      <th className="px-3 py-2 border-b border-gray-700">
+                        Action
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-              <button
-                type="button"
-                onClick={() =>
-                  setSchool((prev) => ({
-                    ...prev,
-                    gradingSystem: [
-                      ...prev.gradingSystem,
-                      { min: 0, max: 0, grade: "New", remark: "" },
-                    ],
-                  }))
-                }
-                className="mt-2 px-3 py-1 bg-gray-700 text-white rounded hover:bg-gray-600 text-sm"
-              >
-                ➕ Add Grade Row
-              </button>
-            </div>
-          </section>}
+                  </thead>
+                  <tbody>
+                    {school.gradingSystem.map((g, idx) => (
+                      <tr key={idx} className="hover:bg-gray-800/50">
+                        <td className="px-3 py-2">
+                          <input
+                            type="number"
+                            value={g.min}
+                            onChange={(e) => {
+                              const newGrades = [...school.gradingSystem];
+                              newGrades[idx].min = Number(e.target.value);
+                              setSchool((prev) => ({
+                                ...prev,
+                                gradingSystem: newGrades,
+                              }));
+                            }}
+                            className="w-20 p-1 rounded bg-gray-800 text-white text-xs"
+                          />
+                        </td>
+                        <td className="px-3 py-2">
+                          <input
+                            type="number"
+                            value={g.max}
+                            onChange={(e) => {
+                              const newGrades = [...school.gradingSystem];
+                              newGrades[idx].max = Number(e.target.value);
+                              setSchool((prev) => ({
+                                ...prev,
+                                gradingSystem: newGrades,
+                              }));
+                            }}
+                            className="w-20 p-1 rounded bg-gray-800 text-white text-xs"
+                          />
+                        </td>
+                        <td className="px-3 py-2">
+                          <input
+                            value={g.grade}
+                            onChange={(e) => {
+                              const newGrades = [...school.gradingSystem];
+                              newGrades[idx].grade = e.target.value;
+                              setSchool((prev) => ({
+                                ...prev,
+                                gradingSystem: newGrades,
+                              }));
+                            }}
+                            className="w-20 p-1 rounded bg-gray-800 text-white text-xs"
+                          />
+                        </td>
+                        <td className="px-3 py-2">
+                          <input
+                            value={g.remark || ""}
+                            onChange={(e) => {
+                              const newGrades = [...school.gradingSystem];
+                              newGrades[idx].remark = e.target.value;
+                              setSchool((prev) => ({
+                                ...prev,
+                                gradingSystem: newGrades,
+                              }));
+                            }}
+                            className="w-28 p-1 rounded bg-gray-800 text-white text-xs"
+                          />
+                        </td>
+                        <td className="px-3 py-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newGrades = school.gradingSystem.filter(
+                                (_, i) => i !== idx
+                              );
+                              setSchool((prev) => ({
+                                ...prev,
+                                gradingSystem: newGrades,
+                              }));
+                            }}
+                            className="text-red-400 hover:text-red-600 text-xs"
+                          >
+                            ✕ Delete
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setSchool((prev) => ({
+                      ...prev,
+                      gradingSystem: [
+                        ...prev.gradingSystem,
+                        { min: 0, max: 0, grade: "New", remark: "" },
+                      ],
+                    }))
+                  }
+                  className="mt-2 px-3 py-1 bg-gray-700 text-white rounded hover:bg-gray-600 text-sm"
+                >
+                  ➕ Add Grade Row
+                </button>
+              </div>
+            </section>
+          )}
 
           {/* Fee Expectations */}
           <section>
@@ -586,139 +598,145 @@ const SchoolSettings = ({ onNext }) => {
           </section>
 
           {/* Subjects By Class Range (NEW) */}
-         <section>
-  <h2 className="text-gray-200 font-semibold mb-3 border-b border-gray-700 pb-1">
-    Subjects by Class Range
-  </h2>
-  <div className="space-y-3">
-    {school.subjectsByClass?.map((rule, idx) => (
-      <div
-        key={idx}
-        className="bg-gray-800 p-3 rounded border border-gray-700"
-      >
-        {/* Class range selection */}
-        <div className="grid grid-cols-1 sm:grid-cols-4 gap-2 mb-2 items-center">
-          <select
-            value={rule.fromClass}
-            onChange={(e) =>
-              updateSubjectsRule(idx, "fromClass", e.target.value)
-            }
-            className="p-2 rounded bg-gray-700 text-white text-sm"
-          >
-            {school.classLevels.map((c) => (
-              <option key={c.name} value={c.name}>
-                {c.name}
-              </option>
-            ))}
-          </select>
+          <section>
+            <h2 className="text-gray-200 font-semibold mb-3 border-b border-gray-700 pb-1">
+              Subjects by Class Range
+            </h2>
+            <div className="space-y-3">
+              {school.subjectsByClass?.map((rule, idx) => (
+                <div
+                  key={idx}
+                  className="bg-gray-800 p-3 rounded border border-gray-700"
+                >
+                  {/* Class range selection */}
+                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-2 mb-2 items-center">
+                    <select
+                      value={rule.fromClass}
+                      onChange={(e) =>
+                        updateSubjectsRule(idx, "fromClass", e.target.value)
+                      }
+                      className="p-2 rounded bg-gray-700 text-white text-sm"
+                    >
+                      {school.classLevels.map((c) => (
+                        <option key={c.name} value={c.name}>
+                          {c.name}
+                        </option>
+                      ))}
+                    </select>
 
-          <select
-            value={rule.toClass}
-            onChange={(e) =>
-              updateSubjectsRule(idx, "toClass", e.target.value)
-            }
-            className="p-2 rounded bg-gray-700 text-white text-sm"
-          >
-            {school.classLevels.map((c) => (
-              <option key={c.name} value={c.name}>
-                {c.name}
-              </option>
-            ))}
-          </select>
+                    <select
+                      value={rule.toClass}
+                      onChange={(e) =>
+                        updateSubjectsRule(idx, "toClass", e.target.value)
+                      }
+                      className="p-2 rounded bg-gray-700 text-white text-sm"
+                    >
+                      {school.classLevels.map((c) => (
+                        <option key={c.name} value={c.name}>
+                          {c.name}
+                        </option>
+                      ))}
+                    </select>
 
-          {/* Add subject dropdown */}
-          <select
-            onChange={(e) => {
-              if (e.target.value) {
-                addSubjectToRule(idx, e.target.value);
-                e.target.value = "";
-              }
-            }}
-            className="p-2 rounded bg-gray-700 text-white text-sm"
-          >
-            <option value="">Add Subject...</option>
-            {school.subjects
-              .filter((subj) => !(rule.subjects || []).includes(subj))
-              .map((subj) => (
-                <option key={subj} value={subj}>
-                  {subj}
-                </option>
+                    {/* Add subject dropdown */}
+                    <select
+                      onChange={(e) => {
+                        if (e.target.value) {
+                          addSubjectToRule(idx, e.target.value);
+                          e.target.value = "";
+                        }
+                      }}
+                      className="p-2 rounded bg-gray-700 text-white text-sm"
+                    >
+                      <option value="">Add Subject...</option>
+                      {school.subjects
+                        .filter((subj) => !(rule.subjects || []).includes(subj))
+                        .map((subj) => (
+                          <option key={subj} value={subj}>
+                            {subj}
+                          </option>
+                        ))}
+                    </select>
+
+                    <button
+                      type="button"
+                      onClick={() => removeSubjectsRule(idx)}
+                      className="text-red-400 hover:text-red-600 text-sm"
+                    >
+                      ✕ Remove Rule
+                    </button>
+                  </div>
+
+                  {/* Assigned subjects */}
+                  <div className="flex flex-wrap gap-2">
+                    {(rule.subjects || []).map((s) => (
+                      <span
+                        key={s}
+                        className="bg-indigo-600 text-white px-2 py-1 rounded-full text-sm flex items-center gap-2"
+                      >
+                        {s}
+                        <button
+                          type="button"
+                          onClick={() => removeSubjectFromRule(idx, s)}
+                          className="ml-1 text-xs text-red-200 hover:text-red-400"
+                        >
+                          ✕
+                        </button>
+                      </span>
+                    ))}
+                    {(rule.subjects || []).length === 0 && (
+                      <div className="text-gray-400 text-sm">
+                        No subjects set for this range
+                      </div>
+                    )}
+                  </div>
+                </div>
               ))}
-          </select>
 
-          <button
-            type="button"
-            onClick={() => removeSubjectsRule(idx)}
-            className="text-red-400 hover:text-red-600 text-sm"
-          >
-            ✕ Remove Rule
-          </button>
-        </div>
-
-        {/* Assigned subjects */}
-        <div className="flex flex-wrap gap-2">
-          {(rule.subjects || []).map((s) => (
-            <span
-              key={s}
-              className="bg-indigo-600 text-white px-2 py-1 rounded-full text-sm flex items-center gap-2"
-            >
-              {s}
               <button
                 type="button"
-                onClick={() => removeSubjectFromRule(idx, s)}
-                className="ml-1 text-xs text-red-200 hover:text-red-400"
+                onClick={addSubjectsRule}
+                className="px-3 py-1 bg-gray-700 text-white rounded hover:bg-gray-600 text-sm"
               >
-                ✕
+                ➕ Add Subjects Rule
               </button>
-            </span>
-          ))}
-          {(rule.subjects || []).length === 0 && (
-            <div className="text-gray-400 text-sm">No subjects set for this range</div>
-          )}
-        </div>
-      </div>
-    ))}
-
-    <button
-      type="button"
-      onClick={addSubjectsRule}
-      className="px-3 py-1 bg-gray-700 text-white rounded hover:bg-gray-600 text-sm"
-    >
-      ➕ Add Subjects Rule
-    </button>
-  </div>
-</section>
-
+            </div>
+          </section>
 
           {/* Optional Modules */}
-         {false && <section>
-            <h2 className="text-gray-200 font-semibold mb-3 border-b border-gray-700 pb-1">
-              Optional Modules
-            </h2>
-            <div className="flex flex-wrap gap-4">
-              {["exams", "attendance", "feeTracking", "communication"].map(
-                (mod) => (
-                  <label
-                    key={mod}
-                    className="flex items-center gap-2 text-gray-300"
-                  >
-                    <input
-                      type="checkbox"
-                      name={mod}
-                      checked={school.modules?.[mod] || false}
-                      onChange={(e) =>
-                        setSchool((prev) => ({
-                          ...prev,
-                          modules: { ...prev.modules, [mod]: e.target.checked },
-                        }))
-                      }
-                    />
-                    {mod.charAt(0).toUpperCase() + mod.slice(1)}
-                  </label>
-                )
-              )}
-            </div>
-          </section>}
+          {false && (
+            <section>
+              <h2 className="text-gray-200 font-semibold mb-3 border-b border-gray-700 pb-1">
+                Optional Modules
+              </h2>
+              <div className="flex flex-wrap gap-4">
+                {["exams", "attendance", "feeTracking", "communication"].map(
+                  (mod) => (
+                    <label
+                      key={mod}
+                      className="flex items-center gap-2 text-gray-300"
+                    >
+                      <input
+                        type="checkbox"
+                        name={mod}
+                        checked={school.modules?.[mod] || false}
+                        onChange={(e) =>
+                          setSchool((prev) => ({
+                            ...prev,
+                            modules: {
+                              ...prev.modules,
+                              [mod]: e.target.checked,
+                            },
+                          }))
+                        }
+                      />
+                      {mod.charAt(0).toUpperCase() + mod.slice(1)}
+                    </label>
+                  )
+                )}
+              </div>
+            </section>
+          )}
 
           <button
             type="button"

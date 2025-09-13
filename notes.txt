@@ -16,156 +16,35 @@ parent to use bursars number....get rid of that part cleverly
 
 editable fees page amounts, and the slow outstanding is annoying
 
-change to multi year /term
 
 
+drop down in selecting subjects for teachers , na Class Level pia 
 
-1-3 
+messages take too long to show , mtu anaexa dhani hana message , i guess, maybe its coz its dev
 
-        Creative Activities
-        CRE
-        English Activities
-        Environmental Activities
-        HRE
-        IRE
-        Kiswahili
-        Mathematics
+chronic absentees to be for the classteachers class only, not all school, only principal should see something like that, 
 
+admin marking attendance is affecting others 
 
-4
+make the view attendance always default to one week before today
 
-        Agriculture
-        Arabic
-        Creative Arts
-        CRE
-        English
-        French
-        German
-        HRE
-        Indigenous Language
-        IRE
-        Kiswahili
-        Mandarin
-        Mathematics
-        Science & Technology
-        Social Studies
+admin should not be able to mark attendance
+
+reviews to use user datanot input data, stuff like school, and role, and name , only review is written and stars 
+
+just let it use a year instead of year / year  + 1, its weird--
+
+remove the grading system and research the new one 
+
+a way to set if new year or term has set in or something
 
 
-5
+dont just hide pages , make them innaccesiible to te invalid or unauthorized roles
 
-        Agriculture
-        Arabic
-        Creative Arts
-        CRE
-        English
-        French
-        German
-        HRE
-        Indigenous Language
-        IRE
-        Kiswahili
-        Mandarin
-        Mathematics
-        Science & Technology
-        Social Studies
+make outstnding fees come up faster
 
+fee, exam, attendace , check if they are using term
 
-6
+be able to enter students balances from excel or something
 
-        Agriculture
-        Arabic
-        Creative Arts
-        CRE
-        English
-        French
-        German
-        HRE
-        Indigenous Language
-        IRE
-        Kiswahili
-        Mandarin
-        Mathematics
-        Science & Technology
-        Social Studies
-
-7
-
-        Agriculture
-        Arabic
-        Creative Arts
-        CRE
-        English
-        French
-        German
-        HRE
-        Indigenous Language
-        Integrated Science
-        IRE
-        Kiswahili
-        Mandarin
-        Mathematics
-        Pre-Technical Studies
-        Social Studies
-
-8
-
-
-        Agriculture
-        Arabic
-        Creative Arts
-        CRE
-        English
-        French
-        German
-        HRE
-        Indigenous Language
-        Integrated Science
-        IRE
-        Kiswahili
-        Mandarin
-        Mathematics
-        Pre-Technical Studies
-        Social Studies
-
-9
-
-        Agriculture
-        Arabic
-        Creative Arts
-        CRE
-        English
-        French
-        German
-        HRE
-        Indigenous Language
-        Integrated Science
-        IRE
-        Kiswahili
-        Mandarin
-        Mathematics
-        Pre-Technical Studies
-        Social Studies
-
-
-10
-
-        Applied Sciences
-        Arts & Sports
-        Foreign Languages
-        Humanities
-        Languages
-        Pure Sciences
-        Religious Education
-        Technical Studies
-
-
-11
-
-        Applied Sciences
-        Arts & Sports
-        Foreign Languages
-        Humanities
-        Languages
-        Pure Sciences
-        Religious Education
-        Technical Studies
+loading could look better

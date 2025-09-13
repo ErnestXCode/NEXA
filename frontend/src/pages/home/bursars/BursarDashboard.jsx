@@ -1,48 +1,56 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { NavLink } from "react-router-dom";
+import { useSelector } from "react-redux";
+import useUnreadMessages from "../../../hooks/useUnreadMessages";
+import { selectCurrentUser } from "../../../redux/slices/authSlice";
+
 
 const BursarDashboard = () => {
-  const navigate = useNavigate();
+  const currentUser = useSelector(selectCurrentUser);
+  const { unreadCount } = useUnreadMessages(currentUser);
 
   const actions = [
     {
       title: "Messages",
       description: "Send or view in-app messages.",
       link: "/dashboard/communication",
-      bgColor: "bg-blue-600",
+      gradient: "from-indigo-700 via-purple-700 to-pink-700",
+      hasBadge: true,
     },
     {
       title: "View Fees",
       description: "Check student fees records.",
       link: "/dashboard/fees",
-      bgColor: "bg-gray-800",
+      gradient: "from-blue-700 via-cyan-600 to-sky-500",
     },
     {
       title: "Record Payment",
       description: "Add a new student payment.",
       link: "/dashboard/fees/add",
-      bgColor: "bg-green-600",
+      gradient: "from-green-700 via-lime-600 to-emerald-500",
     },
   ];
 
   return (
-    <main className="p-6 bg-gray-950 min-h-screen flex flex-col items-center">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-6xl">
+    <div className="min-h-screen bg-gray-950 p-6">
+      <main className="flex flex-col gap-6 max-w-md mx-auto">
         {actions.map((action, idx) => (
-          <div
+          <NavLink
             key={idx}
-            onClick={() => navigate(action.link)}
-            className={`cursor-pointer ${action.bgColor} hover:scale-105 transform transition rounded-2xl shadow-xl p-6 flex flex-col justify-between text-white`}
+            to={action.link}
+            className={`relative bg-gradient-to-r ${action.gradient} shadow-lg rounded-xl p-6 flex flex-col items-start transition transform hover:scale-105 hover:shadow-2xl duration-300`}
           >
-            <div>
-              <h2 className="text-xl font-bold mb-2">{action.title}</h2>
-              <p className="text-gray-200">{action.description}</p>
-            </div>
-            <div className="mt-4 text-gray-300 text-sm">Go &rarr;</div>
-          </div>
+            <h2 className="text-white text-2xl font-bold mb-2">{action.title}</h2>
+            <p className="text-gray-200 text-sm">{action.description}</p>
+
+            {/* Show badge for Messages */}
+            {action.hasBadge && unreadCount > 0 && (
+              <span className="absolute top-4 right-4 h-3 w-3 rounded-full bg-red-600 animate-pulse"></span>
+            )}
+          </NavLink>
         ))}
-      </div>
-    </main>
+      </main>
+    </div>
   );
 };
 

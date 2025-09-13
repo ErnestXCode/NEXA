@@ -64,6 +64,8 @@ if ("serviceWorker" in navigator && "PushManager" in window) {
   });
 }
 
+
+
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <Provider store={store}>

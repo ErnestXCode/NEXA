@@ -45,13 +45,32 @@ const createSchool = async (req, res) => {
 // Update school info (by id)
 const updateSchool = async (req, res) => {
   try {
-    const updated = await School.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    let updatedData = req.body;
+
+    // If subjects were updated, remove any from subjectsByClass that are no longer in global subjects
+    if (updatedData.subjects) {
+      updatedData.subjectsByClass = (updatedData.subjectsByClass || []).map(rule => {
+        return {
+          ...rule,
+          subjects: (rule.subjects || []).filter(s => updatedData.subjects.includes(s))
+        };
+      });
+    }
+
+    const updated = await School.findByIdAndUpdate(
+      req.params.id,
+      updatedData,
+      { new: true }
+    );
+
     if (!updated) return res.status(404).json({ msg: "School not found" });
-    res.status(200).json({ msg: "School updated", school: updated });
+
+    res.status(200).json({ msg: "School updated" });
   } catch (err) {
     res.status(500).json({ msg: "Error updating school", error: err.message });
   }
 };
+
 
 // Delete school
 const deleteSchool = async (req, res) => {

@@ -41,6 +41,7 @@ import Feedback from "./pages/feedback/Feedback";
 import InstallPrompt from "./install/InstallPrompt";
 import { useSelector } from "react-redux";
 import ReviewPage from "./pages/review/ReviewPage";
+import { useEffect } from "react";
 
 const FeeHistoryWrapper = () => {
   const { studentId } = useParams();
@@ -57,6 +58,14 @@ const HomeRedirect = () => {
 };
 
 function App() {
+  useEffect(() => {
+  const handleFocus = () => {
+    if ("clearAppBadge" in navigator) navigator.clearAppBadge().catch(() => {});
+  };
+  window.addEventListener("focus", handleFocus);
+  return () => window.removeEventListener("focus", handleFocus);
+}, []);
+
   return (
     <div className="bg-gray-950 text-white min-h-screen">
       <BrowserRouter>
