@@ -57,7 +57,10 @@ const schoolSchema = new mongoose.Schema(
     },
 
     feeRules: { type: [feeRuleSchema], default: [] },
-    subjectsByClass: { type: [subjectsRuleSchema], default: [] },
+    subjectsByClass: {
+      type: [subjectsRuleSchema],
+      default: () => School.defaultCBCSubjectsByClass(),
+    },
 
     modules: {
       exams: { type: Boolean, default: true },
@@ -214,11 +217,11 @@ schoolSchema.statics.defaultCBCSubjectsByClass = function () {
   ];
 };
 
-
 schoolSchema.statics.defaultSubjects = function () {
   // Get all subjects from CBC mapping
-  const allCBCSubjects = School.defaultCBCSubjectsByClass()
-    .flatMap(rule => rule.subjects);
+  const allCBCSubjects = School.defaultCBCSubjectsByClass().flatMap(
+    (rule) => rule.subjects
+  );
 
   // Add extra global subjects
   const extras = ["Creative Arts", "Physical Education"];
@@ -226,8 +229,6 @@ schoolSchema.statics.defaultSubjects = function () {
   // Deduplicate + return sorted for consistency
   return [...new Set([...allCBCSubjects, ...extras])].sort();
 };
-
-
 
 schoolSchema.statics.currentAcademicYear = function () {
   const year = new Date().getFullYear();

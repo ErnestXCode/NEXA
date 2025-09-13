@@ -3,6 +3,7 @@ const Student = require("../../models/Student");
 const Activity = require("../../models/Activity");
 const User = require("../../models/User");
 const School = require("../../models/School");
+const { getAllowedSubjectsForClass } = require("../../utils/subjectHelper");
 
 // Create a new student
 const createStudent = async (req, res) => {
@@ -41,7 +42,6 @@ const createStudent = async (req, res) => {
     res.status(500).json({ msg: "Error creating student", error: err.message });
   }
 };
-
 
 // Get student by ID with role-based access
 const getStudentById = async (req, res) => {
@@ -145,7 +145,7 @@ const getAllStudents = async (req, res) => {
     if (requester.role === "teacher" && requesterDoc.isClassTeacher) {
       query.classLevel = requesterDoc.classLevel;
       query.school = requester.school;
-    } else if (!["admin", "superadmin", 'bursar'].includes(requester.role)) {
+    } else if (!["admin", "superadmin", "bursar"].includes(requester.role)) {
       return res.status(403).json({ msg: "Unauthorized" });
     } else {
       query.school = requester.school;
@@ -153,10 +153,9 @@ const getAllStudents = async (req, res) => {
 
     const students = await Student.find(query).populate({
       path: "guardian",
-      select:
-        "name email phoneNumber",
+      select: "name email phoneNumber",
     });
-    console.log('req', students)
+    console.log("req", students);
 
     res.status(200).json(students);
   } catch (err) {
@@ -174,24 +173,37 @@ const getStudentsWithSubjects = async (req, res) => {
 
     const students = await Student.find({ school: req.user.school });
 
+    // Build subjects per classLevel
+    let subjectsByClass = {};
+    students.forEach((s) => {
+      if (!subjectsByClass[s.classLevel]) {
+        subjectsByClass[s.classLevel] = getAllowedSubjectsForClass(
+          school,
+          s.classLevel
+        );
+      }
+    });
 
-    let subjects = school.subjects;
-
-    // 🔒 If teacher, restrict to their subjects
+    // 🔒 Restrict if teacher
     if (req.user.role === "teacher") {
       const teacher = await User.findById(req.user.userId);
       if (teacher && teacher.subjects.length > 0) {
-        subjects = teacher.subjects;
+        for (let classLevel in subjectsByClass) {
+          subjectsByClass[classLevel] = subjectsByClass[classLevel].filter(
+            (subj) => teacher.subjects.includes(subj)
+          );
+        }
       }
     }
 
-    res.json({ students, subjects });
+    res.json({ students, subjectsByClass });
   } catch (err) {
     res
       .status(500)
       .json({ msg: "Error fetching students", error: err.message });
   }
 };
+
 module.exports = {
   createStudent,
   getStudentById,

@@ -1,5 +1,5 @@
 // src/pages/exams/ReportCardsPage.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import api from "../../api/axios";
 import {
   BarChart,
@@ -18,6 +18,7 @@ const ReportCardsPage = () => {
   const [academicYear, setAcademicYear] = useState("");
   const [exams, setExams] = useState([]);
   const [students, setStudents] = useState([]);
+  const [subjectsByClass, setSubjectsByClass] = useState({});
   const [subjects, setSubjects] = useState([]);
   const [examId, setExamId] = useState("");
   const [selectedClass, setSelectedClass] = useState("");
@@ -40,38 +41,28 @@ const ReportCardsPage = () => {
     fetchExams();
   }, [academicYear]);
 
-  // 🔹 Fetch students
+  // 🔹 Fetch students + subjects
   useEffect(() => {
     const fetchStudents = async () => {
       try {
-        const res = await api.get("/students");
-        setStudents(res.data || []);
+        const res = await api.get("/students/students-with-subjects");
+        setStudents(res.data?.students || []);
+        setSubjectsByClass(res.data?.subjectsByClass || {});
       } catch (err) {
-        console.error("Failed to fetch students", err);
+        console.error("Failed to fetch students with subjects", err);
       }
     };
     fetchStudents();
   }, []);
 
-  // 🔹 Fetch subjects
+  // 🔹 Update subjects for selected class
   useEffect(() => {
-    const fetchSubjectsForClass = async () => {
-      if (!selectedClass) {
-        setSubjects([]);
-        return;
-      }
-      try {
-        const res = await api.get(
-          `/schools/subjects/${encodeURIComponent(selectedClass)}`
-        );
-        setSubjects(res.data?.subjects || []);
-      } catch (err) {
-        console.error("Failed to fetch subjects for class", err);
-        setSubjects([]);
-      }
-    };
-    fetchSubjectsForClass();
-  }, [selectedClass]);
+    if (selectedClass) {
+      setSubjects(subjectsByClass[selectedClass] || []);
+    } else {
+      setSubjects([]);
+    }
+  }, [selectedClass, subjectsByClass]);
 
   // 🔹 Fetch results
   useEffect(() => {
@@ -108,51 +99,57 @@ const ReportCardsPage = () => {
   );
 
   // ================= Charts Data =================
-
-  // Student averages
-  const studentAverages = filteredStudents.map((student) => {
-    const r = results[student._id];
-    const avg = r?.average ?? 0;
-    return {
-      name: `${student.firstName} ${student.lastName}`,
-      average: avg,
-    };
-  });
-
-  // Top 3 students
-  const top3 = [...studentAverages]
-    .sort((a, b) => b.average - a.average)
-    .slice(0, 3);
-
-  // Best performed subjects (class average per subject)
-  const subjectPerformance = subjects.map((subj) => {
-    let total = 0;
-    let count = 0;
-    filteredStudents.forEach((student) => {
-      const subjScore = results[student._id]?.subjects?.find(
-        (s) => s.name === subj
-      )?.score;
-      if (subjScore != null) {
-        total += subjScore;
-        count++;
-      }
+  const studentAverages = useMemo(() => {
+    return filteredStudents.map((student) => {
+      const r = results[student._id];
+      const avg = r?.average ?? 0;
+      return {
+        name: `${student.firstName} ${student.lastName}`,
+        average: avg,
+      };
     });
-    return {
-      subject: subj,
-      average: count ? total / count : 0,
-    };
-  });
+  }, [filteredStudents, results]);
 
-  // Grade distribution
-  const gradeCounts = { A: 0, B: 0, C: 0, D: 0, E: 0 };
-  filteredStudents.forEach((student) => {
-    const grade = results[student._id]?.grade;
-    if (grade) gradeCounts[grade] = (gradeCounts[grade] || 0) + 1;
-  });
-  const gradeData = Object.keys(gradeCounts).map((g) => ({
-    name: g,
-    value: gradeCounts[g],
-  }));
+  const top3 = useMemo(() => {
+    return [...studentAverages]
+      .sort((a, b) => b.average - a.average)
+      .slice(0, 3);
+  }, [studentAverages]);
+
+  const subjectPerformance = useMemo(() => {
+    return subjects.map((subj) => {
+      let total = 0;
+      let count = 0;
+
+      filteredStudents.forEach((student) => {
+        const subjScore = results[student._id]?.subjects?.find(
+          (s) => s.name === subj
+        )?.score;
+
+        if (subjScore != null) {
+          total += subjScore;
+          count++;
+        }
+      });
+
+      return {
+        subject: subj, // MUST match table header
+        average: count ? total / count : 0,
+      };
+    });
+  }, [subjects, filteredStudents, results]);
+
+  const gradeCounts = useMemo(() => {
+    const counts = { A: 0, B: 0, C: 0, D: 0, E: 0 };
+    filteredStudents.forEach((student) => {
+      const grade = results[student._id]?.grade;
+      if (grade) counts[grade] = (counts[grade] || 0) + 1;
+    });
+    return Object.keys(counts).map((g) => ({
+      name: g,
+      value: counts[g],
+    }));
+  }, [filteredStudents, results]);
 
   // ================= Actions =================
   const handleDownload = async (studentId) => {
@@ -284,7 +281,9 @@ const ReportCardsPage = () => {
               </thead>
               <tbody>
                 {filteredStudents.map((student) => {
-                  const studentResult = results[student._id] || { subjects: [] };
+                  const studentResult = results[student._id] || {
+                    subjects: [],
+                  };
                   const subjectsArr = studentResult.subjects || [];
                   const total = subjectsArr.reduce(
                     (acc, s) => acc + (s.score || 0),
@@ -339,7 +338,7 @@ const ReportCardsPage = () => {
             <div className="bg-gray-900 p-4 rounded-lg shadow">
               <h3 className="text-lg font-semibold mb-2">Top 3 Students</h3>
               <ResponsiveContainer width="100%" height={250}>
-                <BarChart data={top3}>
+                <BarChart key={selectedClass} data={top3}>
                   <XAxis dataKey="name" />
                   <YAxis />
                   <Tooltip />
@@ -350,13 +349,24 @@ const ReportCardsPage = () => {
             </div>
 
             {/* Subject Performance */}
-            <div className="bg-gray-900 p-4 rounded-lg shadow">
+            <div className="bg-gray-900 p-4 rounded-lg shadow row-span-2">
               <h3 className="text-lg font-semibold mb-2">
                 Best Performed Subjects
               </h3>
-              <ResponsiveContainer width="100%" height={250}>
-                <BarChart data={subjectPerformance}>
-                  <XAxis dataKey="subject" />
+              <ResponsiveContainer width="100%" height={600}>
+                <BarChart
+                  key={selectedClass}
+                  data={subjectPerformance}
+                  margin={{ top: 20, right: 20, bottom: 60, left: 20 }} // add bottom margin
+                >
+                  <XAxis
+                    dataKey="subject"
+                    type="category"
+                    interval={0}
+                    angle={-35} // tilt more if needed
+                    textAnchor="end"
+                    height={100} // gives extra space for labels
+                  />
                   <YAxis />
                   <Tooltip />
                   <Bar dataKey="average" fill="#0088FE" />
@@ -365,12 +375,12 @@ const ReportCardsPage = () => {
             </div>
 
             {/* Grade Distribution */}
-            <div className="bg-gray-900 p-4 rounded-lg shadow col-span-1 md:col-span-2">
+            <div className="bg-gray-900 p-4 rounded-lg shadow col-span-1">
               <h3 className="text-lg font-semibold mb-2">Grade Distribution</h3>
               <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
+                <PieChart key={selectedClass}>
                   <Pie
-                    data={gradeData}
+                    data={gradeCounts}
                     cx="50%"
                     cy="50%"
                     outerRadius={100}
@@ -378,7 +388,7 @@ const ReportCardsPage = () => {
                     dataKey="value"
                     label
                   >
-                    {gradeData.map((entry, index) => (
+                    {gradeCounts.map((entry, index) => (
                       <Cell
                         key={`cell-${index}`}
                         fill={COLORS[index % COLORS.length]}

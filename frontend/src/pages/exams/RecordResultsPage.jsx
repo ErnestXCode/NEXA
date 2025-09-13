@@ -6,12 +6,12 @@ import { selectCurrentUser } from "../../redux/slices/authSlice";
 const RecordResultsPage = () => {
   const [exams, setExams] = useState([]);
   const [students, setStudents] = useState([]);
-  const [subjects, setSubjects] = useState([]);
+  const [subjectsByClass, setSubjectsByClass] = useState({}); // 🔹 changed from []
   const [examId, setExamId] = useState("");
   const [selectedClass, setSelectedClass] = useState("");
   const [selectedSubject, setSelectedSubject] = useState("");
   const [results, setResults] = useState({});
-  const [academicYear, setAcademicYear] = useState(""); // ✅ New
+  const [academicYear, setAcademicYear] = useState("");
   const [isDesktop, setIsDesktop] = useState(true);
   const currentUser = useSelector(selectCurrentUser);
 
@@ -39,7 +39,7 @@ const RecordResultsPage = () => {
       try {
         const res = await api.get("/students/students-with-subjects");
         setStudents(res.data?.students || []);
-        setSubjects(res.data?.subjects || []);
+        setSubjectsByClass(res.data?.subjectsByClass || {}); // 🔹 changed
       } catch (err) {
         console.error("Failed to fetch students", err);
       }
@@ -208,7 +208,7 @@ const RecordResultsPage = () => {
           className="p-2 w-full rounded bg-gray-800 text-white"
         >
           <option value="">All Subjects (Admin Mode)</option>
-          {subjects.map((subj) => (
+          {(subjectsByClass[selectedClass] || []).map((subj) => (
             <option key={subj} value={subj}>
               {subj}
             </option>
@@ -230,7 +230,7 @@ const RecordResultsPage = () => {
                 {selectedSubject ? (
                   <th className="p-2 text-left">{selectedSubject}</th>
                 ) : (
-                  subjects.map((subj) => (
+                  (subjectsByClass[selectedClass] || []).map((subj) => (
                     <th key={subj} className="p-2 text-left">
                       {subj}
                     </th>
@@ -279,7 +279,7 @@ const RecordResultsPage = () => {
                         />
                       </td>
                     ) : (
-                      subjects.map((subj) => (
+                      (subjectsByClass[selectedClass] || []).map((subj) => (
                         <td key={subj} className="p-2">
                           <input
                             type="number"

@@ -1,4 +1,5 @@
 const School = require("../../models/School");
+const { getAllowedSubjectsForClass } = require("../../utils/subjectHelper");
 
 // Get all schools (superadmin only)
 const getAllSchools = async (req, res) => {
@@ -86,14 +87,7 @@ const getSubjectsForClass = async (req, res) => {
     if (!cls) return res.status(404).json({ msg: "Class not found" });
 
     // 1️⃣ Collect subjects: class-specific + by-range + global
-    const subjectsByRange = school.subjectsByClass.filter(r =>
-      isClassInRange(classLevel, r.fromClass, r.toClass, school.classLevels)
-    );
-    let subjects = Array.from(new Set([
-      ...(cls.subjects || []),
-      ...(subjectsByRange.flatMap(r => r.subjects || [])),
-      ...(school.subjects || [])
-    ]));
+    let subjects = getAllowedSubjectsForClass(school, classLevel);
 
     // 2️⃣ Restrict for teachers
     if (req.user.role === "teacher") {

@@ -1,6 +1,7 @@
 const Exam = require("../../models/Exam");
 const Student = require("../../models/Student");
 const School = require("../../models/School");
+const { getAllowedSubjectsForClass } = require("../../utils/subjectHelper");
 
 /**
  * Helper: compute grade & remark from school's grading system given average
@@ -104,19 +105,12 @@ const recordResult = async (req, res) => {
       if (!student) continue;
 
       // ✅ 1. Determine allowed subjects for this student based on classLevel
-      const allowedSubjects = [];
-      for (const rule of school.subjectsByClass || []) {
-        if (
-          rule.fromClass === student.classLevel ||
-          rule.toClass === student.classLevel
-        ) {
-          allowedSubjects.push(...rule.subjects);
-        }
-      }
-      // fallback to global if no mapping found
-      if (!allowedSubjects.length) {
-        allowedSubjects.push(...school.subjects);
-      }
+
+      // ...
+      const allowedSubjects = getAllowedSubjectsForClass(
+        school,
+        student.classLevel
+      );
 
       // ✅ 2. Filter/clean subjects against allowed list
       const cleanSubjects = subjects
