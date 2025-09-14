@@ -244,7 +244,7 @@ const SchoolSettings = ({ onNext }) => {
           </section>
 
           {/* Class Levels */}
-          {false && (
+          {(
             <section>
               <h2 className="text-gray-200 font-semibold mb-3 border-b border-gray-700 pb-1">
                 Class Levels & Streams

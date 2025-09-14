@@ -9,14 +9,19 @@ const PersonnelEditPage = () => {
   const queryClient = useQueryClient();
 
   // Fetch personnel
-  const {
-    data: personnelData,
-    isLoading,
-    isError,
-  } = useQuery({
+  const { data: personnelData, isLoading, isError } = useQuery({
     queryKey: ["personnel", id],
     queryFn: async () => {
       const res = await api.get(`/personel/id/${id}`);
+      return res.data;
+    },
+  });
+
+  // Fetch school data (subjects + classLevels)
+  const { data: schoolData = {}, isLoading: schoolLoading } = useQuery({
+    queryKey: ["schoolData"],
+    queryFn: async () => {
+      const res = await api.get("/schools/me");
       return res.data;
     },
   });
@@ -37,34 +42,30 @@ const PersonnelEditPage = () => {
       queryClient.refetchQueries(["teachers"]);
       queryClient.refetchQueries(["bursars"]);
       queryClient.refetchQueries(["personnel", id]);
-      navigate("/dashboard",  {replace: true});
+      navigate("/dashboard", { replace: true });
     },
   });
 
-  if (isLoading)
-    return <p className="text-white p-6">Loading personnel data...</p>;
+  if (isLoading || schoolLoading)
+    return <p className="text-white p-6">Loading data...</p>;
   if (isError)
     return <p className="text-red-500 p-6">❌ Error fetching personnel</p>;
   if (!personnel) return null;
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-
     let updated = { ...personnel };
 
-    // Handle checkbox
     if (type === "checkbox") updated[name] = checked;
     else updated[name] = value;
 
     // Handle role changes
     if (name === "role") {
       if (originalRole === "teacher" && value !== "teacher") {
-        // Switching from teacher → bursar/admin → clear teacher-specific fields
         updated.subjects = [];
         updated.isClassTeacher = false;
-        updated.classLevel = null;
+        updated.classLevel = "";
       } else if (originalRole !== "teacher" && value === "teacher") {
-        // Switching from non-teacher → teacher → set defaults if needed
         updated.subjects = updated.subjects || [];
         updated.isClassTeacher = updated.isClassTeacher || false;
         updated.classLevel = updated.classLevel || "";
@@ -73,6 +74,22 @@ const PersonnelEditPage = () => {
     }
 
     setPersonnel(updated);
+  };
+
+  const handleAddSubject = (subject) => {
+    if (!personnel.subjects.includes(subject)) {
+      setPersonnel((prev) => ({
+        ...prev,
+        subjects: [...prev.subjects, subject],
+      }));
+    }
+  };
+
+  const handleRemoveSubject = (subject) => {
+    setPersonnel((prev) => ({
+      ...prev,
+      subjects: prev.subjects.filter((s) => s !== subject),
+    }));
   };
 
   const handleSubmit = (e) => {
@@ -123,8 +140,7 @@ const PersonnelEditPage = () => {
             <option value="bursar">Bursar</option>
           </select>
 
-          {/* --- Teacher-specific fields --- */}
-          {/* --- Teacher-specific fields --- */}
+          {/* Teacher-specific fields */}
           {personnel.role === "teacher" && (
             <>
               {/* Subjects */}
@@ -138,36 +154,32 @@ const PersonnelEditPage = () => {
                     {subj}
                     <button
                       type="button"
-                      onClick={() =>
-                        setPersonnel((prev) => ({
-                          ...prev,
-                          subjects: prev.subjects.filter((s) => s !== subj),
-                        }))
-                      }
+                      onClick={() => handleRemoveSubject(subj)}
                       className="ml-1 text-xs text-red-200 hover:text-red-400"
                     >
                       ✕
                     </button>
                   </span>
                 ))}
-                <input
-                  type="text"
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === "," || e.key === " ") {
-                      e.preventDefault();
-                      const value = e.target.value.trim();
-                      if (value && !personnel.subjects.includes(value)) {
-                        setPersonnel((prev) => ({
-                          ...prev,
-                          subjects: [...prev.subjects, value],
-                        }));
-                      }
-                      e.target.value = "";
-                    }
+
+                {/* Dropdown for adding subjects */}
+                <select
+                  onChange={(e) => {
+                    if (!e.target.value) return;
+                    handleAddSubject(e.target.value);
+                    e.target.value = "";
                   }}
-                  placeholder="Type subject and press Enter"
                   className="flex-1 min-w-[120px] p-2 rounded bg-gray-700 text-white"
-                />
+                >
+                  <option value="">Select subject...</option>
+                  {schoolData.subjects
+                    .filter((s) => !personnel.subjects.includes(s))
+                    .map((s) => (
+                      <option key={s} value={s}>
+                        {s}
+                      </option>
+                    ))}
+                </select>
               </div>
 
               {/* Class Teacher */}
@@ -182,14 +194,19 @@ const PersonnelEditPage = () => {
               </label>
 
               {personnel.isClassTeacher && (
-                <input
-                  type="text"
+                <select
                   name="classLevel"
                   value={personnel.classLevel || ""}
                   onChange={handleChange}
-                  placeholder="Class Level e.g., Grade 5"
                   className="w-full p-2 rounded bg-gray-800 text-white text-sm"
-                />
+                >
+                  <option value="">Select Class Level</option>
+                  {schoolData.classLevels?.map((level) => (
+                    <option key={level.name} value={level.name}>
+                      {level.name}
+                    </option>
+                  ))}
+                </select>
               )}
             </>
           )}

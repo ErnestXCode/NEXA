@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import api from "../../api/axios";
 import Papa from "papaparse";
 import * as XLSX from "xlsx";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 const studentObj = {
   middleName: "",
@@ -12,7 +12,6 @@ const studentObj = {
   gender: "",
   dateOfBirth: "",
   classLevel: "",
- 
 };
 
 const normalizeStudentData = (data) => {
@@ -20,13 +19,9 @@ const normalizeStudentData = (data) => {
     middleName: s.middleName?.trim() || "",
     firstName: s.firstName?.trim() || "",
     lastName: s.lastName?.trim() || "",
-    gender:
-      s.gender?.toLowerCase() === "female"
-        ? "female"
-        : "male", // default to male if unknown
+    gender: s.gender?.toLowerCase() === "female" ? "female" : "male", // default to male if unknown
     dateOfBirth: s.dateOfBirth || "",
     classLevel: s.classLevel?.trim() || "",
-
   }));
 };
 
@@ -34,6 +29,15 @@ const StudentForm = ({ onNext }) => {
   const [student, setStudent] = useState(studentObj);
   const [file, setFile] = useState(null);
   const [message, setMessage] = useState("");
+
+  const { data: schoolData = {} } = useQuery({
+    queryKey: ["schoolData"],
+    queryFn: async () => {
+      const res = await api.get("/schools/me");
+      return res.data || {};
+    },
+  });
+  const classLevels = schoolData.classLevels || [];
 
   const queryClient = useQueryClient();
 
@@ -181,25 +185,31 @@ const StudentForm = ({ onNext }) => {
           </p>
         </div>
 
-        <div className="col-span-1 flex flex-col">
-          <label className="text-gray-300 text-sm mb-1">Class Level</label>
-          <input
-            placeholder="e.g. Grade 4"
-            name="classLevel"
-            value={student.classLevel}
-            onChange={handleChange}
-            className="p-2 rounded bg-gray-800 text-white"
-          />
-        </div>
+      
+          <div className="col-span-1 flex flex-col">
+            <label className="text-gray-300 text-sm mb-1">Class Level</label>
+            <select
+              name="classLevel"
+              value={student.classLevel}
+              onChange={handleChange}
+              className="p-2 rounded bg-gray-800 text-white"
+            >
+              <option value="">Select Class Level</option>
+              {classLevels.map((level) => (
+                <option key={level.name} value={level.name}>
+                  {level.name}
+                </option>
+              ))}
+            </select>
+          </div>
+      
 
-       
         {/* Bulk upload */}
         <div className="col-span-2">
           <p className="text-gray-400 text-sm mb-1">
             Expected columns for CSV / Excel: <br />
             <strong>
-              firstName,middleName, lastName, gender, dateOfBirth,
-              classLevel
+              firstName,middleName, lastName, gender, dateOfBirth, classLevel
             </strong>
           </p>
           <label className="block text-gray-300 text-sm mb-1">

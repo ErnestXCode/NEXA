@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import api from "../../api/axios";
 import Papa from "papaparse";
 import * as XLSX from "xlsx";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 const registerObj = {
   role: "",
@@ -23,6 +23,17 @@ const PersonelForm = ({ onNext }) => {
   const [canRegister, setCanRegister] = useState(false);
   const [message, setMessage] = useState("");
   const [showTeacherModal, setShowTeacherModal] = useState(false);
+
+  const { data: schoolData = {}, isLoading: subjectsLoading } = useQuery({
+  queryKey: ["schoolData"],
+  queryFn: async () => {
+    const res = await api.get("/schools/me");
+    return res.data || {};
+  },
+});
+const schoolSubjects = schoolData.subjects || [];
+const classLevels = schoolData.classLevels || [];
+
 
   const queryClient = useQueryClient();
 
@@ -238,6 +249,25 @@ const PersonelForm = ({ onNext }) => {
               </select>
             </div>
           </div>
+          {registerDetails.role === "teacher" && (
+  <div className="mt-2 p-3 bg-gray-800 rounded text-gray-200 text-sm">
+    <p>
+      <strong>Subjects:</strong>{" "}
+      {registerDetails.subjects.length
+        ? registerDetails.subjects.join(", ")
+        : "None"}
+    </p>
+    {registerDetails.isClassTeacher && (
+      <p>
+        <strong>Class Teacher of:</strong>{" "}
+        {registerDetails.classLevel || "Not set"}
+      </p>
+    )}
+  </div>
+)}
+
+
+          
 
           <button
             type="submit"
@@ -260,6 +290,7 @@ const PersonelForm = ({ onNext }) => {
               {message}
             </p>
           )}
+          
         </form>
 
         {/* --- Bulk Upload --- */}
@@ -285,7 +316,10 @@ const PersonelForm = ({ onNext }) => {
             <p>Notes:</p>
             <ul className="list-disc list-inside">
               <li>Boolean fields and gender fields are case-insensitive</li>
-              <li>If a teacher is not a class teacher, leave <code>classLevel</code> empty</li>
+              <li>
+                If a teacher is not a class teacher, leave{" "}
+                <code>classLevel</code> empty
+              </li>
               <li>Subjects should be comma-separated: Math, English</li>
             </ul>
           </div>
@@ -322,6 +356,7 @@ const PersonelForm = ({ onNext }) => {
             </h3>
 
             {/* Subjects input */}
+            {/* Subjects input */}
             <label className="block text-gray-300 mb-2">Subjects</label>
             <div className="flex flex-wrap gap-2 mb-3">
               {registerDetails.subjects.map((subj, idx) => (
@@ -339,12 +374,34 @@ const PersonelForm = ({ onNext }) => {
                   </button>
                 </span>
               ))}
-              <input
-                type="text"
-                onKeyDown={handleSubjectKeyDown}
-                placeholder="Type subject and press Enter"
-                className="flex-1 min-w-[120px] p-2 rounded bg-gray-700 text-white"
-              />
+
+              {subjectsLoading ? (
+                <p className="text-gray-400">Loading subjects...</p>
+              ) : (
+                <select
+                  onChange={(e) => {
+                    if (!e.target.value) return;
+                    const value = e.target.value;
+                    if (!registerDetails.subjects.includes(value)) {
+                      setRegisterDetails((prev) => ({
+                        ...prev,
+                        subjects: [...prev.subjects, value],
+                      }));
+                    }
+                    e.target.value = "";
+                  }}
+                  className="flex-1 min-w-[120px] p-2 rounded bg-gray-700 text-white"
+                >
+                  <option value="">Select subject...</option>
+                  {schoolSubjects
+                    .filter((s) => !registerDetails.subjects.includes(s))
+                    .map((s) => (
+                      <option key={s} value={s}>
+                        {s}
+                      </option>
+                    ))}
+                </select>
+              )}
             </div>
 
             {/* Class teacher */}
@@ -358,19 +415,25 @@ const PersonelForm = ({ onNext }) => {
               Is Class Teacher?
             </label>
 
-            {registerDetails.isClassTeacher && (
-              <div className="mb-3">
-                <label className="block text-gray-300 mb-1">Class Level</label>
-                <input
-                  type="text"
-                  name="classLevel"
-                  value={registerDetails.classLevel}
-                  onChange={handleChange}
-                  className="p-2 rounded bg-gray-700 text-white w-full"
-                  placeholder="e.g., Grade 5"
-                />
-              </div>
-            )}
+           {registerDetails.isClassTeacher && (
+  <div className="mb-3">
+    <label className="block text-gray-300 mb-1">Class Level</label>
+    <select
+      name="classLevel"
+      value={registerDetails.classLevel || ""}
+      onChange={handleChange}
+      className="p-2 rounded bg-gray-700 text-white w-full"
+    >
+      <option value="">Select Class Level</option>
+      {classLevels.map((level) => (
+        <option key={level.name} value={level.name}>
+          {level.name}
+        </option>
+      ))}
+    </select>
+  </div>
+)}
+
 
             <div className="flex justify-end gap-3">
               <button
