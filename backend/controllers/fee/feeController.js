@@ -22,7 +22,8 @@ const getAllFees = async (req, res) => {
 // POST /fees
 const addFee = async (req, res) => {
   try {
-    const { studentId, term, academicYear, amount, type, method, note } = req.body;
+    const { studentId, term, academicYear, amount, type, method, note } =
+      req.body;
 
     if (!academicYear) {
       return res.status(400).json({ message: "academicYear is required" });
@@ -43,21 +44,37 @@ const addFee = async (req, res) => {
 
       // Calculate expected fee for this term
       let expected = 0;
-      const classDef = school.classLevels.find(c => c.name === student.classLevel);
+      const classDef = school.classLevels.find(
+        (c) => c.name === student.classLevel
+      );
       if (classDef?.feeExpectations?.length) {
-        expected = classDef.feeExpectations.find(f => f.term === currentTerm)?.amount || 0;
+        expected =
+          classDef.feeExpectations.find((f) => f.term === currentTerm)
+            ?.amount || 0;
       }
       if (!expected) {
-        expected = school.feeExpectations.find(f => f.term === currentTerm)?.amount || 0;
+        expected =
+          school.feeExpectations.find((f) => f.term === currentTerm)?.amount ||
+          0;
       }
 
       // Total already paid for this term
       const paid = student.payments
-        .filter(p => p.term === currentTerm && p.academicYear === academicYear && p.category === "payment")
+        .filter(
+          (p) =>
+            p.term === currentTerm &&
+            p.academicYear === academicYear &&
+            p.category === "payment"
+        )
         .reduce((sum, p) => sum + p.amount, 0);
 
       const adjustments = student.payments
-        .filter(p => p.term === currentTerm && p.academicYear === academicYear && p.category === "adjustment")
+        .filter(
+          (p) =>
+            p.term === currentTerm &&
+            p.academicYear === academicYear &&
+            p.category === "adjustment"
+        )
         .reduce((sum, p) => sum + p.amount, 0);
 
       const balance = expected - paid + adjustments;
@@ -98,15 +115,17 @@ const addFee = async (req, res) => {
 
     await student.save();
 
-    res.status(201).json({ message: "Payment recorded", amountApplied: amount - remainingAmount });
+    res
+      .status(201)
+      .json({
+        message: "Payment recorded",
+        amountApplied: amount - remainingAmount,
+      });
   } catch (err) {
     console.error("addFee error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
-
-
-
 
 // --- Get student fee history ---
 const getStudentFees = async (req, res) => {
@@ -149,7 +168,9 @@ const getOutstandingFees = async (req, res) => {
     const { academicYear } = req.query;
 
     if (!academicYear) {
-      return res.status(400).json({ message: "academicYear query is required" });
+      return res
+        .status(400)
+        .json({ message: "academicYear query is required" });
     }
 
     const student = await Student.findById(studentId).populate("school");
@@ -160,8 +181,9 @@ const getOutstandingFees = async (req, res) => {
     const school = await School.findById(student.school);
 
     // 1️⃣ expected amount for this class & year
-    const classExpectations = school.classLevels
-      .find((cl) => cl.name === student.classLevel)?.feeExpectations || [];
+    const classExpectations =
+      school.classLevels.find((cl) => cl.name === student.classLevel)
+        ?.feeExpectations || [];
 
     const expected = classExpectations
       .filter((e) => e.academicYear === academicYear)
@@ -261,8 +283,88 @@ const getTotalOutstanding = async (req, res) => {
   }
 };
 
+const editFee = async (req, res) => {
+  try {
+    const { feeId } = req.params;
+    const { amount, type, method, note } = req.body;
 
+    const fee = await Fee.findById(feeId);
+    if (!fee) return res.status(404).json({ message: "Fee not found" });
 
+    const student = await Student.findById(fee.student);
+    if (!student) return res.status(404).json({ message: "Student not found" });
 
+    // --- Update student.payments ---
+    const paymentEntry = student.payments.find(
+      (p) =>
+        p.academicYear === fee.academicYear &&
+        p.term === fee.term &&
+        p.amount === fee.amount &&
+        p.category === fee.type
+    );
+    if (paymentEntry) {
+      if (amount !== undefined) paymentEntry.amount = amount;
+      if (type !== undefined) paymentEntry.category = type;
+      if (method !== undefined) paymentEntry.type = method;
+      if (note !== undefined) paymentEntry.note = note;
+    }
 
-module.exports = { addFee, getStudentFees, getOutstandingFees, getAllFees, getTotalOutstanding };
+    await student.save();
+
+    // --- Update Fee record ---
+    if (amount !== undefined) fee.amount = amount;
+    if (type !== undefined) fee.type = type;
+    if (method !== undefined) fee.method = method;
+    if (note !== undefined) fee.note = note;
+    
+
+    await fee.save();
+
+    res.status(200).json(fee);
+  } catch (err) {
+    console.error("editFee error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// --- Delete a fee/payment ---
+const deleteFee = async (req, res) => {
+  try {
+    const { feeId } = req.params;
+
+    const fee = await Fee.findById(feeId);
+    if (!fee) return res.status(404).json({ message: "Fee not found" });
+
+    const student = await Student.findById(fee.student);
+    if (!student) return res.status(404).json({ message: "Student not found" });
+
+    // Remove from student.payments
+    student.payments = student.payments.filter(
+      (p) =>
+        !(
+          p.academicYear === fee.academicYear &&
+          p.term === fee.term &&
+          p.amount === fee.amount &&
+          p.category === fee.type
+        )
+    );
+
+    await student.save();
+    await fee.deleteOne();
+
+    res.status(200).json({ message: "Fee deleted" });
+  } catch (err) {
+    console.error("deleteFee error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+module.exports = {
+  addFee,
+  getStudentFees,
+  getOutstandingFees,
+  getAllFees,
+  editFee, 
+  deleteFee,
+  getTotalOutstanding,
+};

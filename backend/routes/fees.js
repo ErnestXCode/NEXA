@@ -6,7 +6,9 @@ const {
   getStudentFees,
   getOutstandingFees,
   getAllFees,
-  getTotalOutstanding
+  getTotalOutstanding,
+  deleteFee,
+  editFee
 } = require("../controllers/fee/feeController");
 
 const { getLedger } = require("../controllers/fee/ledgerController");
@@ -23,5 +25,9 @@ router.get("/total-outstanding", verifyJWT, authorize(["admin", "teacher", "burs
 router.get("/ledger/:studentId", verifyJWT, authorize(["superadmin", "admin", "bursar"]), getLedger);
 
 router.get("/student/:studentId", verifyJWT, authorize(["superadmin", "admin", "bursar"]), getStudentFees);
+
+router.patch("/:feeId", verifyJWT, authorize(["bursar", "admin"]), editFee);
+router.delete("/:feeId", verifyJWT, authorize(["bursar", "admin"]), deleteFee);
+
 
 module.exports = router;
