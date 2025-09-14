@@ -1,52 +1,21 @@
 add sreams to classes  
 polish parents portal and make it mobile friendly
-
 badge and notifications dont work well 
 optimize backend
-
-editable 'reason' for  attendance
-
-fee history where you can edit ayments instead of balances , way to enter balances in bulk , like john has a balance of this so far , in case we get to schools in the middle of a term 
-
 parent to use bursars number....get rid of that part cleverly
-
 drop down in selecting subjects for teachers , na Class Level pia 
-
 messages take too long to show , mtu anaexa dhani hana message , i guess, maybe its coz its dev
-
 chronic absentees to be for the classteachers class only, not all school, only principal should see something like that, 
-
- hide from admin (marking attendance)
-
-
+hide from admin (marking attendance)
 just let it use a year instead of year / year  + 1, its weird--
-
 remove the grading system and research the new one 
-
 when next year starts, change classLevels of current students plus 1
-
 add pricing 
-
 make inputs better , maybe regex
-
-a way to set if new year or term has set in or something
-
-
+a way to set if new year or term has set in or something, in schoolSetting or maybe let it be automated 
 dont just hide pages , make them innaccesiible to te invalid or unauthorized roles
-
-
-fee, exam, attendace , check if they are using term
-
 be able to enter students balances from excel or something
-
 loading could look better
-
-messages and badge on app and something
-
-
-a way to make overpayment to go to the next term or year
-
-
-parent bulk is noticably slow
-
-carry over fees to next year
+a way to make overpayment to go to the next year
+parent bulk is noticably slow, optimistuc update maybe , or sow updating on bucket
+Got it — so no paid external services for MVP. For free options: for emails you can use EmailJS (free tier) or Gmail SMTP with limits, and for notifications you can use Firebase Cloud Messaging free tier or Pusher Beams free tier for push notifications. They’re limited but fine for small schools in MVP.

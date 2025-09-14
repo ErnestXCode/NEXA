@@ -1,6 +1,7 @@
 const express = require("express");
 const verifyJWT = require("../middleware/verifyJWT");
 const controller = require("../controllers/attendance/attendanceController");
+const Attendance = require("../models/Attendance");
 
 const router = express.Router();
 
@@ -20,5 +21,23 @@ router.get("/absentees", verifyJWT, controller.getAbsenteeListRange);
 
 // Admin: stats per class for a date range
 router.get("/class-stats", verifyJWT, controller.getClassStats);
+
+router.patch("/:id", verifyJWT, async (req, res) => {
+  const { reason } = req.body;
+
+  console.log(req.params.id)
+  try {
+    const updated = await Attendance.findByIdAndUpdate(
+      req.params.id,
+      { reason },
+      { new: true }
+    );
+    res.json(updated);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ msg: "Failed to update reason" });
+  }
+});
+
 
 module.exports = router;
