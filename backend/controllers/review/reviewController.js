@@ -1,4 +1,5 @@
 const Review = require("../../models/Review");
+const User = require("../../models/User");
 
 // Get all reviews
 const getAllReviews = async (req, res) => {
@@ -14,11 +15,17 @@ const getAllReviews = async (req, res) => {
 // Add a review (optional: only logged-in users)
 const addReview = async (req, res) => {
   try {
-    const { name, message, rating, avatar } = req.body;
-    if (!name || !message) return res.status(400).json({ message: "Name and message required" });
+    const { message, rating, avatar } = req.body;
+    if (!message) return res.status(400).json({ message: "message required" });
+
+    const reviewer = await User.findById(req.user.userId).populate({
+      path: "school",
+      select: "name",
+    })
 
     const review = new Review({
-      name,
+      name: reviewer.name,
+      school: reviewer.school.name,
       message,
       rating,
       avatar,

@@ -6,8 +6,6 @@ const {
   getStudentFees,
   getOutstandingFees,
   getAllFees,
-  bulkUploadFees,
-  bulkUploadStudentsWithFees,
   getTotalOutstanding
 } = require("../controllers/fee/feeController");
 
@@ -34,19 +32,7 @@ router.get(
   getTotalOutstanding
 );
 
-router.post(
-  "/bulk-upload",
-  verifyJWT,
-  authorize(["admin", "bursar"]),
-  bulkUploadFees
-);
 
-router.post(
-  "/bulk-upload-with-fees",
-  verifyJWT,
-  authorize(["admin", "bursar"]),
-  bulkUploadStudentsWithFees
-);
 
 // Get student fee history
 router.get(

@@ -123,7 +123,7 @@ const ReviewPage = () => {
                         className="w-12 h-12 rounded-full object-cover"
                       />
                     )}
-                    <p className="font-semibold text-white">{r.name}</p>
+                    <p className="font-semibold text-white">{r.name}, {r.school}</p>
                     <div className="flex ml-auto space-x-1">
                       {Array(5)
                         .fill(0)

@@ -1,12 +1,12 @@
-classes, stream and grading  
+add sreams to classes  
 polish parents portal and make it mobile friendly
 
 badge and notifications dont work well 
-
 optimize backend
 
 editable 'reason' for  attendance
-editable fees page amounts
+
+fee history where you can edit ayments instead of balances , way to enter balances in bulk , like john has a balance of this so far , in case we get to schools in the middle of a term 
 
 parent to use bursars number....get rid of that part cleverly
 
@@ -16,23 +16,24 @@ messages take too long to show , mtu anaexa dhani hana message , i guess, maybe 
 
 chronic absentees to be for the classteachers class only, not all school, only principal should see something like that, 
 
-admin marking attendance is affecting others 
+ hide from admin (marking attendance)
 
-make the view attendance always default to one week before today
-
-
-reviews to use user datanot input data, stuff like school, and role, and name , only review is written and stars 
 
 just let it use a year instead of year / year  + 1, its weird--
 
 remove the grading system and research the new one 
+
+when next year starts, change classLevels of current students plus 1
+
+add pricing 
+
+make inputs better , maybe regex
 
 a way to set if new year or term has set in or something
 
 
 dont just hide pages , make them innaccesiible to te invalid or unauthorized roles
 
-make outstnding fees come up faster
 
 fee, exam, attendace , check if they are using term
 
@@ -44,3 +45,6 @@ messages and badge on app and something
 
 
 a way to make overpayment to go to the next term or year
+
+
+parent bulk is noticably slow

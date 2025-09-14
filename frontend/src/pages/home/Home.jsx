@@ -162,7 +162,7 @@ const Home = () => {
                 />
               )}
               <p className="italic mb-3 text-gray-300">“{t.message}”</p>
-              <p className="font-semibold text-white">— {t.name}</p>
+              <p className="font-semibold text-white">— {t.name}, {t.school}</p>
               {t.rating && <p className="text-yellow-400 mt-2">⭐ {t.rating}</p>}
             </div>
           ))}
