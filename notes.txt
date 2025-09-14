@@ -3,11 +3,9 @@ polish parents portal and make it mobile friendly
 badge and notifications dont work well 
 optimize backend
 parent to use bursars number....get rid of that part cleverly
-drop down in selecting subjects for teachers , na Class Level pia 
+make caching full proof for entire app
 messages take too long to show , mtu anaexa dhani hana message , i guess, maybe its coz its dev
 chronic absentees to be for the classteachers class only, not all school, only principal should see something like that, 
-hide from admin (marking attendance)
-just let it use a year instead of year / year  + 1, its weird--
 remove the grading system and research the new one 
 when next year starts, change classLevels of current students plus 1
 add pricing 
