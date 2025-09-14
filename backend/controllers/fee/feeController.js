@@ -28,44 +28,83 @@ const addFee = async (req, res) => {
       return res.status(400).json({ message: "academicYear is required" });
     }
 
-    const student = await Student.findById(studentId);
+    const student = await Student.findById(studentId).populate("school");
     if (!student) {
       return res.status(404).json({ message: "Student not found" });
     }
 
-    const fee = new Fee({
-      student: studentId,
-      term,
-      academicYear, // ✅ always stored
-      classLevel: student.classLevel,
-      amount,
-      type,
-      method,
-      note,
-      school: student.school,
-      handledBy: req.user.userId,
-    });
+    const school = student.school;
+    const termOrder = ["Term 1", "Term 2", "Term 3"];
+    let remainingAmount = amount;
+    let termIndex = termOrder.indexOf(term);
 
-    await fee.save();
+    while (remainingAmount > 0 && termIndex < termOrder.length) {
+      const currentTerm = termOrder[termIndex];
 
-    // also push into student.payments for quick lookups
-    student.payments.push({
-      academicYear,
-      term,
-      amount,
-      category: type,
-      type: method,
-      note,
-    });
+      // Calculate expected fee for this term
+      let expected = 0;
+      const classDef = school.classLevels.find(c => c.name === student.classLevel);
+      if (classDef?.feeExpectations?.length) {
+        expected = classDef.feeExpectations.find(f => f.term === currentTerm)?.amount || 0;
+      }
+      if (!expected) {
+        expected = school.feeExpectations.find(f => f.term === currentTerm)?.amount || 0;
+      }
+
+      // Total already paid for this term
+      const paid = student.payments
+        .filter(p => p.term === currentTerm && p.academicYear === academicYear && p.category === "payment")
+        .reduce((sum, p) => sum + p.amount, 0);
+
+      const adjustments = student.payments
+        .filter(p => p.term === currentTerm && p.academicYear === academicYear && p.category === "adjustment")
+        .reduce((sum, p) => sum + p.amount, 0);
+
+      const balance = expected - paid + adjustments;
+
+      const applyAmount = Math.min(remainingAmount, balance > 0 ? balance : 0);
+      const overpay = remainingAmount - applyAmount;
+
+      // Record fee for this term
+      const fee = new Fee({
+        student: studentId,
+        term: currentTerm,
+        academicYear,
+        classLevel: student.classLevel,
+        amount: applyAmount,
+        type,
+        method,
+        note,
+        school: student.school,
+        handledBy: req.user.userId,
+        balanceAfter: balance - applyAmount,
+        carryOver: overpay > 0,
+      });
+
+      await fee.save();
+
+      student.payments.push({
+        academicYear,
+        term: currentTerm,
+        amount: applyAmount,
+        category: type,
+        type: method,
+        note,
+      });
+
+      remainingAmount = overpay;
+      termIndex++; // move to next term if there is rollover
+    }
 
     await student.save();
 
-    res.status(201).json(fee);
+    res.status(201).json({ message: "Payment recorded", amountApplied: amount - remainingAmount });
   } catch (err) {
     console.error("addFee error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
+
 
 
 

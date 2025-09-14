@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import api from "../../api/axios";
 import * as XLSX from "xlsx";
+import AddFeeBulkPage from "./AddFeeBulkPage";
 
 const AddFeePage = () => {
   const [students, setStudents] = useState([]);
@@ -186,7 +187,7 @@ const AddFeePage = () => {
           </form>
         </div>
 
-      
+      <AddFeeBulkPage />
     </div>
   );
 };

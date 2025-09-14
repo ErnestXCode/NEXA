@@ -9,37 +9,19 @@ const {
   getTotalOutstanding
 } = require("../controllers/fee/feeController");
 
+const { getLedger } = require("../controllers/fee/ledgerController");
+const { addFeesBulk } = require("../controllers/fee/bulkController");
+
 const router = express.Router();
 
-// Add payment / adjustment (Bursar/Admin)
 router.post("/", verifyJWT, authorize(["bursar", "admin"]), addFee);
+router.post("/bulk", verifyJWT, authorize(["bursar", "admin"]), addFeesBulk);
 
-// Get all fees
 router.get("/", verifyJWT, authorize(["bursar", "admin"]), getAllFees);
+router.get("/outstanding", verifyJWT, authorize(["admin", "teacher", "bursar"]), getOutstandingFees);
+router.get("/total-outstanding", verifyJWT, authorize(["admin", "teacher", "bursar"]), getTotalOutstanding);
+router.get("/ledger/:studentId", verifyJWT, authorize(["superadmin", "admin", "bursar"]), getLedger);
 
-// Get total outstanding fees (dynamic)
-router.get(
-  "/outstanding",
-  verifyJWT,
-  authorize(["admin", "teacher", "bursar"]),
-  getOutstandingFees
-);
-
-router.get(
-  "/total-outstanding",
-  verifyJWT,
-  authorize(["admin", "teacher", "bursar"]),
-  getTotalOutstanding
-);
-
-
-
-// Get student fee history
-router.get(
-  "/student/:studentId",
-  verifyJWT,
-  authorize(["superadmin", "admin", "bursar"]),
-  getStudentFees
-);
+router.get("/student/:studentId", verifyJWT, authorize(["superadmin", "admin", "bursar"]), getStudentFees);
 
 module.exports = router;
