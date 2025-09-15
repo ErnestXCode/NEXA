@@ -6,26 +6,38 @@ const School = require("../../models/School");
 
 const addFeesBulk = async (req, res) => {
   try {
-    const { rows } = req.body; 
-    // rows = parsed Excel/CSV [{ firstName, middleName, lastName, classLevel, academicYear, term, balance }]
+    const { rows, academicYear } = req.body;
+    // rows = [{ firstName, middleName, lastName, classLevel, term, balance }]
 
     if (!Array.isArray(rows) || rows.length === 0) {
       return res.status(400).json({ message: "No records provided" });
     }
 
+    if (!academicYear) {
+      return res.status(400).json({ message: "academicYear is required" });
+    }
+
     const requester = req.user;
     const schoolId = requester.school;
+
+    const school = await School.findById(schoolId);
+    if (!school) return res.status(404).json({ message: "School not found" });
 
     let created = 0;
     let skipped = [];
 
     for (const r of rows) {
-      const { firstName, middleName, lastName, classLevel, academicYear, term, balance } = r;
+      const { firstName, middleName, lastName, classLevel, term, balance } = r;
+
+      if (!firstName || !lastName || !classLevel || !term || balance == null) {
+        skipped.push({ ...r, reason: "Missing required fields" });
+        continue;
+      }
 
       const student = await Student.findOne({
-        firstName: firstName?.trim(),
+        firstName: firstName.trim(),
         middleName: middleName?.trim(),
-        lastName: lastName?.trim(),
+        lastName: lastName.trim(),
         classLevel,
         school: schoolId,
       });
@@ -35,37 +47,16 @@ const addFeesBulk = async (req, res) => {
         continue;
       }
 
-      // expected fees for this student & term
-      const school = await School.findById(schoolId);
-      let expected = 0;
-
-      const classDef = school.classLevels.find(c => c.name === classLevel);
-      if (classDef?.feeExpectations?.length) {
-        expected = classDef.feeExpectations.find(
-          f => f.term === term && f.academicYear === academicYear
-        )?.amount || 0;
-      }
-      if (!expected) {
-        expected = school.feeExpectations.find(
-          f => f.term === term && f.academicYear === academicYear
-        )?.amount || 0;
-      }
-
-      // payment-style trick: insert adjustment so that balance matches
-      const adjustmentAmount = expected - balance; 
-      // if balance = expected, adjustment = 0
-      // if balance < expected, adjustment = positive (student owes)
-      // if balance > expected, adjustment = negative (overpayment)
-
+      // --- Create adjustment to match uploaded balance ---
       const fee = new Fee({
         student: student._id,
         term,
         academicYear,
         classLevel,
-        amount: adjustmentAmount,
-        type: "adjustment", 
-        method: "cash",
-        note: "Bulk import starting balance",
+        amount: balance, // for onboarding, amount = balance directly
+        type: "adjustment",
+        method: "system",
+        note: "Bulk onboarding balance",
         school: schoolId,
         handledBy: requester.userId,
         balanceAfter: balance,
@@ -73,25 +64,25 @@ const addFeesBulk = async (req, res) => {
 
       await fee.save();
 
+      // --- Update student's payments ledger ---
       student.payments.push({
         academicYear,
         term,
-        amount: adjustmentAmount,
+        amount: balance,
         category: "adjustment",
-        type: "cash",
-        note: "Bulk import starting balance",
+        type: "system",
+        note: "Bulk onboarding balance",
       });
 
       await student.save();
       created++;
     }
 
-    res.status(201).json({
-      message: "Bulk balances imported",
+    return res.status(201).json({
+      message: "Bulk onboarding completed",
       created,
       skipped,
     });
-
   } catch (err) {
     console.error("addFeesBulk error:", err);
     res.status(500).json({ message: "Server error", error: err.message });
