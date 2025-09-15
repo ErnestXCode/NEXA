@@ -109,110 +109,106 @@ const getAllFees = async (req, res) => {
 // --- Add payment / adjustment ---
 // --- Add payment / adjustment ---
 // POST /fees
+function getExpectedFee(student, school, term, academicYear) {
+  let expectations = [];
+
+  // 1. Check feeRules (range of classes)
+  if (Array.isArray(school.feeRules) && school.feeRules.length) {
+    const idx = school.classLevels.findIndex(c => c.name === student.classLevel);
+
+    const matched = school.feeRules.filter(rule => {
+      if (rule.academicYear !== academicYear || rule.term !== term) return false;
+      const fromIdx = school.classLevels.findIndex(c => c.name === rule.fromClass);
+      const toIdx = school.classLevels.findIndex(c => c.name === rule.toClass);
+      if (idx === -1 || fromIdx === -1 || toIdx === -1) return false;
+      const min = Math.min(fromIdx, toIdx);
+      const max = Math.max(fromIdx, toIdx);
+      return idx >= min && idx <= max;
+    });
+
+    if (matched.length) expectations = matched;
+  }
+
+  // 2. If none, check class-level feeExpectations
+  if (!expectations.length) {
+    const classDef = (school.classLevels || []).find(c => c.name === student.classLevel);
+    if (classDef && Array.isArray(classDef.feeExpectations)) {
+      expectations = classDef.feeExpectations.filter(f => f.term === term && f.academicYear === academicYear);
+    }
+  }
+
+  // 3. If none, check school-wide feeExpectations
+  if (!expectations.length) {
+    expectations = (school.feeExpectations || []).filter(f => f.term === term && f.academicYear === academicYear);
+  }
+
+  return expectations[0]?.amount || 0;
+}
+
+/**
+ * 🔹 POST /fees/add
+ * Add a payment or adjustment for a student
+ */
 const addFee = async (req, res) => {
   try {
-    const { studentId, term, academicYear, amount, type, method, note } =
-      req.body;
-
-    if (!academicYear) {
-      return res.status(400).json({ message: "academicYear is required" });
-    }
+    const { studentId, term, academicYear, amount, type, method, note } = req.body;
+    const handledBy = req.user.userId; // assume auth middleware attaches user
+    if (!academicYear) return res.status(400).json({ message: "academicYear is required" });
 
     const student = await Student.findById(studentId).populate("school");
-    if (!student) {
-      return res.status(404).json({ message: "Student not found" });
-    }
+    if (!student) return res.status(404).json({ message: "Student not found" });
 
     const school = student.school;
-    const termOrder = ["Term 1", "Term 2", "Term 3"];
-    let remainingAmount = amount;
-    let termIndex = termOrder.indexOf(term);
+    const expected = getExpectedFee(student, school, term, academicYear);
 
-    while (remainingAmount > 0 && termIndex < termOrder.length) {
-      const currentTerm = termOrder[termIndex];
+    // 💰 sum payments + adjustments for this term
+    const payments = student.payments
+      .filter(p => p.term === term && p.academicYear === academicYear && p.category === "payment")
+      .reduce((sum, p) => sum + p.amount, 0);
 
-      // Calculate expected fee for this term
-      let expected = 0;
-      const classDef = school.classLevels.find(
-        (c) => c.name === student.classLevel
-      );
-      if (classDef?.feeExpectations?.length) {
-        expected =
-          classDef.feeExpectations.find((f) => f.term === currentTerm)
-            ?.amount || 0;
-      }
-      if (!expected) {
-        expected =
-          school.feeExpectations.find((f) => f.term === currentTerm)?.amount ||
-          0;
-      }
+    const adjustments = student.payments
+      .filter(p => p.term === term && p.academicYear === academicYear && p.category === "adjustment")
+      .reduce((sum, p) => sum + p.amount, 0);
 
-      // Total already paid for this term
-      const paid = student.payments
-        .filter(
-          (p) =>
-            p.term === currentTerm &&
-            p.academicYear === academicYear &&
-            p.category === "payment"
-        )
-        .reduce((sum, p) => sum + p.amount, 0);
+    const currentBalance = expected - payments + adjustments;
 
-      const adjustments = student.payments
-        .filter(
-          (p) =>
-            p.term === currentTerm &&
-            p.academicYear === academicYear &&
-            p.category === "adjustment"
-        )
-        .reduce((sum, p) => sum + p.amount, 0);
+    // Create Fee record
+    const fee = await Fee.create({
+      student: student._id,
+      term,
+      academicYear,
+      classLevel: student.classLevel,
+      amount,
+      type,
+      method,
+      note,
+      handledBy,
+      school: school._id,
+      balanceAfter: currentBalance - amount, // approximate
+    });
 
-      const balance = expected - paid + adjustments;
-
-      const applyAmount = Math.min(remainingAmount, balance > 0 ? balance : 0);
-      const overpay = remainingAmount - applyAmount;
-
-      // Record fee for this term
-      const fee = new Fee({
-        student: studentId,
-        term: currentTerm,
-        academicYear,
-        classLevel: student.classLevel,
-        amount: applyAmount,
-        type,
-        method,
-        note,
-        school: student.school,
-        handledBy: req.user.userId,
-        balanceAfter: balance - applyAmount,
-        carryOver: overpay > 0,
-      });
-
-      await fee.save();
-
-      student.payments.push({
-        academicYear,
-        term: currentTerm,
-        amount: applyAmount,
-        category: type,
-        type: method,
-        note,
-      });
-
-      remainingAmount = overpay;
-      termIndex++; // move to next term if there is rollover
-    }
+    // Push to Student.payments history
+    student.payments.push({
+      academicYear,
+      term,
+      amount,
+      category: type, // "payment" or "adjustment"
+      type: method,
+      note,
+    });
 
     await student.save();
 
-    res
-      .status(201)
-      .json({
-        message: "Payment recorded",
-        amountApplied: amount - remainingAmount,
-      });
+    return res.status(201).json({
+      message: "Fee recorded successfully",
+      fee,
+      studentId: student._id,
+      balanceBefore: currentBalance,
+      balanceAfter: currentBalance - amount,
+    });
   } catch (err) {
     console.error("addFee error:", err);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: "Server error", error: err.message });
   }
 };
 
