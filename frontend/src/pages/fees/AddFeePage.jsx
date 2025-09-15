@@ -17,7 +17,6 @@ const AddFeePage = () => {
     note: "",
   });
 
-
   const feeTypes = ["payment", "adjustment"];
   const methods = ["cash", "mpesa", "card"];
   const terms = ["Term 1", "Term 2", "Term 3"];
@@ -71,12 +70,10 @@ const AddFeePage = () => {
     }
   };
 
-  
-  
-
   return (
-    <div className="overflow-y-hidden p-6 bg-gray-950 text-gray-100 flex justify-center ">
-      
+    <div className="overflow-y-hidden p-6 bg-gray-950 text-gray-100">
+      <div className="grid md:grid-cols-2 gap-6">
+        
         {/* --- Single Student Payment Form --- */}
         <div className="p-6 bg-gray-900 rounded-md shadow-md flex flex-col">
           <h2 className="text-2xl font-bold mb-6 text-center">
@@ -187,7 +184,14 @@ const AddFeePage = () => {
           </form>
         </div>
 
-      <AddFeeBulkPage />
+        {/* --- Bulk Onboarding Upload --- */}
+        <div className="p-6 bg-gray-900 rounded-md shadow-md flex flex-col">
+          <h2 className="text-2xl font-bold mb-6 text-center">
+            Bulk Import Balances (Onboarding)
+          </h2>
+          <AddFeeBulkPage />
+        </div>
+      </div>
     </div>
   );
 };

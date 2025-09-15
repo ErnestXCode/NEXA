@@ -2,6 +2,104 @@ const Fee = require("../../models/Fee");
 const Student = require("../../models/Student");
 const School = require("../../models/School");
 
+
+
+const addFeesBulk = async (req, res) => {
+  try {
+    const { rows } = req.body; 
+    // rows = parsed Excel/CSV [{ firstName, middleName, lastName, classLevel, academicYear, term, balance }]
+
+    if (!Array.isArray(rows) || rows.length === 0) {
+      return res.status(400).json({ message: "No records provided" });
+    }
+
+    const requester = req.user;
+    const schoolId = requester.school;
+
+    let created = 0;
+    let skipped = [];
+
+    for (const r of rows) {
+      const { firstName, middleName, lastName, classLevel, academicYear, term, balance } = r;
+
+      const student = await Student.findOne({
+        firstName: firstName?.trim(),
+        middleName: middleName?.trim(),
+        lastName: lastName?.trim(),
+        classLevel,
+        school: schoolId,
+      });
+
+      if (!student) {
+        skipped.push({ ...r, reason: "Student not found" });
+        continue;
+      }
+
+      // expected fees for this student & term
+      const school = await School.findById(schoolId);
+      let expected = 0;
+
+      const classDef = school.classLevels.find(c => c.name === classLevel);
+      if (classDef?.feeExpectations?.length) {
+        expected = classDef.feeExpectations.find(
+          f => f.term === term && f.academicYear === academicYear
+        )?.amount || 0;
+      }
+      if (!expected) {
+        expected = school.feeExpectations.find(
+          f => f.term === term && f.academicYear === academicYear
+        )?.amount || 0;
+      }
+
+      // payment-style trick: insert adjustment so that balance matches
+      const adjustmentAmount = expected - balance; 
+      // if balance = expected, adjustment = 0
+      // if balance < expected, adjustment = positive (student owes)
+      // if balance > expected, adjustment = negative (overpayment)
+
+      const fee = new Fee({
+        student: student._id,
+        term,
+        academicYear,
+        classLevel,
+        amount: adjustmentAmount,
+        type: "adjustment", 
+        method: "cash",
+        note: "Bulk import starting balance",
+        school: schoolId,
+        handledBy: requester.userId,
+        balanceAfter: balance,
+      });
+
+      await fee.save();
+
+      student.payments.push({
+        academicYear,
+        term,
+        amount: adjustmentAmount,
+        category: "adjustment",
+        type: "cash",
+        note: "Bulk import starting balance",
+      });
+
+      await student.save();
+      created++;
+    }
+
+    res.status(201).json({
+      message: "Bulk balances imported",
+      created,
+      skipped,
+    });
+
+  } catch (err) {
+    console.error("addFeesBulk error:", err);
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+
+
+
 // --- Get all fees ---
 const getAllFees = async (req, res) => {
   try {
@@ -363,6 +461,7 @@ module.exports = {
   addFee,
   getStudentFees,
   getOutstandingFees,
+  addFeesBulk,
   getAllFees,
   editFee, 
   deleteFee,

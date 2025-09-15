@@ -40,7 +40,7 @@ const PersistLogin = ({hideNav}) => {
     };
   }, [accessToken, dispatch]);
 
-  if (loading) return <p>Loading...</p>;
+  if (loading) return <p className="p-6 text-gray-400">Loading...</p>;;
 
   return (
     <>

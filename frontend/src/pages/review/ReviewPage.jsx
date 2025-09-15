@@ -5,7 +5,6 @@ import api from "../../api/axios";
 const ReviewPage = () => {
   const [reviews, setReviews] = useState([]);
   const [form, setForm] = useState({
-    name: "",
     message: "",
     rating: 5,
   });
@@ -34,7 +33,7 @@ const ReviewPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.name || !form.message) return alert("Name and message are required");
+    if (!form.message) return alert("message is required");
 
     setSubmitting(true);
     try {
@@ -60,15 +59,6 @@ const ReviewPage = () => {
             onSubmit={handleSubmit}
             className="space-y-4"
           >
-            <input
-              type="text"
-              name="name"
-              placeholder="Your Name"
-              value={form.name}
-              onChange={handleChange}
-              required
-              className="w-full p-4 rounded-xl bg-gray-800 border border-gray-700 focus:border-indigo-500 focus:ring focus:ring-indigo-500/30 outline-none transition"
-            />
             <textarea
               name="message"
               placeholder="Your Review"

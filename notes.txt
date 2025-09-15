@@ -1,41 +1,22 @@
-add sreams to classes  
-polish parents portal and make it mobile friendly
-loading could look better
-badge and notifications dont work well 
-optimize backend
-parent to use bursars number....get rid of that part cleverly
-make caching full proof for entire app
-messages take too long to show , mtu anaexa dhani hana message , i guess, maybe its coz its dev
 chronic absentees to be for the classteachers class only, not all school, only principal should see something like that, 
-remove the grading system and research the new one 
-when next year starts, change classLevels of current students plus 1
-add pricing 
-make inputs better , maybe regex
-dont just hide pages , make them innaccesiible to te invalid or unauthorized roles
+
 be able to enter students balances from excel or something
+
+when next year starts, change classLevels of current students plus 1
 a way to make overpayment to go to the next year
-parent bulk is noticably slow, optimistuc update maybe , or sow updating on bucket
-for emails you can use EmailJS (free tier) or Gmail SMTP with limits, and for notifications you can use Firebase Cloud Messaging free tier or Pusher Beams free tier for push notifications. 
 
-add  to report card, email , address 
+dont just hide pages , make them innaccesiible to te invalid or unauthorized roles
 
-add rating too
+messages take too long to show , mtu anaexa dhani hana message , i guess, maybe its coz its dev
+badge and notifications dont work well 
 
-a way to notify parents when next term will begin , and when school is closing
+make caching full proof for entire app, tanstack
 
+parent to use bursars number....get rid of that part cleverly
+polish parents portal and make it mobile friendly
 
-
-Here's a breakdown of the grading levels and their ranges:
-
-    Exceeding Expectation (EE) (80%-100%):
-    The student performs well above the expected standard for their learning stage. 
-
-Meeting Expectation (ME) (50%-79%):
-The student's performance meets the expected standard. 
-Approaching Expectation (AE) (40%-49%):
-The student is progressing towards the expected standard but needs some support. 
-Below Expectation (BE) (0%-39%):
-The student's performance is below the expected standards, requiring significant support to catch up. 
-
-
+optimize backend
+add streams to classes  
+add pricing 
 add continuous assessment reports later
+for emails you can use EmailJS (free tier) or Gmail SMTP with limits, and for notifications you can use Firebase Cloud Messaging free tier or Pusher Beams free tier for push notifications. 

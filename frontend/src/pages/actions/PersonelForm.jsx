@@ -17,6 +17,23 @@ const registerObj = {
   classLevel: "",
 };
 
+const patterns = {
+  name: /^[a-zA-Z\s]{3,50}$/,
+  email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+  phoneNumber: /^(?:\+254|0)(?:7|1)\d{8}$/, // Kenyan phone format: 07XXXXXXXX, 01XXXXXXXX, +2547XXXXXXXX, +2541XXXXXXXX
+  password: /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*?&]{6,}$/, // min 6, letter+digit
+};
+
+const errorMessages = {
+  name: "Name should be 3–50 letters only.",
+  email: "Enter a valid email (e.g. example@school.ac.ke).",
+  phoneNumber:
+    "Phone must start with +2547 / +2541 / 07 / 01 and have 10 digits (e.g. 0712345678).",
+  password:
+    "Password must be at least 6 characters with at least 1 letter and 1 number.",
+  confirmPass: "Passwords do not match.",
+};
+
 const PersonelForm = ({ onNext }) => {
   const [registerDetails, setRegisterDetails] = useState(registerObj);
   const [file, setFile] = useState(null);
@@ -25,19 +42,17 @@ const PersonelForm = ({ onNext }) => {
   const [showTeacherModal, setShowTeacherModal] = useState(false);
 
   const { data: schoolData = {}, isLoading: subjectsLoading } = useQuery({
-  queryKey: ["schoolData"],
-  queryFn: async () => {
-    const res = await api.get("/schools/me");
-    return res.data || {};
-  },
-});
-const schoolSubjects = schoolData.subjects || [];
-const classLevels = schoolData.classLevels || [];
-
+    queryKey: ["schoolData"],
+    queryFn: async () => {
+      const res = await api.get("/schools/me");
+      return res.data || {};
+    },
+  });
+  const schoolSubjects = schoolData.subjects || [];
+  const classLevels = schoolData.classLevels || [];
 
   const queryClient = useQueryClient();
 
-  // Mutation
   const addPersonnelMutation = useMutation({
     mutationFn: async (data) => {
       if (data.bulk) {
@@ -55,38 +70,29 @@ const classLevels = schoolData.classLevels || [];
     },
   });
 
-  // Input change
+  const validateField = (field, value) => {
+    if (field === "confirmPass") {
+      return value === registerDetails.password;
+    }
+    if (!patterns[field]) return true;
+    return patterns[field].test(value);
+  };
+
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     let updated = { ...registerDetails };
-    if (type === "checkbox") updated[name] = checked;
-    else updated[name] = value;
-
+    updated[name] = type === "checkbox" ? checked : value;
     setRegisterDetails(updated);
 
-    setCanRegister(
+    const allValid =
       updated.role &&
-        updated.name &&
-        updated.email &&
-        updated.phoneNumber &&
-        updated.password &&
-        updated.confirmPass === updated.password
-    );
-  };
+      validateField("name", updated.name) &&
+      validateField("email", updated.email) &&
+      validateField("phoneNumber", updated.phoneNumber) &&
+      validateField("password", updated.password) &&
+      validateField("confirmPass", updated.confirmPass);
 
-  // Subjects input (chip style)
-  const handleSubjectKeyDown = (e) => {
-    if (e.key === "Enter" || e.key === "," || e.key === " ") {
-      e.preventDefault();
-      const value = e.target.value.trim();
-      if (value && !registerDetails.subjects.includes(value)) {
-        setRegisterDetails((prev) => ({
-          ...prev,
-          subjects: [...prev.subjects, value],
-        }));
-      }
-      e.target.value = "";
-    }
+    setCanRegister(allValid);
   };
 
   const removeSubject = (subj) => {
@@ -102,7 +108,6 @@ const classLevels = schoolData.classLevels || [];
     e.preventDefault();
     try {
       if (file) {
-        // Bulk upload
         let parsedData = [];
         if (file.name.endsWith(".csv")) {
           parsedData = await new Promise((resolve) => {
@@ -119,34 +124,24 @@ const classLevels = schoolData.classLevels || [];
           parsedData = XLSX.utils.sheet_to_json(sheet);
         } else return alert("Unsupported file type");
 
-        // Normalize
         parsedData = parsedData.map((row) => {
-          // booleans
           row.isClassTeacher =
             row.isClassTeacher &&
             row.isClassTeacher.toString().toLowerCase() === "true";
-
-          // classLevel only if isClassTeacher
           if (!row.isClassTeacher) row.classLevel = "";
-
-          // role
           if (row.role) row.role = row.role.toLowerCase().trim();
-
-          // subjects array
           if (row.subjects) {
             row.subjects = row.subjects
               .split(",")
               .map((s) => s.trim())
               .filter(Boolean);
           } else row.subjects = [];
-
           return row;
         });
 
         await addPersonnelMutation.mutateAsync({ bulk: parsedData });
         setMessage("✅ Bulk upload successful!");
       } else {
-        // Single registration
         const { confirmPass, ...dataToSend } = registerDetails;
         await addPersonnelMutation.mutateAsync({ single: dataToSend });
         setMessage("✅ Single personnel added!");
@@ -172,36 +167,76 @@ const classLevels = schoolData.classLevels || [];
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Name */}
             <div>
-              <label className="block mb-1">Name</label>
+              <label className="block mb-1">Full Name</label>
               <input
                 name="name"
                 value={registerDetails.name}
                 onChange={handleChange}
-                className="p-2 rounded bg-gray-800 text-white w-full"
+                className={`p-2 rounded w-full ${
+                  registerDetails.name === ""
+                    ? "bg-gray-800 text-white"
+                    : validateField("name", registerDetails.name)
+                    ? "bg-gray-800 text-white"
+                    : "bg-red-600 text-white"
+                }`}
               />
+              {!validateField("name", registerDetails.name) &&
+                registerDetails.name && (
+                  <p className="text-red-400 text-sm mt-1">
+                    {errorMessages.name}
+                  </p>
+                )}
             </div>
 
+            {/* Email */}
             <div>
               <label className="block mb-1">Email</label>
               <input
                 name="email"
                 value={registerDetails.email}
                 onChange={handleChange}
-                className="p-2 rounded bg-gray-800 text-white w-full"
+                className={`p-2 rounded w-full ${
+                  registerDetails.email === ""
+                    ? "bg-gray-800 text-white"
+                    : validateField("email", registerDetails.email)
+                    ? "bg-gray-800 text-white"
+                    : "bg-red-600 text-white"
+                }`}
               />
+              {!validateField("email", registerDetails.email) &&
+                registerDetails.email && (
+                  <p className="text-red-400 text-sm mt-1">
+                    {errorMessages.email}
+                  </p>
+                )}
             </div>
 
+            {/* Phone */}
             <div>
               <label className="block mb-1">Phone Number</label>
               <input
                 name="phoneNumber"
                 value={registerDetails.phoneNumber}
                 onChange={handleChange}
-                className="p-2 rounded bg-gray-800 text-white w-full"
+                className={`p-2 rounded w-full ${
+                  registerDetails.phoneNumber === ""
+                    ? "bg-gray-800 text-white"
+                    : validateField("phoneNumber", registerDetails.phoneNumber)
+                    ? "bg-gray-800 text-white"
+                    : "bg-red-600 text-white"
+                }`}
               />
+              {!validateField("phoneNumber", registerDetails.phoneNumber) &&
+                registerDetails.phoneNumber && (
+                  <p className="text-red-400 text-sm mt-1">
+                    {errorMessages.phoneNumber}
+                  </p>
+                )}
             </div>
 
+            {/* Password */}
             <div>
               <label className="block mb-1">Password</label>
               <input
@@ -209,10 +244,23 @@ const classLevels = schoolData.classLevels || [];
                 name="password"
                 value={registerDetails.password}
                 onChange={handleChange}
-                className="p-2 rounded bg-gray-800 text-white w-full"
+                className={`p-2 rounded w-full ${
+                  registerDetails.password === ""
+                    ? "bg-gray-800 text-white"
+                    : validateField("password", registerDetails.password)
+                    ? "bg-gray-800 text-white"
+                    : "bg-red-600 text-white"
+                }`}
               />
+              {!validateField("password", registerDetails.password) &&
+                registerDetails.password && (
+                  <p className="text-red-400 text-sm mt-1">
+                    {errorMessages.password}
+                  </p>
+                )}
             </div>
 
+            {/* Confirm Password */}
             <div className="md:col-span-2">
               <label className="block mb-1">Confirm Password</label>
               <input
@@ -223,13 +271,20 @@ const classLevels = schoolData.classLevels || [];
                 className={`p-2 rounded w-full ${
                   registerDetails.confirmPass === ""
                     ? "bg-gray-800 text-white"
-                    : registerDetails.confirmPass === registerDetails.password
+                    : validateField("confirmPass", registerDetails.confirmPass)
                     ? "bg-green-600 text-white"
                     : "bg-red-600 text-white"
                 }`}
               />
+              {!validateField("confirmPass", registerDetails.confirmPass) &&
+                registerDetails.confirmPass && (
+                  <p className="text-red-400 text-sm mt-1">
+                    {errorMessages.confirmPass}
+                  </p>
+                )}
             </div>
 
+            {/* Role */}
             <div className="md:col-span-2">
               <label className="block mb-1">Role</label>
               <select
@@ -249,25 +304,23 @@ const classLevels = schoolData.classLevels || [];
               </select>
             </div>
           </div>
+
           {registerDetails.role === "teacher" && (
-  <div className="mt-2 p-3 bg-gray-800 rounded text-gray-200 text-sm">
-    <p>
-      <strong>Subjects:</strong>{" "}
-      {registerDetails.subjects.length
-        ? registerDetails.subjects.join(", ")
-        : "None"}
-    </p>
-    {registerDetails.isClassTeacher && (
-      <p>
-        <strong>Class Teacher of:</strong>{" "}
-        {registerDetails.classLevel || "Not set"}
-      </p>
-    )}
-  </div>
-)}
-
-
-          
+            <div className="mt-2 p-3 bg-gray-800 rounded text-gray-200 text-sm">
+              <p>
+                <strong>Subjects:</strong>{" "}
+                {registerDetails.subjects.length
+                  ? registerDetails.subjects.join(", ")
+                  : "None"}
+              </p>
+              {registerDetails.isClassTeacher && (
+                <p>
+                  <strong>Class Teacher of:</strong>{" "}
+                  {registerDetails.classLevel || "Not set"}
+                </p>
+              )}
+            </div>
+          )}
 
           <button
             type="submit"
@@ -290,7 +343,6 @@ const classLevels = schoolData.classLevels || [];
               {message}
             </p>
           )}
-          
         </form>
 
         {/* --- Bulk Upload --- */}
@@ -300,7 +352,6 @@ const classLevels = schoolData.classLevels || [];
         >
           <h2 className="text-2xl font-bold text-white mb-2">Bulk Upload</h2>
 
-          {/* Instructions */}
           <div className="bg-gray-800 p-3 rounded mb-3 text-gray-300 text-sm">
             <p>Expected headers for bulk upload:</p>
             <ul className="list-disc list-inside">
@@ -312,15 +363,6 @@ const classLevels = schoolData.classLevels || [];
               <li>isClassTeacher (true / false)</li>
               <li>classLevel (only required if isClassTeacher is true)</li>
               <li>subjects (comma-separated, only for teachers)</li>
-            </ul>
-            <p>Notes:</p>
-            <ul className="list-disc list-inside">
-              <li>Boolean fields and gender fields are case-insensitive</li>
-              <li>
-                If a teacher is not a class teacher, leave{" "}
-                <code>classLevel</code> empty
-              </li>
-              <li>Subjects should be comma-separated: Math, English</li>
             </ul>
           </div>
 
@@ -355,8 +397,6 @@ const classLevels = schoolData.classLevels || [];
               Teacher Details
             </h3>
 
-            {/* Subjects input */}
-            {/* Subjects input */}
             <label className="block text-gray-300 mb-2">Subjects</label>
             <div className="flex flex-wrap gap-2 mb-3">
               {registerDetails.subjects.map((subj, idx) => (
@@ -404,7 +444,6 @@ const classLevels = schoolData.classLevels || [];
               )}
             </div>
 
-            {/* Class teacher */}
             <label className="flex items-center gap-2 mb-3 text-gray-300">
               <input
                 type="checkbox"
@@ -415,25 +454,24 @@ const classLevels = schoolData.classLevels || [];
               Is Class Teacher?
             </label>
 
-           {registerDetails.isClassTeacher && (
-  <div className="mb-3">
-    <label className="block text-gray-300 mb-1">Class Level</label>
-    <select
-      name="classLevel"
-      value={registerDetails.classLevel || ""}
-      onChange={handleChange}
-      className="p-2 rounded bg-gray-700 text-white w-full"
-    >
-      <option value="">Select Class Level</option>
-      {classLevels.map((level) => (
-        <option key={level.name} value={level.name}>
-          {level.name}
-        </option>
-      ))}
-    </select>
-  </div>
-)}
-
+            {registerDetails.isClassTeacher && (
+              <div className="mb-3">
+                <label className="block text-gray-300 mb-1">Class Level</label>
+                <select
+                  name="classLevel"
+                  value={registerDetails.classLevel || ""}
+                  onChange={handleChange}
+                  className="p-2 rounded bg-gray-700 text-white w-full"
+                >
+                  <option value="">Select Class Level</option>
+                  {classLevels.map((level) => (
+                    <option key={level.name} value={level.name}>
+                      {level.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             <div className="flex justify-end gap-3">
               <button

@@ -30,7 +30,7 @@ const ParentForm = ({ onNext }) => {
     queryFn: () => api.get("/students").then((res) => res.data),
   });
 
-  // Filter students based on search
+  // Filter students
   useEffect(() => {
     if (!studentSearch) return setFilteredStudents([]);
     const filtered = students.filter((s) =>
@@ -96,7 +96,7 @@ const ParentForm = ({ onNext }) => {
   // File change
   const handleFileChange = (e) => setFile(e.target.files[0]);
 
-  // Normalize bulk row using student full names
+  // Normalize bulk row
   const normalizeParentRow = (row, students) => {
     const normalized = { ...row };
     normalized.name = normalized.name?.trim() || "";
@@ -110,7 +110,6 @@ const ParentForm = ({ onNext }) => {
         .map((c) => c.trim())
         .filter(Boolean)
         .map((childName) => {
-          // match by full name: "firstName lastName"
           const student = students.find(
             (s) =>
               `${s.firstName} ${s.lastName}`.toLowerCase() ===
@@ -148,9 +147,7 @@ const ParentForm = ({ onNext }) => {
           parsedData = XLSX.utils.sheet_to_json(sheet);
         } else return alert("Unsupported file type");
 
-        // Normalize rows
         parsedData = parsedData.map((row) => normalizeParentRow(row, students));
-
         await addParentMutation.mutateAsync({ bulk: parsedData });
         setMessage("✅ Bulk upload successful!");
         setFile(null);
@@ -178,7 +175,9 @@ const ParentForm = ({ onNext }) => {
             Add Single Parent
           </h2>
 
+          {/* Inputs */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Name */}
             <div>
               <label className="block mb-1">Name</label>
               <input
@@ -188,7 +187,7 @@ const ParentForm = ({ onNext }) => {
                 className="p-2 rounded bg-gray-800 text-white w-full"
               />
             </div>
-
+            {/* Email */}
             <div>
               <label className="block mb-1">Email</label>
               <input
@@ -198,7 +197,7 @@ const ParentForm = ({ onNext }) => {
                 className="p-2 rounded bg-gray-800 text-white w-full"
               />
             </div>
-
+            {/* Phone */}
             <div>
               <label className="block mb-1">Phone Number</label>
               <input
@@ -208,7 +207,7 @@ const ParentForm = ({ onNext }) => {
                 className="p-2 rounded bg-gray-800 text-white w-full"
               />
             </div>
-
+            {/* Password */}
             <div>
               <label className="block mb-1">Password</label>
               <input
@@ -219,7 +218,7 @@ const ParentForm = ({ onNext }) => {
                 className="p-2 rounded bg-gray-800 text-white w-full"
               />
             </div>
-
+            {/* Confirm */}
             <div className="md:col-span-2">
               <label className="block mb-1">Confirm Password</label>
               <input
@@ -236,7 +235,6 @@ const ParentForm = ({ onNext }) => {
                 }`}
               />
             </div>
-
             {/* Children */}
             <div className="md:col-span-2">
               <label className="block mb-1">Children</label>
@@ -284,18 +282,20 @@ const ParentForm = ({ onNext }) => {
             </div>
           </div>
 
+          {/* Button */}
           <button
             type="submit"
-            disabled={!canRegister}
+            disabled={!canRegister || addParentMutation.isPending}
             className={`mt-6 py-2 rounded font-semibold w-full ${
-              canRegister
+              canRegister && !addParentMutation.isPending
                 ? "bg-white text-black hover:bg-gray-200"
                 : "bg-gray-500 cursor-not-allowed"
             }`}
           >
-            Add Parent
+            {addParentMutation.isPending ? "Adding Parent..." : "Add Parent"}
           </button>
 
+          {/* Message */}
           {message && (
             <p
               className={`${
@@ -316,7 +316,6 @@ const ParentForm = ({ onNext }) => {
             Bulk Upload
           </h2>
 
-          {/* Hint */}
           <div className="bg-gray-800 p-3 rounded mb-3 text-gray-300 text-sm">
             <p>Expected headers for bulk upload:</p>
             <ul className="list-disc list-inside">
@@ -328,7 +327,7 @@ const ParentForm = ({ onNext }) => {
             </ul>
             <p>Notes:</p>
             <ul className="list-disc list-inside">
-              <li>Child names must match students exactly: e.g., "Kamau Njogu"</li>
+              <li>Child names must match students exactly</li>
               <li>If a child cannot be found, it will be ignored</li>
             </ul>
           </div>
@@ -342,14 +341,14 @@ const ParentForm = ({ onNext }) => {
           {file && <p className="text-gray-300 mt-2">Selected file: {file.name}</p>}
           <button
             type="submit"
-            disabled={!file}
+            disabled={!file || addParentMutation.isPending}
             className={`mt-4 py-2 rounded font-semibold w-full ${
-              file
+              file && !addParentMutation.isPending
                 ? "bg-white text-black hover:bg-gray-200"
                 : "bg-gray-500 cursor-not-allowed"
             }`}
           >
-            Upload File
+            {addParentMutation.isPending ? "Uploading..." : "Upload File"}
           </button>
         </form>
       </div>

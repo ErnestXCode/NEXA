@@ -52,7 +52,7 @@ const HomeRedirect = () => {
   const { accessToken } = useSelector((state) => state.auth);
 
   // Wait until PersistLogin has finished loading
-  if (accessToken === undefined) return null; // or a spinner
+  if (accessToken === undefined) return <p className="p-6 text-gray-400">Loading...</p>;; // or a spinner
 
   return accessToken ? <Navigate to="/dashboard" replace /> : <Home />;
 };
@@ -87,6 +87,8 @@ function App() {
             <Route path="/feedback" element={<Feedback />} />
             <Route path="/dashboard">
               <Route index element={<Dashboard />} />
+
+             
               <Route path="fees" element={<FeesPage />} />
               <Route path="fees/add" element={<AddFeePage />} />
               <Route
