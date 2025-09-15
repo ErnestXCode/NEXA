@@ -10,8 +10,8 @@ const School = require("../../models/School");
 function drawResultsTable(doc, er, school) {
   const startX = 50;
   let y = doc.y + 10;
- const colWidths = [160, 70, 120, 175]; // total = 515
-// Subject, Marks, Performance Level, Remark
+  const colWidths = [160, 70, 120, 175]; // total = 515
+  // Subject, Marks, Performance Level, Remark
 
   // --- Table headers
   doc.font("Helvetica-Bold").fontSize(12);
@@ -112,10 +112,7 @@ function drawSummaryTable(doc, er) {
 
   // Values
   doc.font("Helvetica").fontSize(13);
-  const values = [
-    er.total?.toString() || "-",
-    er.average?.toFixed(2) || "-",
-  ];
+  const values = [er.total?.toString() || "-", er.average?.toFixed(2) || "-"];
   let y = startY + rowHeight;
   x = startX;
   doc
@@ -156,30 +153,37 @@ async function generateStudentReport(student, exam, school, positionText) {
       }
 
       doc
-        .fontSize(20)
-        .font("Helvetica-Bold")
-        .text(school.name || "School Name", 0, 35, { align: "center" });
+  .fontSize(20)
+  .font("Helvetica-Bold")
+  .text(school.name || "School Name", 50, 35, { width: 500, align: "center" });
+
 
       // Add address, phone, email if available
-      doc.fontSize(10);
-      if (school.address) doc.text(school.address, { align: "center" });
-      if (school.phone) doc.text(`Tel: ${school.phone}`, { align: "center" });
-      if (school.email) doc.text(`Email: ${school.email}`, { align: "center" });
+   doc.fontSize(10);
+if (school.address)
+  doc.text(school.address, 50, doc.y, { width: 500, align: "center" });
+if (school.phone)
+  doc.text(`Tel: ${school.phone}`, 50, doc.y, { width: 500, align: "center" });
+if (school.email)
+  doc.text(`Email: ${school.email}`, 50, doc.y, { width: 500, align: "center" });
 
-      doc.moveDown(0.5);
-      doc
-        .strokeColor("#000")
-        .lineWidth(1)
-        .moveTo(50, doc.y)
-        .lineTo(550, doc.y)
-        .stroke();
-      doc.moveDown(1);
+doc.moveDown(0.5);
+doc
+  .strokeColor("#000")
+  .lineWidth(1)
+  .moveTo(50, doc.y)
+  .lineTo(550, doc.y)
+  .stroke();
 
-      // --- Exam Title ---
-      doc
-        .fontSize(14)
-        .font("Helvetica-Bold")
-        .text(`Exam Report: ${exam.name} (${exam.term})`, { align: "center" });
+doc.moveDown(1);
+doc
+  .fontSize(14)
+  .font("Helvetica-Bold")
+  .text(`${exam.name} (${exam.term})`, 50, doc.y, {
+    width: 500,
+    align: "center",
+  });
+ 
       doc.moveDown(1.5);
 
       // --- Student Details ---
@@ -222,7 +226,12 @@ async function generateStudentReport(student, exam, school, positionText) {
           .fillColor("black")
           .fontSize(12)
           .font("Helvetica-Bold")
-          .text("Subjects & Scores", { underline: true, align: "left" });
+          .text("Subjects & Scores", 50, doc.y, {
+            width: 500, // content area = 550 - 50
+            align: "center",
+            underline: true,
+          });
+
         doc.moveDown(0.5);
 
         drawResultsTable(doc, er, school);
@@ -305,7 +314,6 @@ const downloadStudentReport = async (req, res) => {
     });
   }
 };
-
 
 /**
  * Download all reports for a class (zipped)
