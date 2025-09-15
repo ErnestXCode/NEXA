@@ -1,5 +1,6 @@
 add sreams to classes  
 polish parents portal and make it mobile friendly
+loading could look better
 badge and notifications dont work well 
 optimize backend
 parent to use bursars number....get rid of that part cleverly
@@ -10,10 +11,31 @@ remove the grading system and research the new one
 when next year starts, change classLevels of current students plus 1
 add pricing 
 make inputs better , maybe regex
-a way to set if new year or term has set in or something, in schoolSetting or maybe let it be automated 
 dont just hide pages , make them innaccesiible to te invalid or unauthorized roles
 be able to enter students balances from excel or something
-loading could look better
 a way to make overpayment to go to the next year
 parent bulk is noticably slow, optimistuc update maybe , or sow updating on bucket
-Got it — so no paid external services for MVP. For free options: for emails you can use EmailJS (free tier) or Gmail SMTP with limits, and for notifications you can use Firebase Cloud Messaging free tier or Pusher Beams free tier for push notifications. They’re limited but fine for small schools in MVP.
+for emails you can use EmailJS (free tier) or Gmail SMTP with limits, and for notifications you can use Firebase Cloud Messaging free tier or Pusher Beams free tier for push notifications. 
+
+add  to report card, email , address 
+
+add rating too
+
+a way to notify parents when next term will begin , and when school is closing
+
+
+
+Here's a breakdown of the grading levels and their ranges:
+
+    Exceeding Expectation (EE) (80%-100%):
+    The student performs well above the expected standard for their learning stage. 
+
+Meeting Expectation (ME) (50%-79%):
+The student's performance meets the expected standard. 
+Approaching Expectation (AE) (40%-49%):
+The student is progressing towards the expected standard but needs some support. 
+Below Expectation (BE) (0%-39%):
+The student's performance is below the expected standards, requiring significant support to catch up. 
+
+
+add continuous assessment reports later

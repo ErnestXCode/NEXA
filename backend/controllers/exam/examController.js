@@ -59,12 +59,12 @@ const getAllExams = async (req, res) => {
  * Upsert results for many students.
  * Accepts: { examId, studentResults: [{ studentId, subjects: [{name, score}] }, ...] }
  */
-function computeGrade(average, gradingSystem) {
+function computeCBCGrade(score, gradingSystem) {
   if (!Array.isArray(gradingSystem) || gradingSystem.length === 0) {
     gradingSystem = School.defaultGradingSystem();
   }
   for (let g of gradingSystem) {
-    if (average >= g.min && average <= g.max) {
+    if (score >= g.min && score <= g.max) {
       return { grade: g.grade, remark: g.remark || "" };
     }
   }
@@ -105,35 +105,31 @@ const recordResult = async (req, res) => {
       if (!student) continue;
 
       // ✅ 1. Determine allowed subjects for this student based on classLevel
-
-      // ...
       const allowedSubjects = getAllowedSubjectsForClass(
         school,
         student.classLevel
       );
 
-      // ✅ 2. Filter/clean subjects against allowed list
+      // ✅ 2. Filter/clean subjects against allowed list + assign CBC grade
       const cleanSubjects = subjects
         .filter((s) => allowedSubjects.includes(s.name))
-        .map((s) => ({
-          name: s.name,
-          score: typeof s.score === "number" ? s.score : Number(s.score || 0),
-        }));
+        .map((s) => {
+          const score = typeof s.score === "number" ? s.score : Number(s.score || 0);
+          const { grade, remark } = computeCBCGrade(score, gradingSystem);
+          return { name: s.name, score, grade, remark };
+        });
 
       const total = cleanSubjects.reduce((acc, s) => acc + (s.score || 0), 0);
       const average =
         cleanSubjects.length > 0 ? total / cleanSubjects.length : 0;
-      const { grade, remark } = computeGrade(average, gradingSystem);
 
       const examResultObj = {
         exam: exam._id,
         term: exam.term,
         academicYear: exam.academicYear,
-        subjects: cleanSubjects,
+        subjects: cleanSubjects, // ✅ per subject grading
         total,
         average,
-        grade,
-        remark,
       };
 
       const idx = (student.examResults || []).findIndex(
@@ -158,8 +154,7 @@ const recordResult = async (req, res) => {
         id: student._id,
         name: `${student.firstName} ${student.lastName}`,
         average,
-        grade,
-        remark,
+        total,
       });
     }
 
@@ -171,6 +166,7 @@ const recordResult = async (req, res) => {
       .json({ msg: "Error recording results", error: err.message });
   }
 };
+
 
 /**
  * GET existing saved results for an exam + classLevel

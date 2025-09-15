@@ -71,8 +71,6 @@ const RecordResultsPage = () => {
             subjects: r.subjects || [],
             total: r.total,
             average: r.average,
-            grade: r.grade,
-            remark: r.remark,
           };
         });
 
@@ -120,9 +118,6 @@ const RecordResultsPage = () => {
       const studentResults = Object.keys(results).map((id) => {
         const entry = results[id] || { subjects: [] };
         const subjectsArr = entry.subjects || [];
-
-        const total = subjectsArr.reduce((acc, s) => acc + (s.score || 0), 0);
-        const average = subjectsArr.length ? total / subjectsArr.length : 0;
 
         return {
           studentId: id,
@@ -243,27 +238,12 @@ const RecordResultsPage = () => {
                     </th>
                   ))
                 )}
-                <th className="p-2 text-left">Average</th>
-                <th className="p-2 text-left">Grade</th>
               </tr>
             </thead>
             <tbody>
               {filteredStudents.map((student) => {
                 const studentResult = results[student._id] || { subjects: [] };
                 const subjectsArr = studentResult.subjects || [];
-
-                const total = subjectsArr.reduce((acc, s) => acc + (s.score || 0), 0);
-                const average = subjectsArr.length ? total / subjectsArr.length : 0;
-                const grade =
-                  average >= 80
-                    ? "A"
-                    : average >= 70
-                    ? "B"
-                    : average >= 60
-                    ? "C"
-                    : average >= 50
-                    ? "D"
-                    : "E";
 
                 return (
                   <tr key={student._id} className="border-t border-gray-700">
@@ -301,8 +281,6 @@ const RecordResultsPage = () => {
                         </td>
                       ))
                     )}
-                    <td className="p-2">{average.toFixed(1)}</td>
-                    <td className="p-2">{grade}</td>
                   </tr>
                 );
               })}

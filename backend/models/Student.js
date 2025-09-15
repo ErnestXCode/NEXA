@@ -10,7 +10,11 @@ const studentSchema = new mongoose.Schema(
     dateOfBirth: { type: Date, required: true },
     classLevel: { type: String, required: true },
 
-    school: { type: mongoose.Schema.Types.ObjectId, ref: "School", required: true },
+    school: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "School",
+      required: true,
+    },
 
     stream: { type: String },
     subjects: [{ type: String }],
@@ -20,11 +24,23 @@ const studentSchema = new mongoose.Schema(
     payments: [
       {
         academicYear: { type: String, required: true }, // 🔹 string format 2025/2026
-        term: { type: String, enum: ["Term 1", "Term 2", "Term 3"], required: true },
+        term: {
+          type: String,
+          enum: ["Term 1", "Term 2", "Term 3"],
+          required: true,
+        },
         amount: { type: Number, required: true },
         date: { type: Date, default: Date.now },
-        category: { type: String, enum: ["payment", "adjustment"], required: true },
-        type: { type: String, enum: ["cash", "mpesa", "card", "bank"], default: "cash" },
+        category: {
+          type: String,
+          enum: ["payment", "adjustment"],
+          required: true,
+        },
+        type: {
+          type: String,
+          enum: ["cash", "mpesa", "card", "bank"],
+          default: "cash",
+        },
         note: String,
       },
     ],
@@ -33,21 +49,35 @@ const studentSchema = new mongoose.Schema(
     feeStructures: [
       {
         academicYear: { type: String, required: true },
-        term: { type: String, enum: ["Term 1", "Term 2", "Term 3"], required: true },
+        term: {
+          type: String,
+          enum: ["Term 1", "Term 2", "Term 3"],
+          required: true,
+        },
         expected: { type: Number, required: true },
       },
     ],
 
     // 📚 Exam results
+    // 📚 Exam results
     examResults: [
       {
         exam: { type: mongoose.Schema.Types.ObjectId, ref: "Exam" },
-        academicYear: { type: String }, // 🔹 added
+        academicYear: { type: String },
         term: String,
-        subjects: [{ name: String, score: Number }],
+        subjects: [
+          {
+            name: String,
+            score: Number,
+            grade: String, // 🔹 CBC grade e.g. ME1
+            remark: String, // 🔹 remark from grading system
+          },
+        ],
+        // Transitional totals (for schools still used to 8-4-4 style)
         total: Number,
         average: Number,
-        grade: String,
+        grade: String, // overall grade (optional in CBC, keep for now)
+        remark: String, // overall remark
       },
     ],
 

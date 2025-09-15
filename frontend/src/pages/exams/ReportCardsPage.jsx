@@ -24,10 +24,9 @@ const ReportCardsPage = () => {
   const [selectedClass, setSelectedClass] = useState("");
   const [results, setResults] = useState({});
 
-  // colors for charts
   const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#C71585"];
 
-  // 🔹 Fetch exams filtered by academicYear
+  // fetch exams
   useEffect(() => {
     const fetchExams = async () => {
       if (!academicYear) return;
@@ -41,7 +40,7 @@ const ReportCardsPage = () => {
     fetchExams();
   }, [academicYear]);
 
-  // 🔹 Fetch students + subjects
+  // fetch students + subjects
   useEffect(() => {
     const fetchStudents = async () => {
       try {
@@ -55,7 +54,7 @@ const ReportCardsPage = () => {
     fetchStudents();
   }, []);
 
-  // 🔹 Update subjects for selected class
+  // update subjects for selected class
   useEffect(() => {
     if (selectedClass) {
       setSubjects(subjectsByClass[selectedClass] || []);
@@ -64,7 +63,7 @@ const ReportCardsPage = () => {
     }
   }, [selectedClass, subjectsByClass]);
 
-  // 🔹 Fetch results
+  // fetch results
   useEffect(() => {
     const fetchResults = async () => {
       if (!examId || !selectedClass) return;
@@ -79,8 +78,6 @@ const ReportCardsPage = () => {
             subjects: r.subjects || [],
             total: r.total,
             average: r.average,
-            grade: r.grade,
-            remark: r.remark,
           };
         });
         setResults(mapped);
@@ -98,22 +95,27 @@ const ReportCardsPage = () => {
     (s) => selectedClass && s.classLevel === selectedClass
   );
 
-  // ================= Charts Data =================
+  // compute averages
   const studentAverages = useMemo(() => {
     return filteredStudents.map((student) => {
       const r = results[student._id];
       const avg = r?.average ?? 0;
       return {
+        id: student._id,
         name: `${student.firstName} ${student.lastName}`,
         average: avg,
       };
     });
   }, [filteredStudents, results]);
 
+  // assign positions by sorting
+  const studentRanks = useMemo(() => {
+    const sorted = [...studentAverages].sort((a, b) => b.average - a.average);
+    return sorted.map((s, idx) => ({ ...s, position: idx + 1 }));
+  }, [studentAverages]);
+
   const top3 = useMemo(() => {
-    return [...studentAverages]
-      .sort((a, b) => b.average - a.average)
-      .slice(0, 3);
+    return [...studentAverages].sort((a, b) => b.average - a.average).slice(0, 3);
   }, [studentAverages]);
 
   const subjectPerformance = useMemo(() => {
@@ -133,41 +135,31 @@ const ReportCardsPage = () => {
       });
 
       return {
-        subject: subj, // MUST match table header
+        subject: subj,
         average: count ? total / count : 0,
       };
     });
   }, [subjects, filteredStudents, results]);
 
-  const gradeCounts = useMemo(() => {
-    const counts = { A: 0, B: 0, C: 0, D: 0, E: 0 };
-    filteredStudents.forEach((student) => {
-      const grade = results[student._id]?.grade;
-      if (grade) counts[grade] = (counts[grade] || 0) + 1;
-    });
-    return Object.keys(counts).map((g) => ({
-      name: g,
-      value: counts[g],
-    }));
-  }, [filteredStudents, results]);
+ const handleDownload = async (studentId, positionText) => {
+  try {
+    const res = await api.post(
+      `/reports/student/${examId}/${studentId}`,
+      { positionText }, // 👈 send in body
+      { responseType: "blob" }
+    );
+    const url = window.URL.createObjectURL(new Blob([res.data]));
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `report-card-${studentId}.pdf`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  } catch (err) {
+    console.error("Download failed", err);
+  }
+};
 
-  // ================= Actions =================
-  const handleDownload = async (studentId) => {
-    try {
-      const res = await api.get(`/reports/student/${examId}/${studentId}`, {
-        responseType: "blob",
-      });
-      const url = window.URL.createObjectURL(new Blob([res.data]));
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", `report-card-${studentId}.pdf`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-    } catch (err) {
-      console.error("Download failed", err);
-    }
-  };
 
   const handlePrintAll = async () => {
     if (!examId || !selectedClass) return;
@@ -274,34 +266,15 @@ const ReportCardsPage = () => {
                     </th>
                   ))}
                   <th className="p-2 text-left">Average</th>
-                  <th className="p-2 text-left">Grade</th>
-                  <th className="p-2 text-left">Remark</th>
+                  <th className="p-2 text-left">Position</th>
                   <th className="p-2 text-left">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredStudents.map((student) => {
-                  const studentResult = results[student._id] || {
-                    subjects: [],
-                  };
+                {studentRanks.map((ranked) => {
+                  const student = students.find((s) => s._id === ranked.id);
+                  const studentResult = results[student._id] || { subjects: [] };
                   const subjectsArr = studentResult.subjects || [];
-                  const total = subjectsArr.reduce(
-                    (acc, s) => acc + (s.score || 0),
-                    0
-                  );
-                  const average = subjectsArr.length
-                    ? total / subjectsArr.length
-                    : 0;
-                  const grade =
-                    average >= 80
-                      ? "A"
-                      : average >= 70
-                      ? "B"
-                      : average >= 60
-                      ? "C"
-                      : average >= 50
-                      ? "D"
-                      : "E";
 
                   return (
                     <tr key={student._id} className="border-t border-gray-700">
@@ -310,16 +283,14 @@ const ReportCardsPage = () => {
                       </td>
                       {subjects.map((subj) => (
                         <td key={subj} className="p-2">
-                          {subjectsArr.find((s) => s.name === subj)?.score ??
-                            "-"}
+                          {subjectsArr.find((s) => s.name === subj)?.score ?? "-"}
                         </td>
                       ))}
-                      <td className="p-2">{average.toFixed(1)}</td>
-                      <td className="p-2">{grade}</td>
-                      <td className="p-2">{studentResult.remark || "-"}</td>
+                      <td className="p-2">{ranked.average.toFixed(1)}</td>
+                      <td className="p-2">{ranked.position}</td>
                       <td className="p-2">
                         <button
-                          onClick={() => handleDownload(student._id)}
+                          onClick={() => handleDownload(student._id, `${ranked.position} / ${studentRanks.length}`)}
                           className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded"
                         >
                           Download
@@ -332,14 +303,16 @@ const ReportCardsPage = () => {
             </table>
           </div>
 
-          {/* Charts Section */}
+          {/* Charts */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-            {/* Top 3 Students */}
+            {/* Top 3 */}
             <div className="bg-gray-900 p-4 rounded-lg shadow">
               <h3 className="text-lg font-semibold mb-2">Top 3 Students</h3>
-              <ResponsiveContainer width="100%" height={250}>
+              <ResponsiveContainer width="100%" height={600}>
                 <BarChart key={selectedClass} data={top3}>
-                  <XAxis dataKey="name" />
+                  <XAxis dataKey="name"  height={100}  interval={0}
+                    angle={-35}
+                    textAnchor="end"/>
                   <YAxis />
                   <Tooltip />
                   <Legend />
@@ -349,7 +322,7 @@ const ReportCardsPage = () => {
             </div>
 
             {/* Subject Performance */}
-            <div className="bg-gray-900 p-4 rounded-lg shadow row-span-2">
+            <div className="bg-gray-900 p-4 rounded-lg shadow">
               <h3 className="text-lg font-semibold mb-2">
                 Best Performed Subjects
               </h3>
@@ -357,47 +330,20 @@ const ReportCardsPage = () => {
                 <BarChart
                   key={selectedClass}
                   data={subjectPerformance}
-                  margin={{ top: 20, right: 20, bottom: 60, left: 20 }} // add bottom margin
+                  margin={{ top: 20, right: 20, bottom: 60, left: 20 }}
                 >
                   <XAxis
                     dataKey="subject"
                     type="category"
                     interval={0}
-                    angle={-35} // tilt more if needed
+                    angle={-35}
                     textAnchor="end"
-                    height={100} // gives extra space for labels
+                    height={100}
                   />
                   <YAxis />
                   <Tooltip />
                   <Bar dataKey="average" fill="#0088FE" />
                 </BarChart>
-              </ResponsiveContainer>
-            </div>
-
-            {/* Grade Distribution */}
-            <div className="bg-gray-900 p-4 rounded-lg shadow col-span-1">
-              <h3 className="text-lg font-semibold mb-2">Grade Distribution</h3>
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart key={selectedClass}>
-                  <Pie
-                    data={gradeCounts}
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={100}
-                    fill="#8884d8"
-                    dataKey="value"
-                    label
-                  >
-                    {gradeCounts.map((entry, index) => (
-                      <Cell
-                        key={`cell-${index}`}
-                        fill={COLORS[index % COLORS.length]}
-                      />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                  <Legend />
-                </PieChart>
               </ResponsiveContainer>
             </div>
           </div>

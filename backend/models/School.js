@@ -83,19 +83,17 @@ schoolSchema.statics.defaultFeeExpectations = function () {
 
 schoolSchema.statics.defaultGradingSystem = function () {
   return [
-    { min: 80, max: 100, grade: "A", remark: "Excellent" },
-    { min: 75, max: 79, grade: "A-", remark: "Very Good" },
-    { min: 70, max: 74, grade: "B+", remark: "Good" },
-    { min: 65, max: 69, grade: "B", remark: "Above Average" },
-    { min: 60, max: 64, grade: "B-", remark: "Average" },
-    { min: 55, max: 59, grade: "C+", remark: "Satisfactory" },
-    { min: 50, max: 54, grade: "C", remark: "Fair" },
-    { min: 45, max: 49, grade: "C-", remark: "Below Average" },
-    { min: 40, max: 44, grade: "D+", remark: "Weak" },
-    { min: 35, max: 39, grade: "D", remark: "Poor" },
-    { min: 0, max: 34, grade: "E", remark: "Fail" },
+    { min: 90, max: 100, grade: "EE1", remark: "Exceeding Expectation - High" },
+    { min: 75, max: 89, grade: "EE2", remark: "Exceeding Expectation - Low" },
+    { min: 58, max: 74, grade: "ME1", remark: "Meeting Expectation - High" },
+    { min: 41, max: 57, grade: "ME2", remark: "Meeting Expectation - Low" },
+    { min: 31, max: 40, grade: "AE1", remark: "Approaching Expectation - High" },
+    { min: 21, max: 30, grade: "AE2", remark: "Approaching Expectation - Low" },
+    { min: 11, max: 20, grade: "BE1", remark: "Below Expectation - High" },
+    { min: 1,  max: 10, grade: "BE2", remark: "Below Expectation - Low" },
   ];
 };
+
 
 schoolSchema.statics.defaultCBCLevels = function () {
   return [

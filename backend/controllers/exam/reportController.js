@@ -9,54 +9,73 @@ const School = require("../../models/School");
  */
 function drawResultsTable(doc, er, school) {
   const startX = 50;
-  const startY = doc.y + 10;
-  const rowHeight = 25;
-  const colWidths = [200, 80, 80, 150]; // Subject, Score, Grade, Remark
+  let y = doc.y + 10;
+ const colWidths = [160, 70, 120, 175]; // total = 515
+// Subject, Marks, Performance Level, Remark
 
   // --- Table headers
-  doc.rect(startX, startY, colWidths.reduce((a, b) => a + b, 0), rowHeight).stroke();
   doc.font("Helvetica-Bold").fontSize(12);
+  const headers = ["Subject", "Marks", "Performance Level", "Remark"];
 
-  const headers = ["Subject", "Score", "Grade", "Remark"];
   let x = startX;
   headers.forEach((h, i) => {
-    doc.text(h, x + 5, startY + 7);
+    doc.rect(x, y, colWidths[i], 25).stroke();
+    doc.text(h, x + 5, y + 7, { width: colWidths[i] - 10, align: "center" });
     x += colWidths[i];
   });
+  y += 25;
 
   // --- Table rows
   doc.font("Helvetica").fontSize(11);
+
   er.subjects.forEach((s, i) => {
-    const y = startY + (i + 1) * rowHeight;
+    const rowData = [
+      s.name,
+      s.score?.toString() || "-",
+      s.grade || "-", // renamed
+      s.remark || "",
+    ];
+
+    // Find max height needed for this row (based on wrapped text)
+    const heights = rowData.map((text, j) =>
+      doc.heightOfString(text, { width: colWidths[j] - 10 })
+    );
+    const rowHeight = Math.max(...heights, 25);
 
     // Alternate row background
     if (i % 2 === 0) {
-      doc.rect(startX, y, colWidths.reduce((a, b) => a + b, 0), rowHeight)
+      doc
+        .rect(
+          startX,
+          y,
+          colWidths.reduce((a, b) => a + b, 0),
+          rowHeight
+        )
         .fill("#f2f2f2")
         .stroke();
       doc.fillColor("black");
     } else {
-      doc.rect(startX, y, colWidths.reduce((a, b) => a + b, 0), rowHeight).stroke();
+      doc
+        .rect(
+          startX,
+          y,
+          colWidths.reduce((a, b) => a + b, 0),
+          rowHeight
+        )
+        .stroke();
     }
 
-    let grade = "-";
-    let remark = "";
-    if (s.score !== undefined && school.gradingSystem) {
-      const grading = school.gradingSystem.find(
-        (g) => s.score >= g.min && s.score <= g.max
-      );
-      if (grading) {
-        grade = grading.grade;
-        remark = grading.remark || "";
-      }
-    }
-
-    const rowData = [s.name, s.score?.toString() || "-", grade, remark];
+    // Draw text in each column
     let colX = startX;
     rowData.forEach((text, j) => {
-      doc.text(text, colX + 5, y + 7, { width: colWidths[j] - 10 });
+      doc.text(text, colX + 5, y + 5, {
+        width: colWidths[j] - 10,
+        align: j === 1 || j === 2 ? "center" : "left", // center Marks + Performance Level
+      });
       colX += colWidths[j];
     });
+
+    y += rowHeight;
   });
 
   doc.moveDown(2);
@@ -69,15 +88,25 @@ function drawSummaryTable(doc, er) {
   const startX = 50;
   const startY = doc.y;
   const rowHeight = 30;
-  const colWidths = [160, 160, 160]; // Total, Average, Grade
+  const colWidths = [80, 80]; // Total, Average, Grade
 
   // Headers
   doc.font("Helvetica-Bold").fontSize(12);
   let x = startX;
-  const headers = ["Total Marks", "Average", "Grade"];
-  doc.rect(startX, startY, colWidths.reduce((a, b) => a + b, 0), rowHeight).stroke();
+  const headers = ["Total Marks", "Average"];
+  doc
+    .rect(
+      startX,
+      startY,
+      colWidths.reduce((a, b) => a + b, 0),
+      rowHeight
+    )
+    .stroke();
   headers.forEach((h, i) => {
-    doc.text(h, x + 5, startY + 8, { width: colWidths[i] - 10, align: "center" });
+    doc.text(h, x + 5, startY + 8, {
+      width: colWidths[i] - 10,
+      align: "center",
+    });
     x += colWidths[i];
   });
 
@@ -86,11 +115,17 @@ function drawSummaryTable(doc, er) {
   const values = [
     er.total?.toString() || "-",
     er.average?.toFixed(2) || "-",
-    er.grade || "-",
   ];
   let y = startY + rowHeight;
   x = startX;
-  doc.rect(startX, y, colWidths.reduce((a, b) => a + b, 0), rowHeight).stroke();
+  doc
+    .rect(
+      startX,
+      y,
+      colWidths.reduce((a, b) => a + b, 0),
+      rowHeight
+    )
+    .stroke();
   values.forEach((v, i) => {
     doc.text(v, x + 5, y + 8, { width: colWidths[i] - 10, align: "center" });
     x += colWidths[i];
@@ -102,10 +137,10 @@ function drawSummaryTable(doc, er) {
 /**
  * Generate PDF for a single student
  */
-async function generateStudentReport(student, exam, school) {
+async function generateStudentReport(student, exam, school, positionText) {
   return new Promise((resolve, reject) => {
     try {
-      const doc = new PDFDocument({ margin: 40, size: 'A4' });
+      const doc = new PDFDocument({ margin: 40, size: "A4" });
       const chunks = [];
       doc.on("data", chunks.push.bind(chunks));
       doc.on("end", () => resolve(Buffer.concat(chunks)));
@@ -120,20 +155,31 @@ async function generateStudentReport(student, exam, school) {
         }
       }
 
-      doc.fontSize(20)
-         .font("Helvetica-Bold")
-         .text(school.name || "School Name", 0, 35, { align: 'center' });
+      doc
+        .fontSize(20)
+        .font("Helvetica-Bold")
+        .text(school.name || "School Name", 0, 35, { align: "center" });
 
-      if (school.address) doc.fontSize(10).text(school.address, { align: 'center' });
-      if (school.phone) doc.text(`Tel: ${school.phone}`, { align: 'center' });
+      // Add address, phone, email if available
+      doc.fontSize(10);
+      if (school.address) doc.text(school.address, { align: "center" });
+      if (school.phone) doc.text(`Tel: ${school.phone}`, { align: "center" });
+      if (school.email) doc.text(`Email: ${school.email}`, { align: "center" });
 
       doc.moveDown(0.5);
-      doc.strokeColor('#000').lineWidth(1).moveTo(50, doc.y).lineTo(550, doc.y).stroke();
+      doc
+        .strokeColor("#000")
+        .lineWidth(1)
+        .moveTo(50, doc.y)
+        .lineTo(550, doc.y)
+        .stroke();
       doc.moveDown(1);
 
       // --- Exam Title ---
-      doc.fontSize(14).font("Helvetica-Bold")
-         .text(`Exam Report: ${exam.name} (${exam.term})`, { align: "center" });
+      doc
+        .fontSize(14)
+        .font("Helvetica-Bold")
+        .text(`Exam Report: ${exam.name} (${exam.term})`, { align: "center" });
       doc.moveDown(1.5);
 
       // --- Student Details ---
@@ -143,6 +189,7 @@ async function generateStudentReport(student, exam, school) {
         ["Class:", student.classLevel],
         ["Stream:", student.stream || "-"],
         ["Exam Date:", new Date(exam.date).toDateString()],
+        ["Position:", positionText || "-"], // 👈 new line
       ];
 
       const startX = 50;
@@ -160,16 +207,22 @@ async function generateStudentReport(student, exam, school) {
 
       // --- Results Table ---
       const er = (student.examResults || []).find(
-        (r) => r.exam?.toString() === exam._id.toString() &&
-               r.academicYear === exam.academicYear
+        (r) =>
+          r.exam?.toString() === exam._id.toString() &&
+          r.academicYear === exam.academicYear
       );
 
       if (!er) {
-        doc.font("Helvetica-Oblique").fillColor("red")
-           .text("⚠ No results found for this exam.", { align: "center" });
+        doc
+          .font("Helvetica-Oblique")
+          .fillColor("red")
+          .text("⚠ No results found for this exam.", { align: "center" });
       } else {
-        doc.fillColor("black").fontSize(12).font("Helvetica-Bold")
-           .text("Subjects & Scores", { underline: true, align: "left" });
+        doc
+          .fillColor("black")
+          .fontSize(12)
+          .font("Helvetica-Bold")
+          .text("Subjects & Scores", { underline: true, align: "left" });
         doc.moveDown(0.5);
 
         drawResultsTable(doc, er, school);
@@ -182,34 +235,31 @@ async function generateStudentReport(student, exam, school) {
           doc.moveDown(0.5);
           const remarkY = doc.y;
           doc.rect(50, remarkY, 500, 25).fill("#e0f7fa").stroke();
-          doc.fillColor("black")
-             .font("Helvetica-Oblique")
-             .fontSize(12)
-             .text(`Remark: ${er.remark}`, 55, remarkY + 6);
+          doc
+            .fillColor("black")
+            .font("Helvetica-Oblique")
+            .fontSize(12)
+            .text(`Remark: ${er.remark}`, 55, remarkY + 6);
           doc.moveDown(2);
         }
       }
 
       // --- Footer ---
       const bottom = doc.page.height - 120;
-      doc.font("Helvetica").fontSize(10)
-         .text(`Generated on: ${new Date().toDateString()}`, 50, bottom - 20);
+      doc
+        .font("Helvetica")
+        .fontSize(10)
+        .text(`Generated on: ${new Date().toDateString()}`, 50, bottom - 20);
 
-      doc.text("__________________", 60, bottom).text(
-        "Class Teacher",
-        70,
-        bottom + 15
-      );
-      doc.text("__________________", 250, bottom).text(
-        "Principal",
-        280,
-        bottom + 15
-      );
-      doc.text("__________________", 430, bottom).text(
-        "Parent/Guardian",
-        440,
-        bottom + 15
-      );
+      doc
+        .text("__________________", 60, bottom)
+        .text("Class Teacher", 70, bottom + 15);
+      doc
+        .text("__________________", 250, bottom)
+        .text("Principal", 280, bottom + 15);
+      doc
+        .text("__________________", 430, bottom)
+        .text("Parent/Guardian", 440, bottom + 15);
 
       doc.end();
     } catch (err) {
@@ -218,13 +268,13 @@ async function generateStudentReport(student, exam, school) {
   });
 }
 
-
 /**
  * Download single student report
  */
 const downloadStudentReport = async (req, res) => {
   try {
     const { examId, studentId } = req.params;
+    const { positionText } = req.body; // 👈 grab from frontend
 
     const student = await Student.findById(studentId);
     const exam = await Exam.findById(examId);
@@ -234,7 +284,12 @@ const downloadStudentReport = async (req, res) => {
       return res.status(404).json({ msg: "Data not found" });
     }
 
-    const pdfBuffer = await generateStudentReport(student, exam, school);
+    const pdfBuffer = await generateStudentReport(
+      student,
+      exam,
+      school,
+      positionText // 👈 pass into PDF generator
+    );
 
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader(
@@ -244,11 +299,13 @@ const downloadStudentReport = async (req, res) => {
     res.send(pdfBuffer);
   } catch (err) {
     console.error(err);
-    res
-      .status(500)
-      .json({ msg: "Error generating report", error: err.message });
+    res.status(500).json({
+      msg: "Error generating report",
+      error: err.message,
+    });
   }
 };
+
 
 /**
  * Download all reports for a class (zipped)

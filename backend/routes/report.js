@@ -9,7 +9,7 @@ const {
 const router = express.Router();
 
 // Single student
-router.get(
+router.post(
   "/student/:examId/:studentId",
   verifyJWT,
   authorize(["teacher", "admin"]),
