@@ -7,18 +7,20 @@ const FeesPage = () => {
   const [selectedTerm, setSelectedTerm] = useState("Term 1");
   const [selectedClass, setSelectedClass] = useState("All");
   const [onlyWithBalance, setOnlyWithBalance] = useState(false);
-  const [searchQuery, setSearchQuery] = useState(""); // 🔹 search input
+  const [searchQuery, setSearchQuery] = useState(""); 
   const [totalOutstanding, setTotalOutstanding] = useState("...");
+  const [studentBalances, setStudentBalances] = useState({}); // 🔹 new state
 
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingFee, setEditingFee] = useState(null); // fee object being edited
+  const [editingFee, setEditingFee] = useState(null); 
   const [editAmount, setEditAmount] = useState("");
   const [editType, setEditType] = useState("payment");
   const [editMethod, setEditMethod] = useState("cash");
   const [editNote, setEditNote] = useState("");
 
-  const openEditModal = (student, balance) => {
-    // Find the student's fee entry for the selected term
+  const openEditModal = (student) => {
+    const balance = studentBalances[student._id] ?? 0;
+
     const fee = student.payments.find(
       (p) => p.term === selectedTerm && p.category === "payment"
     );
@@ -40,7 +42,8 @@ const FeesPage = () => {
 
   useEffect(() => {
     fetchOutstanding();
-  }, [selectedTerm, selectedClass]);
+    fetchStudentBalances(); // 🔹 fetch balances whenever term/class changes
+  }, [selectedTerm, selectedClass, students]);
 
   const fetchStudents = async () => {
     try {
@@ -62,8 +65,7 @@ const FeesPage = () => {
 
   const fetchOutstanding = async () => {
     try {
-      let query = `?term=${selectedTerm}`;
-      if (selectedClass !== "All") query += `&classLevel=${selectedClass}`;
+      const query = `?term=${selectedTerm}&academicYear=2025/2026${selectedClass !== "All" ? `&classLevel=${selectedClass}` : ""}`;
       const res = await api.get(`/fees/total-outstanding${query}`);
       setTotalOutstanding(res.data.totalOutstanding || 0);
     } catch (err) {
@@ -71,78 +73,36 @@ const FeesPage = () => {
     }
   };
 
-  const getStudentBalance = (student) => {
-    if (!school) return 0;
-
-    let expectations = [];
-
-    if (Array.isArray(school.feeRules) && school.feeRules.length) {
-      const idx = school.classLevels.findIndex(
-        (c) => c.name === student.classLevel
-      );
-
-      const matchedRules = school.feeRules.filter((rule) => {
-        const fromIdx = school.classLevels.findIndex(
-          (c) => c.name === rule.fromClass
-        );
-        const toIdx = school.classLevels.findIndex(
-          (c) => c.name === rule.toClass
-        );
-        if (idx === -1 || fromIdx === -1 || toIdx === -1) return false;
-        const min = Math.min(fromIdx, toIdx);
-        const max = Math.max(fromIdx, toIdx);
-        return idx >= min && idx <= max && rule.term === selectedTerm;
-      });
-
-      if (matchedRules.length) expectations = matchedRules;
-    }
-
-    if (!expectations.length) {
-      const classDef = (school.classLevels || []).find(
-        (c) => c.name === student.classLevel
-      );
-      if (classDef && Array.isArray(classDef.feeExpectations)) {
-        expectations = classDef.feeExpectations.filter(
-          (f) => f.term === selectedTerm
-        );
-      }
-    }
-
-    if (!expectations.length) {
-      expectations = (school.feeExpectations || []).filter(
-        (f) => f.term === selectedTerm
-      );
-    }
-
-    const expected = expectations[0]?.amount || 0;
-
-    const payments = student.payments
-      .filter((p) => p.term === selectedTerm && p.category === "payment")
-      .reduce((sum, p) => sum + p.amount, 0);
-
-    const adjustments = student.payments
-      .filter((p) => p.term === selectedTerm && p.category === "adjustment")
-      .reduce((sum, p) => sum + p.amount, 0);
-
-    return expected - payments + adjustments;
+  // 🔹 new: fetch individual student balances from backend
+  const fetchStudentBalances = async () => {
+    const balancesMap = {};
+    await Promise.all(
+      students.map(async (student) => {
+        try {
+          const res = await api.get(`/fees/outstanding/${student._id}?academicYear=2025/2026`);
+          balancesMap[student._id] = res.data.balances[selectedTerm] || 0;
+        } catch (err) {
+          console.error("Error fetching student balance:", err);
+          balancesMap[student._id] = 0;
+        }
+      })
+    );
+    setStudentBalances(balancesMap);
   };
 
   const getBalanceColor = (balance) => {
-    if (balance === 0) return "text-green-400"; // fully paid
-    if (balance > 0) return "text-red-400"; // owes money
-    return "text-yellow-400"; // overpaid
+    if (balance === 0) return "text-green-400";
+    if (balance > 0) return "text-red-400";
+    return "text-yellow-400";
   };
 
   const classLevels = ["All", ...new Set(students.map((s) => s.classLevel))];
 
   const filteredStudents = students.filter((s) => {
-    const balance = getStudentBalance(s);
-    const classMatch =
-      selectedClass === "All" || s.classLevel === selectedClass;
+    const balance = studentBalances[s._id] ?? 0;
+    const classMatch = selectedClass === "All" || s.classLevel === selectedClass;
     const balanceMatch = !onlyWithBalance || balance > 0;
-    const nameMatch = `${s.firstName} ${s.lastName}`
-      .toLowerCase()
-      .includes(searchQuery.toLowerCase()); // 🔹 name filter
+    const nameMatch = `${s.firstName} ${s.lastName}`.toLowerCase().includes(searchQuery.toLowerCase());
     return classMatch && balanceMatch && nameMatch;
   });
 
@@ -157,7 +117,6 @@ const FeesPage = () => {
         note: editNote,
       });
 
-      // Update local students state
       setStudents((prev) =>
         prev.map((s) => {
           if (s._id === editingFee.studentId) {
@@ -178,8 +137,9 @@ const FeesPage = () => {
         })
       );
 
+      fetchStudentBalances(); // 🔹 refresh balances
+      fetchOutstanding();
       closeModal();
-      fetchOutstanding(); // recalc total outstanding
     } catch (err) {
       console.error("Error updating fee:", err);
     }
@@ -285,11 +245,12 @@ const FeesPage = () => {
               <th className="px-4 py-2 border-b border-gray-800 text-left">
                 Balance
               </th>
+              <th className="px-4 py-2 border-b border-gray-800"></th>
             </tr>
           </thead>
           <tbody>
             {filteredStudents.map((s) => {
-              const balance = getStudentBalance(s);
+              const balance = studentBalances[s._id] ?? 0;
               return (
                 <tr key={s._id} className="hover:bg-gray-900 transition">
                   <td className="px-4 py-2 border-b border-gray-800">
@@ -299,15 +260,13 @@ const FeesPage = () => {
                     {s.classLevel}
                   </td>
                   <td
-                    className={`px-4 py-2 border-b border-gray-800 font-semibold ${getBalanceColor(
-                      balance
-                    )}`}
+                    className={`px-4 py-2 border-b border-gray-800 font-semibold ${getBalanceColor(balance)}`}
                   >
                     KSh {balance}
                   </td>
                   <td className="px-4 py-2 border-b border-gray-800">
                     <button
-                      onClick={() => openEditModal(s, getStudentBalance(s))}
+                      onClick={() => openEditModal(s)}
                       className="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1 rounded"
                     >
                       Edit
@@ -318,7 +277,7 @@ const FeesPage = () => {
             })}
             {filteredStudents.length === 0 && (
               <tr>
-                <td colSpan="3" className="px-4 py-4 text-center text-gray-400">
+                <td colSpan="4" className="px-4 py-4 text-center text-gray-400">
                   No students found
                 </td>
               </tr>
@@ -327,6 +286,7 @@ const FeesPage = () => {
         </table>
       </div>
 
+      {/* Edit Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-gray-900 p-6 rounded-lg w-96 shadow-lg">
@@ -337,14 +297,14 @@ const FeesPage = () => {
               type="number"
               value={editAmount}
               onChange={(e) => setEditAmount(Number(e.target.value))}
-              className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 mb-4 text-gray-100"
+              className="w-full mb-4 p-2 rounded bg-gray-800 border border-gray-700 text-gray-100"
             />
 
             <label className="block mb-2 text-sm text-gray-300">Type</label>
             <select
               value={editType}
               onChange={(e) => setEditType(e.target.value)}
-              className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 mb-4"
+              className="w-full mb-4 p-2 rounded bg-gray-800 border border-gray-700 text-gray-100"
             >
               <option value="payment">Payment</option>
               <option value="adjustment">Adjustment</option>
@@ -354,32 +314,31 @@ const FeesPage = () => {
             <select
               value={editMethod}
               onChange={(e) => setEditMethod(e.target.value)}
-              className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 mb-4"
+              className="w-full mb-4 p-2 rounded bg-gray-800 border border-gray-700 text-gray-100"
             >
               <option value="cash">Cash</option>
-              <option value="mpesa">Mpesa</option>
+              <option value="mpesa">M-Pesa</option>
               <option value="card">Card</option>
               <option value="bank">Bank</option>
             </select>
 
             <label className="block mb-2 text-sm text-gray-300">Note</label>
-            <input
-              type="text"
+            <textarea
               value={editNote}
               onChange={(e) => setEditNote(e.target.value)}
-              className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 mb-4 text-gray-100"
+              className="w-full mb-4 p-2 rounded bg-gray-800 border border-gray-700 text-gray-100"
             />
 
-            <div className="flex justify-end space-x-2">
+            <div className="flex justify-end space-x-4">
               <button
-                className="px-4 py-2 bg-gray-700 rounded hover:bg-gray-600"
                 onClick={closeModal}
+                className="px-4 py-2 bg-gray-700 rounded hover:bg-gray-600"
               >
                 Cancel
               </button>
               <button
-                className="px-4 py-2 bg-blue-600 rounded hover:bg-blue-500"
                 onClick={submitEdit}
+                className="px-4 py-2 bg-blue-600 rounded hover:bg-blue-500 text-white"
               >
                 Save
               </button>

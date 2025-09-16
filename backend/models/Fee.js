@@ -8,7 +8,8 @@ const feeSchema = new mongoose.Schema(
     classLevel: { type: String, required: true },
     amount: { type: Number, required: true },
     type: { type: String, enum: ["payment", "adjustment"], default: "payment" },
-    method: { type: String, enum: ["cash", "mpesa", "card", "bank"], default: "cash" },
+    method: { type: String, enum: ["cash", "mpesa", "card", "bank", "system"], default: "cash" },
+
     note: { type: String },
     date: { type: Date, default: Date.now },
     handledBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
@@ -16,7 +17,7 @@ const feeSchema = new mongoose.Schema(
     receiptGenerated: { type: Boolean, default: false },
 
     // ✅ ledger enhancements
-    balanceAfter: { type: Number, default: 0 }, 
+    balanceAfter: { type: Number}, 
     carryOver: { type: Boolean, default: false }, // if overpayment goes to next term
   },
   { timestamps: true }

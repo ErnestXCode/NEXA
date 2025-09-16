@@ -155,7 +155,6 @@ const getAllStudents = async (req, res) => {
       path: "guardian",
       select: "name email phoneNumber",
     });
-    console.log("req", students);
 
     res.status(200).json(students);
   } catch (err) {
@@ -203,6 +202,8 @@ const getStudentsWithSubjects = async (req, res) => {
       .json({ msg: "Error fetching students", error: err.message });
   }
 };
+
+
 
 module.exports = {
   createStudent,

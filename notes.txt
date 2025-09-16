@@ -1,22 +1,11 @@
 chronic absentees to be for the classteachers class only, not all school, only principal should see something like that, 
-
-be able to enter students balances from excel or something
-
 when next year starts, change classLevels of current students plus 1
-a way to make overpayment to go to the next year
-
 dont just hide pages , make them innaccesiible to te invalid or unauthorized roles
-
-messages take too long to show , mtu anaexa dhani hana message , i guess, maybe its coz its dev
-badge and notifications dont work well 
-
+messages take too long to show , mtu anaexa dhani hana message , i guess, maybe its coz its dev, badge and notifications dont work well 
 make caching full proof for entire app, tanstack
-
-parent to use bursars number....get rid of that part cleverly
 polish parents portal and make it mobile friendly
-
 optimize backend
 add streams to classes  
 add pricing 
-add continuous assessment reports later
-for emails you can use EmailJS (free tier) or Gmail SMTP with limits, and for notifications you can use Firebase Cloud Messaging free tier or Pusher Beams free tier for push notifications. 
+
+
