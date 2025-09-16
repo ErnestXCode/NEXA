@@ -20,7 +20,7 @@ const sendMessage = async (req, res) => {
 
     if (!body) return res.status(400).json({ msg: "Message body required" });
 
-    // Save message to DB
+    // Save message
     const newMessage = await Message.create({
       sender: sender.userId,
       subject,
@@ -43,9 +43,8 @@ const sendMessage = async (req, res) => {
         .catch((err) => console.error("Email send failed:", err));
     }
 
-    // Real-time chat
+    // Chat / push notifications
     if (type === "chat") {
-      // Fetch all subscriptions once
       const subscriptions = await PushSubscription.find({ school: sender.school }).populate("user");
 
       const payload = {
@@ -57,28 +56,15 @@ const sendMessage = async (req, res) => {
         senderId: senderDoc._id,
       };
 
+      // 🔹 Always send push notification
       subscriptions.forEach((sub) => {
-        const userId = sub.user._id.toString();
-
-        // Skip sender
-        if (userId === sender.userId) return;
-
-        // Web push only if offline (not connected via Socket.IO)
-        const isOnline = io.sockets.adapter.rooms.has(`user-${userId}`);
-        if (!isOnline) {
-          webpush
-            .sendNotification(sub.subscription, JSON.stringify(payload))
-            .catch((err) => console.error("Push failed:", err));
-        }
-
-        // Emit socket message if online
-        if (isOnline) {
-          io.to(`user-${userId}`).emit("newMessage", payload);
-        }
+        webpush
+          .sendNotification(sub.subscription, JSON.stringify(payload))
+          .catch((err) => console.error("Push failed:", err));
       });
 
-      // Emit to school room for anyone else listening (optional)
-      io.to(`school-${sender.school}`).emit("newMessage", payload);
+      // 🔹 Always emit socket to the whole school
+      io.to(sender.school.toString()).emit("newMessage", payload);
     }
 
     res.status(201).json(newMessage);
@@ -87,6 +73,7 @@ const sendMessage = async (req, res) => {
     res.status(500).json({ msg: "Failed to send message" });
   }
 };
+
 
 // GET /communication?type=chat&since=timestamp
 const getMessages = async (req, res) => {
