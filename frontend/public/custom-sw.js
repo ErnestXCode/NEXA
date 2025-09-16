@@ -25,7 +25,7 @@ self.addEventListener("push", (event) => {
       // Show system notification
       await self.registration.showNotification(title, options);
 
-      // Update the app icon badge (Badging API)
+      // // Update the app icon badge (Badging API)
       if ("setAppBadge" in navigator) {
         const prev = self.unreadCount || 0;
         self.unreadCount = prev + 1;

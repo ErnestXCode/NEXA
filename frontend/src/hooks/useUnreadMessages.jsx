@@ -18,11 +18,13 @@ export default function useUnreadMessages(currentUser) {
 
     const handler = (msg) => {
       if (msg.senderId !== currentUser.userId) {
-        setUnreadCount((c) => c + 1);
-
-        if ("setAppBadge" in navigator) {
-          navigator.setAppBadge(unreadCount + 1).catch(() => {});
-        }
+        setUnreadCount((c) => {
+          const newCount = c + 1;
+          if ("setAppBadge" in navigator) {
+            navigator.setAppBadge(newCount).catch(() => {});
+          }
+          return newCount;
+        });
       }
     };
 

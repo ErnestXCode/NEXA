@@ -5,3 +5,7 @@ add pricing
 
 
 fees is somewhat slow
+
+when saving results show saving on button
+
+alerts are ugly, use modals

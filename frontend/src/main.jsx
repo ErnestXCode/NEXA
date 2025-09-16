@@ -32,30 +32,37 @@ persistQueryClient({
 });
 
 // Register service worker and request push subscription
+// add helper near top of file (above load event)
+function urlBase64ToUint8Array(base64String) {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/\-/g, "+").replace(/_/g, "/");
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+}
+
 if ("serviceWorker" in navigator && "PushManager" in window) {
   window.addEventListener("load", async () => {
     try {
-      const registration = await navigator.serviceWorker.register(
-        "/custom-sw.js"
-      );
+      const registration = await navigator.serviceWorker.register("/custom-sw.js");
       console.log("Service Worker registered", registration);
 
-      // Request notification permission
       const permission = await Notification.requestPermission();
       if (permission === "granted") {
-        console.log("Notification permission granted.");
+        // convert base64 VAPID to Uint8Array
+        const vapidKey = import.meta.env.VITE_VAPID_PUBLIC_KEY || "";
+        const applicationServerKey = urlBase64ToUint8Array(vapidKey);
 
-        // Subscribe user to push
         const subscription = await registration.pushManager.subscribe({
           userVisibleOnly: true,
-          applicationServerKey: import.meta.env.VITE_VAPID_PUBLIC_KEY, // must be base64
+          applicationServerKey,
         });
 
-        // Send subscription to backend
-        const res = await api.post("/push/subscribe", subscription);
-
-        console.log(res);
-
+        // send subscription object to backend
+        await api.post("/push/subscribe", subscription);
         console.log("Push subscription saved on server");
       }
     } catch (err) {
@@ -63,6 +70,7 @@ if ("serviceWorker" in navigator && "PushManager" in window) {
     }
   });
 }
+
 
 
 
