@@ -82,17 +82,17 @@ const RecordResultsPage = () => {
     fetchResults();
   }, [examId, selectedClass]);
 
-  if (!isDesktop) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen text-center p-6">
-        <h1 className="text-2xl font-bold mb-4">⚠️ Desktop Required</h1>
-        <p className="text-gray-300">
-          Recording results is only available on a desktop or laptop device.
-          Please switch to a larger screen for the best experience.
-        </p>
-      </div>
-    );
-  }
+  // if (!isDesktop) {
+  //   return (
+  //     <div className="flex flex-col items-center justify-center min-h-screen p-6 text-center">
+  //       <h1 className="mb-4 text-2xl font-bold">⚠️ Desktop Required</h1>
+  //       <p className="text-gray-300">
+  //         Recording results is only available on a desktop or laptop device.
+  //         Please switch to a larger screen for the best experience.
+  //       </p>
+  //     </div>
+  //   );
+  // }
 
   const handleScoreChange = (studentId, subject, score) => {
     setResults((prev) => {
@@ -171,7 +171,7 @@ const RecordResultsPage = () => {
             setSelectedSubject("");
             setResults({});
           }}
-          className="p-2 w-full rounded bg-gray-800 text-white"
+          className="w-full p-2 text-white bg-gray-800 rounded"
         >
           <option value="">Select Exam</option>
           {exams.map((e) => (
@@ -191,7 +191,7 @@ const RecordResultsPage = () => {
             setSelectedSubject("");
             setResults({});
           }}
-          className="p-2 w-full rounded bg-gray-800 text-white"
+          className="w-full p-2 text-white bg-gray-800 rounded"
         >
           <option value="">Select Class</option>
           {classLevels.map((level) => (
@@ -207,7 +207,7 @@ const RecordResultsPage = () => {
         <select
           value={selectedSubject}
           onChange={(e) => setSelectedSubject(e.target.value)}
-          className="p-2 w-full rounded bg-gray-800 text-white"
+          className="w-full p-2 text-white bg-gray-800 rounded"
         >
           <option value="">All Subjects (Admin Mode)</option>
           {(subjectsByClass[selectedClass] || []).map((subj) => (
@@ -220,8 +220,8 @@ const RecordResultsPage = () => {
 
       {/* Step 4: Results Table */}
       {examId && selectedClass && (
-        <div className="bg-gray-900 p-4 rounded-lg shadow overflow-auto">
-          <h2 className="text-lg font-semibold mb-2">
+        <div className="p-4 overflow-auto bg-gray-900 rounded-lg shadow">
+          <h2 className="mb-2 text-lg font-semibold">
             {selectedClass}{" "}
             {selectedSubject ? `— ${selectedSubject}` : "— All Subjects"}
           </h2>
@@ -262,7 +262,7 @@ const RecordResultsPage = () => {
                           onChange={(e) =>
                             handleScoreChange(student._id, selectedSubject, Number(e.target.value))
                           }
-                          className="p-1 w-20 rounded bg-gray-800 text-white no-spinner"
+                          className="w-20 p-1 text-white bg-gray-800 rounded no-spinner"
                         />
                       </td>
                     ) : (
@@ -276,7 +276,7 @@ const RecordResultsPage = () => {
                             onChange={(e) =>
                               handleScoreChange(student._id, subj, Number(e.target.value))
                             }
-                            className="p-1 w-20 rounded bg-gray-800 text-white no-spinner"
+                            className="w-20 p-1 text-white bg-gray-800 rounded no-spinner"
                           />
                         </td>
                       ))
@@ -292,7 +292,7 @@ const RecordResultsPage = () => {
       <button
         onClick={handleSubmit}
         disabled={!examId || !selectedClass}
-        className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded"
+        className="px-4 py-2 text-white bg-green-600 rounded hover:bg-green-700"
       >
         Save Results
       </button>
