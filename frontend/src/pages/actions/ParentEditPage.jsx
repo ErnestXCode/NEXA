@@ -40,9 +40,9 @@ const ParentEditPage = () => {
   });
 
   if (isLoading)
-    return <p className="text-white p-6">Loading parent data...</p>;
+    return <p className="p-6 text-white">Loading parent data...</p>;
   if (isError)
-    return <p className="text-red-500 p-6">❌ Error fetching parent data</p>;
+    return <p className="p-6 text-red-500">❌ Error fetching parent data</p>;
   if (!parent) return null;
 
   const handleChange = (e) => {
@@ -64,9 +64,9 @@ const ParentEditPage = () => {
   console.log(parent)
 
   return (
-    <main className="overflow-hidden mt-10 flex items-center justify-center bg-gray-950">
-      <div className="bg-gray-900 p-6 rounded-lg shadow-md w-full max-w-md">
-        <h1 className="text-lg font-semibold text-white mb-4">
+    <main className="flex items-center justify-center mt-10 overflow-hidden bg-gray-950">
+      <div className="w-full max-w-md p-6 bg-gray-900 rounded-lg shadow-md">
+        <h1 className="mb-4 text-lg font-semibold text-white">
           Edit Parent
         </h1>
 
@@ -76,48 +76,48 @@ const ParentEditPage = () => {
             name="name"
             value={parent.name}
             onChange={handleChange}
-            className="w-full p-2 rounded bg-gray-800 text-white text-sm"
+            className="w-full p-2 text-sm text-white bg-gray-800 rounded"
           />
           <input
             placeholder="Email"
             name="email"
             value={parent.email}
             onChange={handleChange}
-            className="w-full p-2 rounded bg-gray-800 text-white text-sm"
+            className="w-full p-2 text-sm text-white bg-gray-800 rounded"
           />
           <input
             placeholder="Phone Number"
             name="phoneNumber"
             value={parent.phoneNumber}
             onChange={handleChange}
-            className="w-full p-2 rounded bg-gray-800 text-white text-sm"
+            className="w-full p-2 text-sm text-white bg-gray-800 rounded"
           />
 
           {/* Role is displayed but not editable */}
           <input
             value="parent"
             disabled
-            className="w-full p-2 rounded bg-gray-700 text-gray-400 text-sm cursor-not-allowed"
+            className="w-full p-2 text-sm text-gray-400 bg-gray-700 rounded cursor-not-allowed"
           />
 
           {/* Children */}
-          <label className="block text-gray-300 mt-2 mb-1">Children</label>
+          <label className="block mt-2 mb-1 text-gray-300">Children</label>
           {parent.children && parent.children.length > 0 ? (
             parent.children.map((child, idx) => (
               <input
                 key={idx}
                 value={`${child.firstName} ${child.lastName}`}
                 disabled
-                className="w-full p-2 mb-1 rounded bg-gray-800 text-gray-300 text-sm cursor-not-allowed"
+                className="w-full p-2 mb-1 text-sm text-gray-300 bg-gray-800 rounded cursor-not-allowed"
               />
             ))
           ) : (
-            <p className="text-gray-400 text-sm">No children assigned</p>
+            <p className="text-sm text-gray-400">No children assigned</p>
           )}
 
           <button
             type="submit"
-            className="w-full py-2 rounded bg-white text-black font-medium text-sm hover:bg-gray-200"
+            className="w-full py-2 text-sm font-medium text-black bg-white rounded hover:bg-gray-200"
           >
             Save Changes
           </button>

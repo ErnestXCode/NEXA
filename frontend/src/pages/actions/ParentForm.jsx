@@ -164,19 +164,19 @@ const ParentForm = ({ onNext }) => {
   };
 
   return (
-    <main className="p-6 bg-gray-950 overflow-hidden flex justify-center items-start">
-      <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-6">
+    <main className="flex items-start justify-center p-6 overflow-hidden bg-gray-950">
+      <div className="grid w-full max-w-6xl grid-cols-1 gap-6 md:grid-cols-2">
         {/* Single Entry */}
         <form
           onSubmit={handleSubmit}
-          className="bg-gray-900 p-6 rounded-lg shadow-lg flex flex-col gap-4"
+          className="flex flex-col gap-4 p-6 bg-gray-900 rounded-lg shadow-lg"
         >
-          <h2 className="text-2xl font-bold text-white mb-2 text-center">
+          <h2 className="mb-2 text-2xl font-bold text-center text-white">
             Add Single Parent
           </h2>
 
           {/* Inputs */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             {/* Name */}
             <div>
               <label className="block mb-1">Name</label>
@@ -184,7 +184,7 @@ const ParentForm = ({ onNext }) => {
                 name="name"
                 value={parentDetails.name}
                 onChange={handleChange}
-                className="p-2 rounded bg-gray-800 text-white w-full"
+                className="w-full p-2 text-white bg-gray-800 rounded"
               />
             </div>
             {/* Email */}
@@ -194,7 +194,7 @@ const ParentForm = ({ onNext }) => {
                 name="email"
                 value={parentDetails.email}
                 onChange={handleChange}
-                className="p-2 rounded bg-gray-800 text-white w-full"
+                className="w-full p-2 text-white bg-gray-800 rounded"
               />
             </div>
             {/* Phone */}
@@ -204,7 +204,7 @@ const ParentForm = ({ onNext }) => {
                 name="phoneNumber"
                 value={parentDetails.phoneNumber}
                 onChange={handleChange}
-                className="p-2 rounded bg-gray-800 text-white w-full"
+                className="w-full p-2 text-white bg-gray-800 rounded"
               />
             </div>
             {/* Password */}
@@ -215,7 +215,7 @@ const ParentForm = ({ onNext }) => {
                 name="password"
                 value={parentDetails.password}
                 onChange={handleChange}
-                className="p-2 rounded bg-gray-800 text-white w-full"
+                className="w-full p-2 text-white bg-gray-800 rounded"
               />
             </div>
             {/* Confirm */}
@@ -243,10 +243,10 @@ const ParentForm = ({ onNext }) => {
                 value={studentSearch}
                 onChange={(e) => setStudentSearch(e.target.value)}
                 placeholder="Search student by name"
-                className="p-2 rounded bg-gray-800 text-white w-full"
+                className="w-full p-2 text-white bg-gray-800 rounded"
               />
               {filteredStudents.length > 0 && (
-                <ul className="bg-gray-800 rounded mt-1 max-h-40 overflow-y-auto">
+                <ul className="mt-1 overflow-y-auto bg-gray-800 rounded max-h-40">
                   {filteredStudents.map((s) => (
                     <li
                       key={s._id}
@@ -265,7 +265,7 @@ const ParentForm = ({ onNext }) => {
                   return (
                     <span
                       key={id}
-                      className="bg-blue-600 text-white px-2 py-1 rounded-full text-sm flex items-center gap-1"
+                      className="flex items-center gap-1 px-2 py-1 text-sm text-white bg-blue-600 rounded-full"
                     >
                       {student.firstName} {student.lastName}
                       <button
@@ -310,13 +310,13 @@ const ParentForm = ({ onNext }) => {
         {/* Bulk Upload */}
         <form
           onSubmit={handleSubmit}
-          className="bg-gray-900 p-6 rounded-lg shadow-lg flex flex-col gap-4"
+          className="flex flex-col gap-4 p-6 bg-gray-900 rounded-lg shadow-lg"
         >
-          <h2 className="text-2xl font-bold text-white mb-2 text-center">
+          <h2 className="mb-2 text-2xl font-bold text-center text-white">
             Bulk Upload
           </h2>
 
-          <div className="bg-gray-800 p-3 rounded mb-3 text-gray-300 text-sm">
+          <div className="p-3 mb-3 text-sm text-gray-300 bg-gray-800 rounded">
             <p>Expected headers for bulk upload:</p>
             <ul className="list-disc list-inside">
               <li>name</li>
@@ -336,9 +336,9 @@ const ParentForm = ({ onNext }) => {
             type="file"
             accept=".csv,.xlsx,.xls"
             onChange={handleFileChange}
-            className="p-2 rounded bg-gray-800 text-white"
+            className="p-2 text-white bg-gray-800 rounded"
           />
-          {file && <p className="text-gray-300 mt-2">Selected file: {file.name}</p>}
+          {file && <p className="mt-2 text-gray-300">Selected file: {file.name}</p>}
           <button
             type="submit"
             disabled={!file || addParentMutation.isPending}

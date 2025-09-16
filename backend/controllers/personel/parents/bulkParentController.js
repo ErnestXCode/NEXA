@@ -79,10 +79,6 @@ exports.bulkCreateParents = async (req, res) => {
 
     res.status(201).json({
       msg: "Bulk parents processed",
-      createdCount: createdParents.length,
-      skippedCount: skippedParents.length,
-      createdParents,
-      skippedParents,
     });
   } catch (err) {
     console.error(err);

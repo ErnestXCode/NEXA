@@ -43,6 +43,45 @@ const createStudent = async (req, res) => {
   }
 };
 
+// Promote all students to next class level
+const promoteStudentsNextYear = async (req, res) => {
+  try {
+    const requester = req.user;
+
+    // Only admin/superadmin can promote
+    if (!["admin", "superadmin"].includes(requester.role)) {
+      return res.status(403).json({ msg: "Unauthorized" });
+    }
+
+    // Get all students in the school
+    const students = await Student.find({ school: requester.school });
+
+    const updatedStudents = [];
+
+    for (let student of students) {
+      // Skip if already at highest class (optional)
+      if (student.classLevel >= 12) continue;
+
+      // Increment classLevel by 1
+      student.classLevel += 1;
+
+      await student.save();
+      updatedStudents.push(student);
+    }
+
+    res.status(200).json({
+      msg: "Students promoted successfully",
+      count: updatedStudents.length,
+      promotedStudents: updatedStudents,
+    });
+  } catch (err) {
+    res
+      .status(500)
+      .json({ msg: "Error promoting students", error: err.message });
+  }
+};
+
+
 // Get student by ID with role-based access
 const getStudentById = async (req, res) => {
   try {
@@ -209,6 +248,7 @@ module.exports = {
   createStudent,
   getStudentById,
   updateStudent,
+  promoteStudentsNextYear,
   deleteStudent,
   getStudentsWithSubjects,
   getAllStudents,

@@ -1,11 +1,7 @@
-chronic absentees to be for the classteachers class only, not all school, only principal should see something like that, 
-when next year starts, change classLevels of current students plus 1
-dont just hide pages , make them innaccesiible to te invalid or unauthorized roles
-messages take too long to show , mtu anaexa dhani hana message , i guess, maybe its coz its dev, badge and notifications dont work well 
 make caching full proof for entire app, tanstack
-polish parents portal and make it mobile friendly
 optimize backend
 add streams to classes  
 add pricing 
 
 
+fees is somewhat slow
