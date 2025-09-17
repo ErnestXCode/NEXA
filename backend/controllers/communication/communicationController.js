@@ -29,6 +29,10 @@ const sendMessage = async (req, res) => {
       school: sender.school,
     });
 
+    // Populate sender for frontend
+    const populatedMessage = await Message.findById(newMessage._id)
+      .populate("sender", "name email role");
+
     const senderDoc = await User.findById(sender.userId);
 
     // Email notifications
@@ -47,27 +51,24 @@ const sendMessage = async (req, res) => {
     if (type === "chat") {
       const subscriptions = await PushSubscription.find({ school: sender.school }).populate("user");
 
-      const payload = {
+      const pushPayload = {
         title: `New message from [${senderDoc.role}] ${senderDoc.name}`,
         body,
         url: "/dashboard/communication",
-        senderName: senderDoc.name,
-        senderRole: senderDoc.role,
-        senderId: senderDoc._id,
       };
 
-      // 🔹 Always send push notification
+      // Send push notifications
       subscriptions.forEach((sub) => {
         webpush
-          .sendNotification(sub.subscription, JSON.stringify(payload))
+          .sendNotification(sub.subscription, JSON.stringify(pushPayload))
           .catch((err) => console.error("Push failed:", err));
       });
 
-      // 🔹 Always emit socket to the whole school
-      io.to(sender.school.toString()).emit("newMessage", payload);
+      // Emit the **real message doc** for in-app chat
+      io.to(sender.school.toString()).emit("newMessage", populatedMessage);
     }
 
-    res.status(201).json(newMessage);
+    res.status(201).json(populatedMessage);
   } catch (err) {
     console.error(err);
     res.status(500).json({ msg: "Failed to send message" });

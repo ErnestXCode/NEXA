@@ -6,7 +6,7 @@ import { selectCurrentUser } from "../../redux/slices/authSlice";
 import api from "../../api/axios";
 
 // connect once
-const socket = io(import.meta.env.VITE_API_URL, {
+const socket = io(import.meta.env.VITE_BACKEND_URL, {
   withCredentials: true,
 });
 

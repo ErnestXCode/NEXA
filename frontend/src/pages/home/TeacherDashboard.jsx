@@ -19,13 +19,13 @@ const TeacherDashboard = () => {
           <h2 className="text-white text-2xl font-bold mb-2">Messages</h2>
           <p className="text-gray-200 text-sm">View and send messages</p>
 
-          <span
+          {unreadCount > 0 && <span
             className="absolute -top-2 -right-2 
              bg-gray-900 text-white text-xs font-bold 
              px-2 py-0.5 rounded-full ring-2 ring-purple-400 shadow-lg"
           >
             {unreadCount > 9 ? "9+" : unreadCount}
-          </span>
+          </span>}
         </NavLink>
 
         {/* Mark Attendance */}
