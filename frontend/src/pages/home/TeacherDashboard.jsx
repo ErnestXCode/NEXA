@@ -20,7 +20,13 @@ const TeacherDashboard = () => {
           <p className="text-gray-200 text-sm">View and send messages</p>
 
           {unreadCount > 0 && (
-            <span className="absolute top-4 right-4 h-3 w-3 rounded-full bg-red-600 animate-pulse"></span>
+            <span
+              className="absolute -top-2 -right-2 
+               bg-red-600 text-white text-xs font-bold 
+               px-2 py-0.5 rounded-full shadow-lg"
+            >
+              {unreadCount > 9 ? "9+" : unreadCount}
+            </span>
           )}
         </NavLink>
 
@@ -43,7 +49,9 @@ const TeacherDashboard = () => {
             to="/dashboard/attendance"
             className="bg-gradient-to-r from-blue-700 via-cyan-600 to-sky-500 shadow-lg rounded-xl p-6 flex flex-col items-start transition transform hover:scale-105 hover:shadow-2xl hover:from-blue-600 hover:via-cyan-500 hover:to-sky-400 duration-300"
           >
-            <h2 className="text-white text-2xl font-bold mb-2">View Attendance</h2>
+            <h2 className="text-white text-2xl font-bold mb-2">
+              View Attendance
+            </h2>
             <p className="text-gray-200 text-sm">Check attendance records</p>
           </NavLink>
         )}
