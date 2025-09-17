@@ -53,6 +53,8 @@ const AdminDashboard = () => {
   const students = useMemo(() => studentsQuery.data || [], [studentsQuery.data]);
   const parents = useMemo(() => parentsQuery.data || [], [parentsQuery.data]);
 
+  
+
 
   const GENDER_COLORS = ["#22d3ee", "#f43f5e"];
   const genderData = useMemo(() => {

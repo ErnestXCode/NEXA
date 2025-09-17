@@ -9,3 +9,7 @@ fees is somewhat slow
 when saving results show saving on button
 
 alerts are ugly, use modals
+
+message polling is slow ,
+
+add confirm fee flow for parents and admin is the one to confirm them

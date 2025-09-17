@@ -1,22 +1,54 @@
-import React from "react";
-import { useQuery } from "@tanstack/react-query";
-import api from "../../api/axios";
+// src/pages/communication/MessagesList.jsx
+import React, { useEffect, useState } from "react";
+import { io } from "socket.io-client";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "../../redux/slices/authSlice";
+import api from "../../api/axios";
+
+// connect once
+const socket = io(import.meta.env.VITE_API_URL, {
+  withCredentials: true,
+});
 
 const MessagesList = () => {
   const currentUser = useSelector(selectCurrentUser);
+  const [messages, setMessages] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const { data: messages = [], isLoading } = useQuery({
-    queryKey: ["messages"],
-    queryFn: async () => {
-      const res = await api.get("/communication?type=chat");
-      return res.data;
-    },
-    refetchInterval: 5000,
-  });
+  // Initial fetch (load history)
+  useEffect(() => {
+    let mounted = true;
+    api
+      .get("/communication?type=chat")
+      .then((res) => {
+        if (mounted) {
+          setMessages(res.data);
+          setLoading(false);
+        }
+      })
+      .catch(() => setLoading(false));
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
-  if (isLoading) {
+  // Real-time updates
+  useEffect(() => {
+    if (!currentUser?.school) return;
+
+    // Join school room for live messages
+    socket.emit("joinSchool", currentUser.school);
+
+    socket.on("newMessage", (msg) => {
+      setMessages((prev) => [msg, ...prev]); // prepend new message
+    });
+
+    return () => {
+      socket.off("newMessage");
+    };
+  }, [currentUser]);
+
+  if (loading) {
     return (
       <div className="flex items-center justify-center h-[500px] text-gray-400">
         Loading messages...
@@ -36,10 +68,7 @@ const MessagesList = () => {
         ) : (
           <ul className="flex flex-col gap-4">
             {messages.map((msg) => (
-              <li
-                key={msg._id}
-                className="flex items-start gap-4 p-0"
-              >
+              <li key={msg._id} className="flex items-start gap-4 p-0">
                 {/* Avatar */}
                 <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white bg-gradient-to-br from-blue-500 to-purple-500 shadow-md flex-shrink-0 mt-1">
                   {msg.sender?.name?.[0]?.toUpperCase() || "U"}
