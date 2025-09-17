@@ -10,6 +10,10 @@ when saving results show saving on button
 
 alerts are ugly, use modals
 
+fees history page
+
+leo ni parents
+
 message polling is slow ,
 
 add confirm fee flow for parents and admin is the one to confirm them
