@@ -12,6 +12,36 @@ const ParentDashboard = () => {
   const [selectedExamId, setSelectedExamId] = useState(null);
   const [feeBalances, setFeeBalances] = useState(null);
 
+  const [proof, setProof] = useState({
+    amount: "",
+    txnCode: "",
+    method: "mpesa",
+  });
+  const [submitting, setSubmitting] = useState(false);
+  const [message, setMessage] = useState(null);
+
+  const submitProof = async () => {
+    if (!selectedChild) return;
+
+    try {
+      setSubmitting(true);
+      setMessage(null);
+      await api.post("/fees/proofs", {
+        studentId: selectedChild._id,
+        amount: proof.amount,
+        txnCode: proof.txnCode,
+        method: proof.method,
+      });
+      setMessage("✅ Proof submitted successfully. Awaiting confirmation.");
+      setProof({ amount: "", txnCode: "", method: "mpesa" });
+    } catch (err) {
+      console.error("Error submitting proof:", err);
+      setMessage("❌ Failed to submit proof. Try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   // ✅ hook for unread badge
   const { unreadCount } = useUnreadMessages();
 
@@ -50,6 +80,33 @@ const ParentDashboard = () => {
       setSelectedExamId(null);
     }
   };
+
+  const [myProofs, setMyProofs] = useState({
+    pending: [],
+    confirmed: [],
+    rejected: [],
+  });
+
+  const fetchMyProofs = async () => {
+    try {
+      const res = await api.get("/fees/proofs/my");
+      const categorized = { pending: [], confirmed: [], rejected: [] };
+
+      res.data.forEach((p) => {
+        categorized[p.status]?.push(p);
+      });
+
+      setMyProofs(categorized);
+    } catch (err) {
+      console.error("Error fetching my proofs:", err);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedChild) {
+      fetchMyProofs();
+    }
+  }, [selectedChild, submitting]); // refresh after new proof
 
   const fetchFeeBalances = async (studentId) => {
     try {
@@ -91,9 +148,7 @@ const ParentDashboard = () => {
         <p className="text-gray-200 text-sm">Check school communications</p>
 
         {unreadCount > 0 && (
-          <span
-            className="absolute -top-2 -right-2 bg-gray-950 text-white text-xs font-bold px-2 py-0.5 rounded-full ring-2 ring-purple-400 shadow-lg"
-          >
+          <span className="absolute -top-2 -right-2 bg-gray-950 text-white text-xs font-bold px-2 py-0.5 rounded-full ring-2 ring-purple-400 shadow-lg">
             {unreadCount > 9 ? "9+" : unreadCount}
           </span>
         )}
@@ -138,16 +193,14 @@ const ParentDashboard = () => {
             </div>
           </div>
 
-
           {/* ✅ New Outstanding Fees Block (from /fees/outstanding) */}
           {feeBalances && (
             <div className="bg-gray-900 p-6 rounded-2xl shadow-md">
               <h2 className="text-xl font-bold mb-4 text-white">
-                Outstanding Balances – <span className="text-gray-400 text-sm">
-                  
-                  {selectedChild.firstName}{" "}
-                {selectedChild.lastName}
-                  </span>
+                Outstanding Balances –{" "}
+                <span className="text-gray-400 text-sm">
+                  {selectedChild.firstName} {selectedChild.lastName}
+                </span>
               </h2>
               <ul className="space-y-2 text-sm">
                 {["Term 1", "Term 2", "Term 3"].map((term) => (
@@ -171,9 +224,7 @@ const ParentDashboard = () => {
                 ))}
                 {feeBalances.rollover && (
                   <li className="flex justify-between pt-2 text-yellow-300">
-                    <span>
-                      Rollover to {feeBalances.rollover.academicYear}
-                    </span>
+                    <span>Rollover to {feeBalances.rollover.academicYear}</span>
                     <span>KSh {feeBalances.rollover.amount}</span>
                   </li>
                 )}
@@ -196,6 +247,110 @@ const ParentDashboard = () => {
               After payment, please inform the school to update your payment
               status.
             </p>
+          </div>
+
+          {/* My Proofs Section */}
+          <div className="bg-gray-900 p-6 rounded-2xl shadow-md mt-6">
+            <h2 className="text-xl font-bold mb-4 text-white">
+              My Payment Proofs
+            </h2>
+            {["pending", "confirmed", "rejected"].map((status) => (
+              <div key={status} className="mb-4">
+                <h3
+                  className={`font-semibold capitalize mb-2 ${
+                    status === "pending"
+                      ? "text-yellow-400"
+                      : status === "confirmed"
+                      ? "text-green-400"
+                      : "text-red-400"
+                  }`}
+                >
+                  {status}
+                </h3>
+                {myProofs[status].length === 0 ? (
+                  <p className="text-gray-400 text-sm">No {status} proofs</p>
+                ) : (
+                  <ul className="space-y-2">
+                    {myProofs[status].map((p) => (
+                      <li
+                        key={p._id}
+                        className="p-3 rounded bg-gray-800 border border-gray-700 flex justify-between"
+                      >
+                        <div>
+                          <p className="text-sm text-gray-200">
+                            {p.studentId?.firstName} {p.studentId?.lastName} (
+                            {p.studentId?.classLevel})
+                          </p>
+                          <p className="text-xs text-gray-400">
+                            {p.method.toUpperCase()} – KSh {p.amount}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            Txn: {p.txnCode}
+                          </p>
+                        </div>
+                        <span
+                          className={`text-xs font-bold uppercase ${
+                            p.status === "pending"
+                              ? "text-yellow-400"
+                              : p.status === "confirmed"
+                              ? "text-green-400"
+                              : "text-red-400"
+                          }`}
+                        >
+                          {p.status}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Submit Payment Proof */}
+          <div className="bg-gray-900 p-6 rounded-2xl shadow-md mt-6">
+            <h2 className="text-xl font-bold mb-4 text-white">
+              Submit Payment Proof
+            </h2>
+            <div className="space-y-3">
+              <input
+                type="text"
+                placeholder="Transaction Code"
+                value={proof.txnCode}
+                onChange={(e) =>
+                  setProof({ ...proof, txnCode: e.target.value })
+                }
+                className="w-full p-2 rounded bg-gray-800 text-white border border-gray-700"
+              />
+              <input
+                type="number"
+                placeholder="Amount Paid"
+                value={proof.amount}
+                onChange={(e) => setProof({ ...proof, amount: e.target.value })}
+                className="w-full p-2 rounded bg-gray-800 text-white border border-gray-700"
+              />
+              <select
+                value={proof.method}
+                onChange={(e) => setProof({ ...proof, method: e.target.value })}
+                className="w-full p-2 rounded bg-gray-800 text-white border border-gray-700"
+              >
+                <option value="mpesa">M-Pesa</option>
+                <option value="bank">Bank</option>
+                <option value="cash">Cash</option>
+              </select>
+              <button
+                onClick={submitProof}
+                disabled={submitting}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50"
+              >
+                {submitting ? "Submitting..." : "Submit Proof"}
+              </button>
+              {message && (
+                <p className="text-sm mt-2 text-center text-gray-300">
+                  {message}
+                </p>
+              )}
+            </div>
           </div>
 
           {/* Attendance Summary */}

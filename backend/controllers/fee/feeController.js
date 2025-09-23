@@ -82,8 +82,6 @@ const addFeesBulk = async (req, res) => {
 
     return res.status(201).json({
       msg: "Bulk onboarding completed",
-      created,
-      skipped,
     });
   } catch (err) {
     console.error("addFeesBulk error:", err);

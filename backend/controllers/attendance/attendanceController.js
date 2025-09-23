@@ -68,7 +68,7 @@ exports.saveAttendance = async (req, res) => {
       }
     }
 
-    res.json({ msg: "Attendance saved", records: results });
+    res.json({ msg: "Attendance saved" });
   } catch (err) {
     console.error(err);
     res.status(500).json({ msg: "Server error" });

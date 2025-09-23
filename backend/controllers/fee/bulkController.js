@@ -38,7 +38,7 @@ const addFeesBulk = async (req, res) => {
 
     res
       .status(201)
-      .json({ message: "Bulk fees added", count: createdFees.length });
+      .json({ message: "Bulk fees added" });
   } catch (err) {
     console.error("addFeesBulk error:", err);
     res.status(500).json({ message: "Server error" });

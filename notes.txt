@@ -1,19 +1,26 @@
-make caching full proof for entire app, tanstack
 optimize backend
-add streams to classes  
-add pricing 
-
-
-fees is somewhat slow
-
-when saving results show saving on button
 
 alerts are ugly, use modals
 
-fees history page
+select option looks ugly for phones make them custom to the app and make em consistent among all phones
 
-leo ni parents
+when saving results show saving... on button
 
-message polling is slow ,
+make caching full proof for entire app, tanstack
 
 add confirm fee flow for parents and admin is the one to confirm them
+
+the next year carryover should check fo feerules of next class...or maybe they should remain as excess till the new year comes in
+
+fees history page for parents and admins/bursars as well
+
+add streams to classes  
+
+add pricing , think very much on how we will actually bill customers and how i would maybe increase it without losing them , will it be modular, will it be entire app, will it be per student, how to bill different amounts to different sizes of schools 
+
+free alternatives to sendgrid for forgot password , registering admin
+
+make it so , if the school has paybil, they have an option to use it to automate fees that way im not going losses all i have to is to check---can do same with bank apis as well, that way theres both manual and automated options, if the school does use some api, the parent flow of confirming payment should not show , they just pay paybill and stuff is just automated , but if no paybill or bank api you can show the parent admin fee confirmation flow.
+
+download videos on ow to pitch and stuff , also use chatgpt and see the best way how to do it...
+

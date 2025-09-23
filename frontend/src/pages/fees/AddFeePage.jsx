@@ -1,3 +1,4 @@
+// src/pages/fees/AddFeePage.jsx
 import React, { useState, useEffect } from "react";
 import api from "../../api/axios";
 import * as XLSX from "xlsx";
@@ -6,6 +7,9 @@ import AddFeeBulkPage from "./AddFeeBulkPage";
 const AddFeePage = () => {
   const [students, setStudents] = useState([]);
   const [filteredStudents, setFilteredStudents] = useState([]);
+  const [proofs, setProofs] = useState([]);
+  const [loadingProofs, setLoadingProofs] = useState(false);
+
   const [form, setForm] = useState({
     studentId: "",
     studentName: "",
@@ -21,10 +25,29 @@ const AddFeePage = () => {
   const methods = ["cash", "mpesa", "card"];
   const terms = ["Term 1", "Term 2", "Term 3"];
 
+  // Fetch all students
   useEffect(() => {
     api.get("/students").then((res) => setStudents(res.data));
   }, []);
 
+  // Fetch all proofs
+  const fetchProofs = async () => {
+    try {
+      setLoadingProofs(true);
+      const res = await api.get("/fees/proofs/pending");
+      setProofs(res.data || []);
+    } catch (err) {
+      console.error("Error fetching proofs:", err);
+    } finally {
+      setLoadingProofs(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchProofs();
+  }, []);
+
+  // Handle manual form changes
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm({ ...form, [name]: value });
@@ -39,6 +62,7 @@ const AddFeePage = () => {
     }
   };
 
+  // Select student from dropdown
   const selectStudent = (student) => {
     setForm({
       ...form,
@@ -49,6 +73,7 @@ const AddFeePage = () => {
     setFilteredStudents([]);
   };
 
+  // Submit manual payment form
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.studentId) return alert("Please select a valid student");
@@ -70,16 +95,28 @@ const AddFeePage = () => {
     }
   };
 
+  // Approve/reject proof
+  const handleProofAction = async (id, action) => {
+    try {
+      await api.patch(`/fees/proofs/${id}/${action}`);
+      fetchProofs();
+    } catch (err) {
+      console.error("Error updating proof:", err);
+    }
+  };
+
   return (
-    <div className="overflow-y-hidden p-6 bg-gray-950 text-gray-100">
+    <div className="overflow-y-auto p-6 bg-gray-950 text-gray-100 min-h-screen space-y-8">
       <div className="grid md:grid-cols-2 gap-6">
-        
         {/* --- Single Student Payment Form --- */}
         <div className="p-6 bg-gray-900 rounded-md shadow-md flex flex-col">
           <h2 className="text-2xl font-bold mb-6 text-center">
             Add Payment / Adjustment
           </h2>
-          <form onSubmit={handleSubmit} className="space-y-4 flex flex-col flex-1">
+          <form
+            onSubmit={handleSubmit}
+            className="space-y-4 flex flex-col flex-1"
+          >
             {/* Student Typeahead */}
             <div className="relative">
               <input
@@ -191,6 +228,62 @@ const AddFeePage = () => {
           </h2>
           <AddFeeBulkPage />
         </div>
+      </div>
+
+      {/* --- Proofs Management --- */}
+      <div className="p-6 bg-gray-900 rounded-md shadow-md">
+        <h2 className="text-2xl font-bold mb-6">Payment Proofs</h2>
+        {loadingProofs ? (
+          <p>Loading proofs...</p>
+        ) : proofs.length === 0 ? (
+          <p>No proofs submitted yet.</p>
+        ) : (
+          <table className="w-full border border-gray-800 rounded text-sm">
+            <thead className="bg-gray-800">
+              <tr>
+                <th className="p-2">Parent</th>
+                <th className="p-2">Student</th>
+                <th className="p-2">Amount</th>
+                <th className="p-2">Txn Code</th>
+                <th className="p-2">Method</th>
+                <th className="p-2">Status</th>
+                <th className="p-2">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {proofs.map((p) => (
+                <tr key={p._id} className="border-t border-gray-800">
+                  <td className="p-2">{p.parent?.name || "N/A"}</td>
+                  <td className="p-2">
+                    {p.student?.firstName} {p.student?.lastName}
+                  </td>
+                  <td className="p-2">KSh {p.amount}</td>
+                  <td className="p-2">{p.txnCode}</td>
+                  <td className="p-2">{p.method}</td>
+                  <td className="p-2">{p.status}</td>
+                  <td className="p-2 flex gap-2">
+                    {p.status === "pending" && (
+                      <>
+                        <button
+                          onClick={() => handleProofAction(p._id, "approve")}
+                          className="bg-green-600 hover:bg-green-700 px-3 py-1 rounded"
+                        >
+                          Approve
+                        </button>
+                        <button
+                          onClick={() => handleProofAction(p._id, "reject")}
+                          className="bg-red-600 hover:bg-red-700 px-3 py-1 rounded"
+                        >
+                          Reject
+                        </button>
+                      </>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );

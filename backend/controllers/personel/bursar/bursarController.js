@@ -19,7 +19,7 @@ const updateBursar = async (req, res) => {
     const { id } = req.params;
     const updated = await User.findByIdAndUpdate(id, req.body, { new: true });
     if (!updated) return res.status(404).json({ msg: "Bursar not found" });
-    res.status(200).json({ msg: "Bursar updated successfully", bursar: updated });
+    res.status(200).json({ msg: "Bursar updated successfully" });
   } catch (err) {
     res.status(500).json({ msg: "Error updating bursar", error: err.message });
   }

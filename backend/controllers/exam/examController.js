@@ -33,7 +33,7 @@ const createExam = async (req, res) => {
     const exam = new Exam({ name, term, date, school, academicYear });
     await exam.save();
 
-    res.status(201).json(exam);
+    res.status(201);
   } catch (err) {
     res.status(500).json({ msg: "Error creating exam", error: err.message });
   }
@@ -158,7 +158,7 @@ const recordResult = async (req, res) => {
       });
     }
 
-    res.status(200).json({ msg: "Results recorded", updatedStudents });
+    res.status(200).json({ msg: "Results recorded" });
   } catch (err) {
     console.error(err);
     res
