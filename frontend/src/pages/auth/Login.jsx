@@ -19,8 +19,6 @@ const Login = () => {
 
   const [forgotModalOpen, setForgotModalOpen] = useState(false);
   const [forgotEmail, setForgotEmail] = useState("");
-  const [resetToken, setResetToken] = useState(null);
-  const [newPassword, setNewPassword] = useState("");
   const [forgotStatus, setForgotStatus] = useState({ message: "", type: "" });
 
   const navigate = useNavigate();
@@ -50,7 +48,7 @@ const Login = () => {
         message: "✅ Logged in successfully!",
         type: "success",
       });
-      setTimeout(() => navigate("/dashboard",  {replace: true}), 800);
+      setTimeout(() => navigate("/dashboard", { replace: true }), 800);
     } catch (err) {
       setStatus({
         loading: false,
@@ -66,54 +64,19 @@ const Login = () => {
     setForgotStatus({ message: "", type: "" });
 
     try {
-      const response = await axios.post(
-        `${apiBaseUrl}/api/auth/forgot-password`,
-        { email: forgotEmail }
-      );
-
-      // Store token internally (hidden from user) to show reset form
-      setResetToken(response.data.token);
-      setForgotStatus({
-        message: "✅ Email verified! Enter your new password below.",
-        type: "success",
+      await axios.post(`${apiBaseUrl}/api/auth/forgot-password`, {
+        email: forgotEmail,
       });
-    } catch (err) {
-      setForgotStatus({
-        message: `❌ ${err.response?.data?.msg || "Error processing request"}`,
-        type: "error",
-      });
-    }
-  };
 
-  // Step 2: Reset password using stored token
-  const handleResetPassword = async (e) => {
-    e.preventDefault();
-    setForgotStatus({ message: "", type: "" });
-
-    if (!newPassword || !resetToken) {
+      // No token returned anymore — backend emails link
       setForgotStatus({
-        message: "❌ New password is required",
-        type: "error",
-      });
-      return;
-    }
-
-    try {
-      await axios.post(`${apiBaseUrl}/api/auth/reset-password`, {
-        token: resetToken,
-        password: newPassword,
-      });
-      setForgotStatus({
-        message: "✅ Password reset successful!",
+        message: "✅ If this email exists, a reset link has been sent.",
         type: "success",
       });
       setForgotEmail("");
-      setNewPassword("");
-      setResetToken(null);
-      setForgotModalOpen(false); // close the modal
     } catch (err) {
       setForgotStatus({
-        message: `❌ ${err.response?.data?.msg || "Error resetting password"}`,
+        message: `❌ ${err.response?.data?.msg || "Error processing request"}`,
         type: "error",
       });
     }
@@ -212,51 +175,26 @@ const Login = () => {
               Reset Password
             </h3>
 
-            {/* Step 1: Request Token */}
-            {!resetToken && (
-              <form
-                onSubmit={handleForgotPassword}
-                className="flex flex-col gap-3"
+            {/* Request reset link */}
+            <form
+              onSubmit={handleForgotPassword}
+              className="flex flex-col gap-3"
+            >
+              <input
+                type="email"
+                placeholder="Enter your email"
+                value={forgotEmail}
+                onChange={(e) => setForgotEmail(e.target.value)}
+                className="bg-gray-800 text-white p-2 rounded-md focus:ring-2 focus:ring-gray-500"
+                required
+              />
+              <button
+                type="submit"
+                className="bg-blue-600 text-white p-2 rounded-md hover:scale-95 transition"
               >
-                <input
-                  type="email"
-                  placeholder="Enter your email"
-                  value={forgotEmail}
-                  onChange={(e) => setForgotEmail(e.target.value)}
-                  className="bg-gray-800 text-white p-2 rounded-md focus:ring-2 focus:ring-gray-500"
-                  required
-                />
-                <button
-                  type="submit"
-                  className="bg-blue-600 text-white p-2 rounded-md hover:scale-95 transition"
-                >
-                  Submit
-                </button>
-              </form>
-            )}
-
-            {/* Step 2: Reset Password */}
-            {resetToken && (
-              <form
-                onSubmit={handleResetPassword}
-                className="flex flex-col gap-3"
-              >
-                <input
-                  type="password"
-                  placeholder="Enter new password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  className="bg-gray-800 text-white p-2 rounded-md focus:ring-2 focus:ring-gray-500"
-                  required
-                />
-                <button
-                  type="submit"
-                  className="bg-green-600 text-white p-2 rounded-md hover:scale-95 transition"
-                >
-                  Reset Password
-                </button>
-              </form>
-            )}
+                Send Reset Link
+              </button>
+            </form>
 
             {forgotStatus.message && (
               <p

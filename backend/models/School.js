@@ -38,6 +38,7 @@ const schoolSchema = new mongoose.Schema(
     name: { type: String, required: true, unique: true },
     address: { type: String },
     phone: { type: String },
+    // add payment stuff like paybill as optional 
     email: { type: String },
 
     classLevels: {

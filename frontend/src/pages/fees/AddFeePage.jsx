@@ -1,15 +1,13 @@
-// src/pages/fees/AddFeePage.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import api from "../../api/axios";
 import * as XLSX from "xlsx";
 import AddFeeBulkPage from "./AddFeeBulkPage";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 const AddFeePage = () => {
-  const [students, setStudents] = useState([]);
-  const [filteredStudents, setFilteredStudents] = useState([]);
-  const [proofs, setProofs] = useState([]);
-  const [loadingProofs, setLoadingProofs] = useState(false);
+  const queryClient = useQueryClient();
 
+  const [filteredStudents, setFilteredStudents] = useState([]);
   const [form, setForm] = useState({
     studentId: "",
     studentName: "",
@@ -25,27 +23,66 @@ const AddFeePage = () => {
   const methods = ["cash", "mpesa", "card"];
   const terms = ["Term 1", "Term 2", "Term 3"];
 
-  // Fetch all students
-  useEffect(() => {
-    api.get("/students").then((res) => setStudents(res.data));
-  }, []);
+  // ✅ Query: all students
+  const { data: students = [] } = useQuery({
+    queryKey: ["students"],
+    queryFn: async () => {
+      const res = await api.get("/students");
+      return res.data;
+    },
+    staleTime: Infinity,
+    cacheTime: Infinity,
+  });
 
-  // Fetch all proofs
-  const fetchProofs = async () => {
-    try {
-      setLoadingProofs(true);
+  // ✅ Query: all proofs
+  const {
+    data: proofs = [],
+    isLoading: loadingProofs,
+  } = useQuery({
+    queryKey: ["proofs", "pending"],
+    queryFn: async () => {
       const res = await api.get("/fees/proofs/pending");
-      setProofs(res.data || []);
-    } catch (err) {
-      console.error("Error fetching proofs:", err);
-    } finally {
-      setLoadingProofs(false);
-    }
-  };
+      return res.data || [];
+    },
+    staleTime: Infinity,
+    cacheTime: Infinity,
+  });
 
-  useEffect(() => {
-    fetchProofs();
-  }, []);
+  // ✅ Mutation: add fee
+  const addFeeMutation = useMutation({
+    mutationFn: async (newFee) => {
+      const res = await api.post("/fees", newFee);
+      return res.data;
+    },
+    onSuccess: () => {
+      alert("Payment recorded successfully");
+      setForm({
+        studentId: "",
+        studentName: "",
+        term: "Term 1",
+        academicYear: new Date().getFullYear(),
+        amount: "",
+        type: "payment",
+        method: "cash",
+        note: "",
+      });
+      queryClient.refetchQueries(["fees", "balances"]);
+    },
+    onError: (err) => {
+      alert(err.response?.data?.message || "Error submitting payment");
+    },
+  });
+
+  // ✅ Mutation: approve/reject proof
+  const proofActionMutation = useMutation({
+    mutationFn: async ({ id, action }) => {
+      await api.patch(`/fees/proofs/${id}/${action}`);
+    },
+    onSuccess: () => {
+      queryClient.refetchQueries(["proofs", "pending"]);
+      queryClient.refetchQueries(["myProofs"]);
+    },
+  });
 
   // Handle manual form changes
   const handleChange = (e) => {
@@ -62,7 +99,6 @@ const AddFeePage = () => {
     }
   };
 
-  // Select student from dropdown
   const selectStudent = (student) => {
     setForm({
       ...form,
@@ -73,36 +109,14 @@ const AddFeePage = () => {
     setFilteredStudents([]);
   };
 
-  // Submit manual payment form
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     if (!form.studentId) return alert("Please select a valid student");
-    try {
-      const res = await api.post("/fees", form);
-      alert(res.data.msg || "Payment recorded successfully");
-      setForm({
-        studentId: "",
-        studentName: "",
-        term: "Term 1",
-        academicYear: new Date().getFullYear(),
-        amount: "",
-        type: "payment",
-        method: "cash",
-        note: "",
-      });
-    } catch (err) {
-      alert(err.response?.data?.message || "Error submitting payment");
-    }
+    addFeeMutation.mutate(form);
   };
 
-  // Approve/reject proof
-  const handleProofAction = async (id, action) => {
-    try {
-      await api.patch(`/fees/proofs/${id}/${action}`);
-      fetchProofs();
-    } catch (err) {
-      console.error("Error updating proof:", err);
-    }
+  const handleProofAction = (id, action) => {
+    proofActionMutation.mutate({ id, action });
   };
 
   return (
@@ -164,6 +178,7 @@ const AddFeePage = () => {
               placeholder="Academic Year"
               required
               className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              style={{ MozAppearance: "textfield" }}
             />
 
             <input
@@ -253,9 +268,9 @@ const AddFeePage = () => {
             <tbody>
               {proofs.map((p) => (
                 <tr key={p._id} className="border-t border-gray-800">
-                  <td className="p-2">{p.parent?.name || "N/A"}</td>
+                  <td className="p-2">{p.parentId?.name || "N/A"}</td>
                   <td className="p-2">
-                    {p.student?.firstName} {p.student?.lastName}
+                    {p.studentId?.firstName} {p.studentId?.lastName}
                   </td>
                   <td className="p-2">KSh {p.amount}</td>
                   <td className="p-2">{p.txnCode}</td>
@@ -265,13 +280,17 @@ const AddFeePage = () => {
                     {p.status === "pending" && (
                       <>
                         <button
-                          onClick={() => handleProofAction(p._id, "approve")}
+                          onClick={() =>
+                            handleProofAction(p._id, "approve")
+                          }
                           className="bg-green-600 hover:bg-green-700 px-3 py-1 rounded"
                         >
                           Approve
                         </button>
                         <button
-                          onClick={() => handleProofAction(p._id, "reject")}
+                          onClick={() =>
+                            handleProofAction(p._id, "reject")
+                          }
                           className="bg-red-600 hover:bg-red-700 px-3 py-1 rounded"
                         >
                           Reject

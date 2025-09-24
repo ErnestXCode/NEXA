@@ -1,23 +1,108 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import api from "../../api/axios";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 const FeesPage = () => {
-  const [students, setStudents] = useState([]);
-  const [school, setSchool] = useState(null);
+  const queryClient = useQueryClient();
+
   const [selectedTerm, setSelectedTerm] = useState("Term 1");
   const [selectedClass, setSelectedClass] = useState("All");
   const [onlyWithBalance, setOnlyWithBalance] = useState(false);
-  const [searchQuery, setSearchQuery] = useState(""); 
-  const [totalOutstanding, setTotalOutstanding] = useState("...");
-  const [studentBalances, setStudentBalances] = useState({}); // 🔹 new state
+  const [searchQuery, setSearchQuery] = useState("");
 
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingFee, setEditingFee] = useState(null); 
+  const [editingFee, setEditingFee] = useState(null);
   const [editAmount, setEditAmount] = useState("");
   const [editType, setEditType] = useState("payment");
   const [editMethod, setEditMethod] = useState("cash");
   const [editNote, setEditNote] = useState("");
 
+  // -------------------------
+  // Queries
+  // -------------------------
+  const {
+    data: students = [],
+    isLoading: loadingStudents,
+    error: studentsError,
+  } = useQuery({
+    queryKey: ["students"],
+    queryFn: async () => {
+      const res = await api.get("/students");
+      return res.data;
+    },
+  });
+
+  const {
+    data: school,
+    isLoading: loadingSchool,
+    error: schoolError,
+  } = useQuery({
+    queryKey: ["school", "me"],
+    queryFn: async () => {
+      const res = await api.get("/schools/me");
+      return res.data;
+    },
+  });
+
+  const {
+    data: totalOutstanding = 0,
+    isLoading: loadingOutstanding,
+  } = useQuery({
+    queryKey: ["fees", "outstanding", selectedTerm, selectedClass],
+    queryFn: async () => {
+      const query = `?term=${selectedTerm}&academicYear=2025/2026${
+        selectedClass !== "All" ? `&classLevel=${selectedClass}` : ""
+      }`;
+      const res = await api.get(`/fees/total-outstanding${query}`);
+      return res.data.totalOutstanding || 0;
+    },
+    enabled: !!students.length,
+  });
+
+  const {
+    data: studentBalances = {},
+    isLoading: loadingBalances,
+  } = useQuery({
+    queryKey: ["fees", "balances", selectedTerm, selectedClass, students],
+    queryFn: async () => {
+      const balancesMap = {};
+      await Promise.all(
+        students.map(async (student) => {
+          try {
+            const res = await api.get(
+              `/fees/outstanding/${student._id}?academicYear=2025/2026`
+            );
+            balancesMap[student._id] = res.data.balances[selectedTerm] || 0;
+          } catch (err) {
+            console.error("Error fetching student balance:", err);
+            balancesMap[student._id] = 0;
+          }
+        })
+      );
+      return balancesMap;
+    },
+    enabled: !!students.length,
+  });
+
+  // -------------------------
+  // Mutations
+  // -------------------------
+  const updateFeeMutation = useMutation({
+    mutationFn: async ({ feeId, payload }) => {
+      const res = await api.patch(`/fees/${feeId}`, payload);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.refetchQueries({ queryKey: ["students"] });
+      queryClient.refetchQueries({ queryKey: ["fees", "balances"] });
+      queryClient.refetchQueries({ queryKey: ["fees", "outstanding"] });
+      closeModal();
+    },
+  });
+
+  // -------------------------
+  // Handlers
+  // -------------------------
   const openEditModal = (student) => {
     const balance = studentBalances[student._id] ?? 0;
 
@@ -35,59 +120,17 @@ const FeesPage = () => {
 
   const closeModal = () => setIsModalOpen(false);
 
-  useEffect(() => {
-    fetchStudents();
-    fetchSchool();
-  }, []);
-
-  useEffect(() => {
-    fetchOutstanding();
-    fetchStudentBalances(); // 🔹 fetch balances whenever term/class changes
-  }, [selectedTerm, selectedClass, students]);
-
-  const fetchStudents = async () => {
-    try {
-      const res = await api.get("/students");
-      setStudents(res.data);
-    } catch (err) {
-      console.error("Error fetching students:", err);
-    }
-  };
-
-  const fetchSchool = async () => {
-    try {
-      const res = await api.get("/schools/me");
-      setSchool(res.data);
-    } catch (err) {
-      console.error("Error fetching school:", err);
-    }
-  };
-
-  const fetchOutstanding = async () => {
-    try {
-      const query = `?term=${selectedTerm}&academicYear=2025/2026${selectedClass !== "All" ? `&classLevel=${selectedClass}` : ""}`;
-      const res = await api.get(`/fees/total-outstanding${query}`);
-      setTotalOutstanding(res.data.totalOutstanding || 0);
-    } catch (err) {
-      console.error("Error fetching outstanding fees:", err);
-    }
-  };
-
-  // 🔹 new: fetch individual student balances from backend
-  const fetchStudentBalances = async () => {
-    const balancesMap = {};
-    await Promise.all(
-      students.map(async (student) => {
-        try {
-          const res = await api.get(`/fees/outstanding/${student._id}?academicYear=2025/2026`);
-          balancesMap[student._id] = res.data.balances[selectedTerm] || 0;
-        } catch (err) {
-          console.error("Error fetching student balance:", err);
-          balancesMap[student._id] = 0;
-        }
-      })
-    );
-    setStudentBalances(balancesMap);
+  const submitEdit = () => {
+    if (!editingFee) return;
+    updateFeeMutation.mutate({
+      feeId: editingFee.feeId,
+      payload: {
+        amount: editAmount,
+        type: editType,
+        method: editMethod,
+        note: editNote,
+      },
+    });
   };
 
   const getBalanceColor = (balance) => {
@@ -102,48 +145,30 @@ const FeesPage = () => {
     const balance = studentBalances[s._id] ?? 0;
     const classMatch = selectedClass === "All" || s.classLevel === selectedClass;
     const balanceMatch = !onlyWithBalance || balance > 0;
-    const nameMatch = `${s.firstName} ${s.lastName}`.toLowerCase().includes(searchQuery.toLowerCase());
+    const nameMatch = `${s.firstName} ${s.lastName}`
+      .toLowerCase()
+      .includes(searchQuery.toLowerCase());
     return classMatch && balanceMatch && nameMatch;
   });
 
-  const submitEdit = async () => {
-    if (!editingFee) return;
+  // -------------------------
+  // Render
+  // -------------------------
+  if (loadingStudents || loadingSchool || loadingBalances || loadingOutstanding) {
+    return (
+      <div className="p-6 text-gray-300">
+        Loading fees data...
+      </div>
+    );
+  }
 
-    try {
-      const res = await api.patch(`/fees/${editingFee.feeId}`, {
-        amount: editAmount,
-        type: editType,
-        method: editMethod,
-        note: editNote,
-      });
-
-      setStudents((prev) =>
-        prev.map((s) => {
-          if (s._id === editingFee.studentId) {
-            const updatedPayments = s.payments.map((p) =>
-              p._id === editingFee.feeId
-                ? {
-                    ...p,
-                    amount: editAmount,
-                    category: editType,
-                    type: editMethod,
-                    note: editNote,
-                  }
-                : p
-            );
-            return { ...s, payments: updatedPayments };
-          }
-          return s;
-        })
-      );
-
-      fetchStudentBalances(); // 🔹 refresh balances
-      fetchOutstanding();
-      closeModal();
-    } catch (err) {
-      console.error("Error updating fee:", err);
-    }
-  };
+  if (studentsError || schoolError) {
+    return (
+      <div className="p-6 text-red-400">
+        Error loading data.
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-6xl mx-auto p-6 bg-gray-950 text-gray-100 rounded-lg shadow-lg mt-6 overflow-hidden">
@@ -260,7 +285,9 @@ const FeesPage = () => {
                     {s.classLevel}
                   </td>
                   <td
-                    className={`px-4 py-2 border-b border-gray-800 font-semibold ${getBalanceColor(balance)}`}
+                    className={`px-4 py-2 border-b border-gray-800 font-semibold ${getBalanceColor(
+                      balance
+                    )}`}
                   >
                     KSh {balance}
                   </td>
@@ -339,8 +366,9 @@ const FeesPage = () => {
               <button
                 onClick={submitEdit}
                 className="px-4 py-2 bg-blue-600 rounded hover:bg-blue-500 text-white"
+                disabled={updateFeeMutation.isPending}
               >
-                Save
+                {updateFeeMutation.isPending ? "Saving..." : "Save"}
               </button>
             </div>
           </div>

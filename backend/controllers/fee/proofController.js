@@ -2,6 +2,7 @@
 const PaymentProof = require("../../models/PaymentProof");
 const Student = require("../../models/Student");
 const User = require("../../models/User");
+const Fee = require("../../models/Fee");
 
 // ---------------------
 // Parent submits proof
@@ -58,30 +59,49 @@ exports.reviewProof = async (req, res) => {
     }
 
     if (action === "approve") {
-      const student = await Student.findById(proof.studentId._id);
+  const student = await Student.findById(proof.studentId._id);
 
-      // Record official payment in student doc
-      student.payments.push({
-        academicYear,
-        term,
-        amount: proof.amount,
-        category: "payment",
-        type: proof.method,
-        note: `Confirmed via proof txn ${proof.txnCode}`,
-      });
+  // Record official payment in Fee collection
+  const fee = await Fee.create({
+    student: student._id,
+    term,
+    academicYear,
+    classLevel: student.classLevel,
+    amount: proof.amount,
+    type: "payment",
+    method: proof.method,
+    note: `Confirmed via proof txn ${proof.txnCode}`,
+    handledBy: req.user.userId, // admin/bursar ID
+    school: student.school,
+  });
 
-      // Increment persisted totals
-      if (term === "Term 1") student.amtPaidTerm1 += proof.amount;
-      if (term === "Term 2") student.amtPaidTerm2 += proof.amount;
-      if (term === "Term 3") student.amtPaidTerm3 += proof.amount;
+  // Also push to student.payments for quick lookup
+  student.payments.push({
+    academicYear,
+    term,
+    amount: proof.amount,
+    category: "payment",
+    type: proof.method,
+    note: `Confirmed via proof txn ${proof.txnCode}`,
+  });
 
-      await student.save();
+  // Update term totals
+  if (term === "Term 1") student.amtPaidTerm1 += proof.amount;
+  if (term === "Term 2") student.amtPaidTerm2 += proof.amount;
+  if (term === "Term 3") student.amtPaidTerm3 += proof.amount;
 
-      proof.status = "confirmed";
-      await proof.save();
+  await student.save();
 
-      return res.json({ message: "Proof confirmed and payment recorded", proof });
-    }
+  proof.status = "confirmed";
+  await proof.save();
+
+  return res.json({
+    message: "Proof confirmed, payment recorded in fees",
+    proof,
+    fee,
+  });
+}
+
 
     res.status(400).json({ message: "Invalid action" });
   } catch (err) {
