@@ -42,6 +42,7 @@ import InstallPrompt from "./install/InstallPrompt";
 import { useSelector } from "react-redux";
 import ReviewPage from "./pages/review/ReviewPage";
 import { useEffect } from "react";
+import Billing from "./pages/home/Billing";
 
 const FeeHistoryWrapper = () => {
   const { studentId } = useParams();
@@ -87,6 +88,8 @@ function App() {
             <Route path="/feedback" element={<Feedback />} />
             <Route path="/dashboard">
               <Route index element={<Dashboard />} />
+
+              <Route path="billing" element={<Billing />} />
 
              
               <Route path="fees" element={<FeesPage />} />

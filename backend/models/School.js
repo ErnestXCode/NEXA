@@ -38,8 +38,10 @@ const schoolSchema = new mongoose.Schema(
     name: { type: String, required: true, unique: true },
     address: { type: String },
     phone: { type: String },
-    // add payment stuff like paybill as optional 
+    // add payment stuff like paybill as optional
     email: { type: String },
+
+    paidPesapal: { type: Boolean, default: false },
 
     classLevels: {
       type: [classLevelSchema],
@@ -88,13 +90,17 @@ schoolSchema.statics.defaultGradingSystem = function () {
     { min: 75, max: 89, grade: "EE2", remark: "Exceeding Expectation - Low" },
     { min: 58, max: 74, grade: "ME1", remark: "Meeting Expectation - High" },
     { min: 41, max: 57, grade: "ME2", remark: "Meeting Expectation - Low" },
-    { min: 31, max: 40, grade: "AE1", remark: "Approaching Expectation - High" },
+    {
+      min: 31,
+      max: 40,
+      grade: "AE1",
+      remark: "Approaching Expectation - High",
+    },
     { min: 21, max: 30, grade: "AE2", remark: "Approaching Expectation - Low" },
     { min: 11, max: 20, grade: "BE1", remark: "Below Expectation - High" },
-    { min: 1,  max: 10, grade: "BE2", remark: "Below Expectation - Low" },
+    { min: 1, max: 10, grade: "BE2", remark: "Below Expectation - Low" },
   ];
 };
-
 
 schoolSchema.statics.defaultCBCLevels = function () {
   return [

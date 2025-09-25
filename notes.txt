@@ -1,10 +1,14 @@
 optimize backend
 
+student edit classlevel is not a dropdown , and middle name is for some reason above the other names
+
 alerts are ugly, use modals
 
 select option looks ugly for phones make them custom to the app and make em consistent among all phones
 
 when saving results show saving... on button
+
+reviews show as commas first for some reason
 
 make caching full proof for entire app, tanstack
 
@@ -16,7 +20,9 @@ fees history page for parents and admins/bursars as well
 
 add streams to classes  
 
-add pricing , think very much on how we will actually bill customers and how i would maybe increase it without losing them , will it be modular, will it be entire app, will it be per student, how to bill different amounts to different sizes of schools 
+fees is caching alot 
+
+add pricing , and pilot complete as well think very much on how we will actually bill customers and how i would maybe increase it without losing them , will it be modular, will it be entire app, will it be per student, how to bill different amounts to different sizes of schools 
 
 free alternatives to sendgrid for forgot password , registering admin
 

@@ -98,6 +98,9 @@ const Navigation = () => {
     <NavLink end onClick={handleCloseSidenav} to="/dashboard/review" className={navLinkClasses}>
       Reviews
     </NavLink>
+    <NavLink end onClick={handleCloseSidenav} to="/dashboard/billing" className={navLinkClasses}>
+      Billing
+    </NavLink>
 
     <NavLink end onClick={handleCloseSidenav} to="/feedback" className={navLinkClasses}>
       Feedback
