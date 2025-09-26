@@ -30,30 +30,26 @@ async function getAccessToken() {
 // Create payment
 // ------------------
 exports.createPayment = async (req, res) => {
-  console.log("hit create", req.body, apiKey, apiSecret, process.env.PESAPAL_ENV);
-
-  const { schoolId, plan, amount } = req.body;
-  const ipnUrl = process.env.PESAPAL_IPN_URL;
+  const { plan, amount } = req.body;
+  const schoolId = req.user.school; // always from token/session, not request body
 
   try {
-    // 1. Get token
     const token = await getAccessToken();
 
-    // 2. Create checkout invoice (SubmitOrderRequest)
     const response = await axios.post(
       `${baseUrl}/api/Transactions/SubmitOrderRequest`,
       {
-        id: schoolId, // merchant reference
+        id: schoolId, // merchant reference will be school _id
         currency: "KES",
         amount,
         description: `${plan} plan`,
-        callback_url: ipnUrl,
-        notification_id: process.env.PESAPAL_IPN_ID, // from registered IPN
+        callback_url: process.env.PESAPAL_IPN_URL,
+        notification_id: process.env.PESAPAL_IPN_ID,
         billing_address: {
-          email_address: "test@example.com",
-          phone_number: "254700000000",
+          email_address: req.user.email || "school@example.com",
+          phone_number: req.user.phone || "254700000000",
           country_code: "KE",
-          first_name: "School",
+          first_name: req.user.name || "School",
           last_name: "Admin",
         },
       },
@@ -65,21 +61,9 @@ exports.createPayment = async (req, res) => {
       }
     );
 
-    console.log("Pesapal full response:", response.status, response.data);
-
-    const redirectUrl = response.data.redirect_url;
-    if (!redirectUrl) {
-      return res
-        .status(500)
-        .json({ error: "No redirect URL returned", raw: response.data });
-    }
-
-    res.json({ paymentUrl: redirectUrl });
+    res.json({ paymentUrl: response.data.redirect_url });
   } catch (err) {
-    console.error(
-      "Pesapal create payment error:",
-      err.response?.data || err.message
-    );
+    console.error("Pesapal create payment error:", err.response?.data || err.message);
     res.status(500).json({ error: "Pesapal payment creation failed" });
   }
 };

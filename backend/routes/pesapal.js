@@ -1,6 +1,8 @@
 const express = require("express");
 const School = require("../models/School");
 const { createPayment } = require("../controllers/pesapal/pesapalController");
+const verifyJWT = require("../middleware/verifyJWT");
+
 const { verifyTransaction } = require("../utils/verifyPesapalTransaction");
 const router = express.Router();
 
@@ -51,6 +53,6 @@ router.post("/ipn", async (req, res) => {
 // ------------------
 // Create payment link
 // ------------------
-router.post("/create-payment", createPayment);
+router.post("/create-payment", verifyJWT, createPayment);
 
 module.exports = router;

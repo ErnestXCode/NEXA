@@ -42,6 +42,8 @@ const schoolSchema = new mongoose.Schema(
     email: { type: String },
 
     paidPesapal: { type: Boolean, default: false },
+    isPilotSchool: {type: Boolean, default: false},
+    isFreeTrial: {type: Boolean, default: false},
 
     classLevels: {
       type: [classLevelSchema],
