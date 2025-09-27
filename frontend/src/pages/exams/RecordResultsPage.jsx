@@ -162,25 +162,33 @@ const RecordResultsPage = () => {
       />
 
       {/* Step 1: Select Exam */}
-      {academicYear && (
-        <select
-          value={examId}
-          onChange={(e) => {
-            setExamId(e.target.value);
-            setSelectedClass("");
-            setSelectedSubject("");
-            setResults({});
-          }}
-          className="w-full p-2 text-white bg-gray-800 rounded"
-        >
-          <option value="">Select Exam</option>
-          {exams.map((e) => (
-            <option key={e._id} value={e._id}>
-              {e.name} - {e.term} - {e.academicYear}
-            </option>
-          ))}
-        </select>
-      )}
+     {/* Step 1: Select Exam */}
+{academicYear && (
+  exams.length === 0 ? (
+    <div className="p-3 text-center text-gray-400 bg-gray-800 rounded">
+      No exams yet for {academicYear}
+    </div>
+  ) : (
+    <select
+      value={examId}
+      onChange={(e) => {
+        setExamId(e.target.value);
+        setSelectedClass("");
+        setSelectedSubject("");
+        setResults({});
+      }}
+      className="w-full p-2 text-white bg-gray-800 rounded"
+    >
+      <option value="">Select Exam</option>
+      {exams.map((e) => (
+        <option key={e._id} value={e._id}>
+          {e.name} - {e.term} - {e.academicYear}
+        </option>
+      ))}
+    </select>
+  )
+)}
+
 
       {/* Step 2: Select Class */}
       {examId && (

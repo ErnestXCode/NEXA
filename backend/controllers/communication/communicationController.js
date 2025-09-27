@@ -30,8 +30,10 @@ const sendMessage = async (req, res) => {
     });
 
     // Populate sender for frontend
-    const populatedMessage = await Message.findById(newMessage._id)
-      .populate("sender", "name email role");
+    const populatedMessage = await Message.findById(newMessage._id).populate(
+      "sender",
+      "name email role"
+    );
 
     const senderDoc = await User.findById(sender.userId);
 
@@ -49,7 +51,9 @@ const sendMessage = async (req, res) => {
 
     // Chat / push notifications
     if (type === "chat") {
-      const subscriptions = await PushSubscription.find({ school: sender.school }).populate("user");
+      const subscriptions = await PushSubscription.find({
+        school: sender.school,
+      }).populate("user");
 
       const pushPayload = {
         title: `New message from [${senderDoc.role}] ${senderDoc.name}`,
@@ -58,7 +62,16 @@ const sendMessage = async (req, res) => {
       };
 
       // Send push notifications
+      // subscriptions.forEach((sub) => {
+      //   webpush
+      //     .sendNotification(sub.subscription, JSON.stringify(pushPayload))
+      //     .catch((err) => console.error("Push failed:", err));
+      // });
+
       subscriptions.forEach((sub) => {
+        // 🚫 Skip notifying the sender themself
+        if (sub.user._id.toString() === sender.userId.toString()) return;
+
         webpush
           .sendNotification(sub.subscription, JSON.stringify(pushPayload))
           .catch((err) => console.error("Push failed:", err));
@@ -74,7 +87,6 @@ const sendMessage = async (req, res) => {
     res.status(500).json({ msg: "Failed to send message" });
   }
 };
-
 
 // GET /communication?type=chat&since=timestamp
 const getMessages = async (req, res) => {

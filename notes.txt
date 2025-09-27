@@ -6,6 +6,10 @@ alerts are ugly, use modals
 
 select option looks ugly for phones make them custom to the app and make em consistent among all phones
 
+creating exams is delayed for some reason
+
+edit fee not found
+
 when saving results show saving... on button
 
 square on nexa notification to be detailed something image 
