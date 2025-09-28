@@ -14,10 +14,15 @@ const handleTokenRefresh = async (req, res) => {
 
     // Verify the old refresh token
     const decoded = jwt.verify(oldRefreshToken, process.env.REFRESH_SECRET);
-    if(!decoded) return res.sendStatus(403)
+    if (!decoded) return res.sendStatus(403);
     // ✅ Generate new tokens
     const newAccessToken = jwt.sign(
-      { email: user.email, role: user.role, school: user.school , userId: user._id},
+      {
+        email: user.email,
+        role: user.role,
+        school: user.school,
+        userId: user._id,
+      },
       process.env.ACCESS_SECRET,
       { expiresIn: "15m" }
     );
@@ -40,6 +45,8 @@ const handleTokenRefresh = async (req, res) => {
 
     await user.save();
 
+    const populatedUser = await User.findById(user._id).populate("school");
+    
     // ✅ Send back tokens
     res.cookie("jwt", newRefreshToken, {
       httpOnly: true,
@@ -48,16 +55,23 @@ const handleTokenRefresh = async (req, res) => {
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7d
     });
 
+    // refreshToken.js
+
     res.json({
       accessToken: newAccessToken,
       user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        school: user.school,
-        isClassTeacher: user.isClassTeacher
-
+        id: populatedUser._id,
+        name: populatedUser.name,
+        email: populatedUser.email,
+        role: populatedUser.role,
+        school: {
+          id: populatedUser.school._id,
+          name: populatedUser.school.name,
+          paidPesapal: populatedUser.school.paidPesapal,
+          isPilotSchool: populatedUser.school.isPilotSchool,
+          isFreeTrial: populatedUser.school.isFreeTrial,
+        },
+        isClassTeacher: populatedUser.isClassTeacher,
       },
     });
   } catch (err) {

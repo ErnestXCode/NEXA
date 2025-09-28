@@ -1,4 +1,7 @@
 const axios = require("axios");
+const { v4: uuidv4 } = require("uuid");
+const Billing = require("../../models/Billing");
+const School = require("../../models/School");
 
 const apiKey =
   process.env.PESAPAL_ENV === "sandbox"
@@ -33,13 +36,17 @@ exports.createPayment = async (req, res) => {
   const { plan, amount } = req.body;
   const schoolId = req.user.school; // always from token/session, not request body
 
+  console.log("schoolId, ", schoolId);
+
+  const merchantRef = uuidv4();
+
   try {
     const token = await getAccessToken();
 
     const response = await axios.post(
       `${baseUrl}/api/Transactions/SubmitOrderRequest`,
       {
-        id: schoolId, // merchant reference will be school _id
+        id: merchantRef, // ✅ unique per request
         currency: "KES",
         amount,
         description: `${plan} plan`,
@@ -61,9 +68,26 @@ exports.createPayment = async (req, res) => {
       }
     );
 
+    console.log(response.data);
+
+    const billing = await Billing.create({
+      school: schoolId,
+      merchant_ref: merchantRef,
+      plan,
+      amount,
+      status: "pending",
+    });
+
+    await School.findByIdAndUpdate(schoolId, {
+  $push: { billings: billing._id },
+});
+
     res.json({ paymentUrl: response.data.redirect_url });
   } catch (err) {
-    console.error("Pesapal create payment error:", err.response?.data || err.message);
+    console.error(
+      "Pesapal create payment error:",
+      err.response?.data || err.message
+    );
     res.status(500).json({ error: "Pesapal payment creation failed" });
   }
 };

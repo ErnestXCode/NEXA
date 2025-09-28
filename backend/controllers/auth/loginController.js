@@ -16,7 +16,12 @@ const handleLogin = async (req, res) => {
   if (!isMatch) return res.status(401).json({ msg: "Invalid credentials" });
 
   const accessToken = jwt.sign(
-    { email, role: foundUser.role, school: foundUser.school, userId: foundUser._id },
+    {
+      email,
+      role: foundUser.role,
+      school: foundUser.school,
+      userId: foundUser._id,
+    },
     process.env.ACCESS_SECRET,
     { expiresIn: "15m" }
   );
@@ -43,6 +48,8 @@ const handleLogin = async (req, res) => {
   await foundUser.save();
   console.log("finished login", foundUser);
 
+  const populatedUser = await User.findById(foundUser._id).populate("school");
+
   res
     .cookie("jwt", refreshToken, {
       httpOnly: true,
@@ -53,14 +60,20 @@ const handleLogin = async (req, res) => {
     .status(200)
     .json({
       accessToken: accessToken,
-      user: {
-        id: foundUser._id,
-        name: foundUser.name,
-        email: foundUser.email,
-        role: foundUser.role,
-        school: foundUser.school,
-        isClassTeacher: foundUser.isClassTeacher
 
+      user: {
+        id: populatedUser._id,
+        name: populatedUser.name,
+        email: populatedUser.email,
+        role: populatedUser.role,
+        school: {
+          id: populatedUser.school._id,
+          name: populatedUser.school.name,
+          paidPesapal: populatedUser.school.paidPesapal,
+          isPilotSchool: populatedUser.school.isPilotSchool,
+          isFreeTrial: populatedUser.school.isFreeTrial,
+        },
+        isClassTeacher: populatedUser.isClassTeacher,
       },
     });
 };

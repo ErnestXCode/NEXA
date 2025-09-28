@@ -26,11 +26,14 @@ const {
   getChildrenExams,
   getStudentAttendanceSummary,
 } = require("../controllers/personel/parents/parentController");
+const checkSchoolPaid = require("../middleware/checkSchoolPaid");
+
 const router = express.Router();
 
-router.route("/bursar").get(verifyJWT, getAllBursars);
-router.route("/teacher").get(verifyJWT, getAllTeachers);
-router.route("/parent").get(verifyJWT, getAllParents);
+
+router.route("/bursar").get(verifyJWT,checkSchoolPaid, getAllBursars);
+router.route("/teacher").get(verifyJWT, checkSchoolPaid, getAllTeachers);
+router.route("/parent").get(verifyJWT,checkSchoolPaid, getAllParents);
 
 router.route("/parent/dashboard").get(verifyJWT, getParentDashboard);
 router.route("/parent/attendance-summary").get(verifyJWT, getStudentAttendanceSummary);

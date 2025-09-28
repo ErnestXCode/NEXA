@@ -8,6 +8,7 @@ import Pricing from "./pages/home/Pricing";
 import Communication from "./pages/communication/Communication";
 import Dashboard from "./pages/home/Dashboard";
 import PersistLogin from "./pages/auth/PersistLogin";
+import ProtectedBillingRoute from "./pages/auth/ProtectedBillingRoute";
 import PersonelForm from "./pages/actions/PersonelForm";
 import StudentForm from "./pages/actions/StudentForm";
 import AllTeachers from "./pages/actions/AllTeachers";
@@ -53,19 +54,24 @@ const HomeRedirect = () => {
   const { accessToken } = useSelector((state) => state.auth);
 
   // Wait until PersistLogin has finished loading
-  if (accessToken === undefined) return <p className="p-6 text-gray-400">Loading...</p>;; // or a spinner
+  if (accessToken === undefined)
+    return <p className="p-6 text-gray-400">Loading...</p>; // or a spinner
 
   return accessToken ? <Navigate to="/dashboard" replace /> : <Home />;
 };
 
 function App() {
   useEffect(() => {
-  const handleFocus = () => {
-    if ("clearAppBadge" in navigator) navigator.clearAppBadge().catch(() => {});
-  };
-  window.addEventListener("focus", handleFocus);
-  return () => window.removeEventListener("focus", handleFocus);
-}, []);
+    const handleFocus = () => {
+      if ("clearAppBadge" in navigator)
+        navigator.clearAppBadge().catch(() => {});
+    };
+    window.addEventListener("focus", handleFocus);
+    return () => window.removeEventListener("focus", handleFocus);
+  }, []);
+
+  const x = useSelector((state) => state.auth);
+  console.log(x);
 
   return (
     <div className="bg-gray-950 text-white min-h-screen">
@@ -87,69 +93,73 @@ function App() {
           <Route element={<PersistLogin />}>
             <Route path="/feedback" element={<Feedback />} />
             <Route path="/dashboard">
-              <Route index element={<Dashboard />} />
-
               <Route path="billing" element={<Billing />} />
 
-             
-              <Route path="fees" element={<FeesPage />} />
-              <Route path="fees/add" element={<AddFeePage />} />
-              <Route
-                path="fees/student/:studentId"
-                element={<StudentFeesPage />}
-              />
-              <Route
-                path="fees/send-statement"
-                element={<SendFeeStatementPage />}
-              />
-              <Route
-                path="fees/set-expectation"
-                element={<SetFeeExpectationPage />}
-              />
-              <Route
-                path="fees/history/:studentId"
-                element={<FeeHistoryWrapper />}
-              />
+              <Route element={<ProtectedBillingRoute />}>
+                <Route index element={<Dashboard />} />
+                <Route path="fees" element={<FeesPage />} />
+                <Route path="fees/add" element={<AddFeePage />} />
+                <Route
+                  path="fees/student/:studentId"
+                  element={<StudentFeesPage />}
+                />
+                <Route
+                  path="fees/send-statement"
+                  element={<SendFeeStatementPage />}
+                />
+                <Route
+                  path="fees/set-expectation"
+                  element={<SetFeeExpectationPage />}
+                />
+                <Route
+                  path="fees/history/:studentId"
+                  element={<FeeHistoryWrapper />}
+                />
 
-              <Route path="attendance" element={<AttendanceDashboard />} />
-              <Route path="attendance/mark" element={<AttendancePage />} />
+                <Route path="attendance" element={<AttendanceDashboard />} />
+                <Route path="attendance/mark" element={<AttendancePage />} />
 
-              <Route path="communication" element={<Communication />} />
-              <Route path="communication/send" element={<SendMessageForm />} />
-              <Route path="settings" element={<SchoolSettings />} />
+                <Route path="communication" element={<Communication />} />
+                <Route
+                  path="communication/send"
+                  element={<SendMessageForm />}
+                />
+                <Route path="settings" element={<SchoolSettings />} />
 
-              {/* Forms */}
-              <Route path="createPersonel" element={<PersonelForm />} />
-              <Route path="createStudent" element={<StudentForm />} />
-              <Route path="createParent" element={<ParentForm />} />
+                {/* Forms */}
+                <Route path="createPersonel" element={<PersonelForm />} />
+                <Route path="createStudent" element={<StudentForm />} />
+                <Route path="createParent" element={<ParentForm />} />
 
-              {/* Lists */}
-              <Route path="students" element={<AllStudents />} />
-              <Route path="students/edit/:id" element={<StudentEditPage />} />
+                {/* Lists */}
+                <Route path="students" element={<AllStudents />} />
+                <Route path="students/edit/:id" element={<StudentEditPage />} />
 
-              <Route path="setup" element={<SetupWizard />} />
+                <Route path="setup" element={<SetupWizard />} />
 
-              <Route path="teachers" element={<AllTeachers />} />
-              <Route path="bursars" element={<AllBursars />} />
-              <Route path="parents" element={<AllParents />} />
-              <Route
-                path="personnel/edit/:id"
-                element={<PersonnelEditPage />}
-              />
-              <Route
-                path="personnel/edit-parent/:id"
-                element={<ParentEditPage />}
-              />
-              <Route path="schools" element={<AllSchools />} />
-              <Route
-                path="schools/edit-school/:id"
-                element={<SchoolEditPage />}
-              />
+                <Route path="teachers" element={<AllTeachers />} />
+                <Route path="bursars" element={<AllBursars />} />
+                <Route path="parents" element={<AllParents />} />
+                <Route
+                  path="personnel/edit/:id"
+                  element={<PersonnelEditPage />}
+                />
+                <Route
+                  path="personnel/edit-parent/:id"
+                  element={<ParentEditPage />}
+                />
+                <Route path="schools" element={<AllSchools />} />
+                <Route
+                  path="schools/edit-school/:id"
+                  element={<SchoolEditPage />}
+                />
 
-              <Route path="exams" element={<ExamsPage />} />
-              <Route path="exams/record" element={<RecordResultsPage />} />
-              <Route path="exams/report" element={<ReportCardsPage />} />
-              <Route path="review" element={<ReviewPage />} />
+                <Route path="exams" element={<ExamsPage />} />
+                <Route path="exams/record" element={<RecordResultsPage />} />
+                <Route path="exams/report" element={<ReportCardsPage />} />
+
+                <Route path="review" element={<ReviewPage />} />
+              </Route>
             </Route>
           </Route>
         </Routes>

@@ -23,8 +23,12 @@ const {
   getPendingProofs,
   getMyProofs,
 } = require("../controllers/fee/proofController");
+const checkSchoolPaid = require("../middleware/checkSchoolPaid");
+
 
 const router = express.Router();
+
+
 
 /* ---------------- FEES ---------------- */
 router.post("/", verifyJWT, authorize(["bursar", "admin"]), addFee);

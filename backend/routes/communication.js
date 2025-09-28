@@ -5,7 +5,11 @@ const {
 } = require("../controllers/communication/communicationController");
 const verifyJWT = require("../middleware/verifyJWT");
 const authorize = require("../middleware/authorize");
+const checkSchoolPaid = require("../middleware/checkSchoolPaid");
+
 const router = express.Router();
+
+
 
 // Only teachers and admins can send/get messages
 router.post(

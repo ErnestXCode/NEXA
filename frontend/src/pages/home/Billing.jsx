@@ -6,7 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 const plans = [
   {
     plan: "Starter",
-    price: 20000,
+    price: 1,
     pesapalAvailable: true,
     features: [
       "Up to 100 students",

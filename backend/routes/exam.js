@@ -7,7 +7,11 @@ const {
   getResultsForExamClass
 } = require("../controllers/exam/examController");
 const verifyJWT = require("../middleware/verifyJWT");
+const checkSchoolPaid = require("../middleware/checkSchoolPaid");
+
 const router = express.Router();
+
+
 
 // Admin & Teacher can manage exams
 // Create exam

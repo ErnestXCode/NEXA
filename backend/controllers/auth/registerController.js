@@ -145,6 +145,9 @@ const handleRegister = async (req, res) => {
 
   await newUser.save();
 
+      const populatedUser = await User.findById(newUser._id).populate("school");
+  
+
   res
     .cookie("jwt", refreshToken, {
       httpOnly: true,
@@ -156,14 +159,18 @@ const handleRegister = async (req, res) => {
     .json({
       accessToken,
       user: {
-        id: newUser._id,
-        name: newUser.name,
-        email: newUser.email,
-        phoneNumber: newUser.phoneNumber,
-        role: newUser.role,
-        school: newUser.school,
-        children: newUser.children || [],
-        isClassTeacher: newUser.isClassTeacher
+        id: populatedUser._id,
+        name: populatedUser.name,
+        email: populatedUser.email,
+        role: populatedUser.role,
+        school: {
+          id: populatedUser.school._id,
+          name: populatedUser.school.name,
+          paidPesapal: populatedUser.school.paidPesapal,
+          isPilotSchool: populatedUser.school.isPilotSchool,
+          isFreeTrial: populatedUser.school.isFreeTrial,
+        },
+        isClassTeacher: populatedUser.isClassTeacher,
       },
     });
 };

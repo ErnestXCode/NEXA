@@ -41,9 +41,15 @@ const schoolSchema = new mongoose.Schema(
     // add payment stuff like paybill as optional
     email: { type: String },
 
+    payments: [{ type: mongoose.Schema.Types.ObjectId, ref: "Billing" }],
+
     paidPesapal: { type: Boolean, default: false },
-    isPilotSchool: {type: Boolean, default: false},
-    isFreeTrial: {type: Boolean, default: false},
+    pesapalExpiresAt: { type: Date },
+    lastPesapalCheck: { type: Date, default: null },
+
+
+    isPilotSchool: { type: Boolean, default: false },
+    isFreeTrial: { type: Boolean, default: false },
 
     classLevels: {
       type: [classLevelSchema],

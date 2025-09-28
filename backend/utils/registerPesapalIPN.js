@@ -20,10 +20,12 @@ const baseUrl =
 // Get access token
 // ------------------
 async function getAccessToken() {
+  console.log(apiKey, '------------', apiSecret)
   const res = await axios.post(`${baseUrl}/api/Auth/RequestToken`, {
     consumer_key: apiKey,
     consumer_secret: apiSecret,
   });
+  console.log(res.data)
   return res.data.token;
 }
 

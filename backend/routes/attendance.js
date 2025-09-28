@@ -2,8 +2,12 @@ const express = require("express");
 const verifyJWT = require("../middleware/verifyJWT");
 const controller = require("../controllers/attendance/attendanceController");
 const Attendance = require("../models/Attendance");
+const checkSchoolPaid = require("../middleware/checkSchoolPaid");
+
 
 const router = express.Router();
+
+
 
 // Save attendance (teacher/admin)
 router.post("/", verifyJWT, controller.saveAttendance);
