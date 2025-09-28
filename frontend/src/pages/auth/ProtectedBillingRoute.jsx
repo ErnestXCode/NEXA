@@ -4,6 +4,10 @@ import { useSelector } from "react-redux";
 const ProtectedBillingRoute = () => {
   const { user } = useSelector((state) => state.auth);
 
+  // If pilot school, skip all checks
+  if (user?.school?.isPilotSchool) {
+    return <Outlet />;
+  }
 
   const schoolPaid = user?.school?.paidPesapal;
 
@@ -23,13 +27,13 @@ const ProtectedBillingRoute = () => {
   }
 
   // Role check
-//   if (!allowedRoles.includes(user.role)) {
-//     return (
-//       <div className="p-6 text-center text-red-400">
-//         You do not have permission to access this page.
-//       </div>
-//     );
-//   }
+  //   if (!allowedRoles.includes(user.role)) {
+  //     return (
+  //       <div className="p-6 text-center text-red-400">
+  //         You do not have permission to access this page.
+  //       </div>
+  //     );
+  //   }
 
   // Everything ok, render child routes
   return <Outlet />;

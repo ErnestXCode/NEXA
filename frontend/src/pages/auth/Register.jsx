@@ -14,11 +14,16 @@ const initialState = {
   phoneNumber: "", // <-- added phoneNumber
   password: "",
   confirmPass: "",
+  pilot: false,
 };
 
 const Register = () => {
   const [formData, setFormData] = useState(initialState);
-  const [status, setStatus] = useState({ loading: false, message: "", type: "" });
+  const [status, setStatus] = useState({
+    loading: false,
+    message: "",
+    type: "",
+  });
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -30,9 +35,12 @@ const Register = () => {
     }));
   };
 
-  const isMatching = formData.password && formData.password === formData.confirmPass;
+  const isMatching =
+    formData.password && formData.password === formData.confirmPass;
   const canRegister =
-    Object.values(formData).every((val) => val.trim() !== "") && isMatching;
+    Object.values(formData).every((val) =>
+      typeof val === "string" ? val.trim() !== "" : true
+    ) && isMatching;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -46,9 +54,13 @@ const Register = () => {
       });
 
       dispatch(setCredentials(res.data));
-      setStatus({ loading: false, message: "✅ Account created!", type: "success" });
+      setStatus({
+        loading: false,
+        message: "✅ Account created!",
+        type: "success",
+      });
 
-      setTimeout(() => navigate("/dashboard/setup", {replace: true}), 1000);
+      setTimeout(() => navigate("/dashboard/setup", { replace: true }), 1000);
     } catch (err) {
       setStatus({
         loading: false,
@@ -68,34 +80,41 @@ const Register = () => {
           Create an Account
         </h2>
 
-       {["name", "email", "school", "phoneNumber"].map((field) => (
-  <div key={field} className="flex flex-col">
-    <label htmlFor={field} className="text-gray-300 font-medium">
-      {field === "phoneNumber"
-        ? "Phone Number"
-        : field.charAt(0).toUpperCase() + field.slice(1)}
-    </label>
-    <input
-      type={field === "email" ? "email" : field === "phoneNumber" ? "tel" : "text"}
-      id={field}
-      name={field}
-      value={formData[field]}
-      onChange={handleChange}
-      className="bg-gray-800 text-white p-2 rounded-md focus:ring-2 focus:ring-gray-500"
-      placeholder={
-        field === "phoneNumber" ? "Enter phone e.g. 0789383985" : `Enter ${field}`
-      }
-      {...(field === "phoneNumber"
-        ? {
-            pattern: "^(07\\d{8}|01\\d{8})$",
-            maxLength: 10,
-            required: true,
-          }
-        : {})}
-    />
-  </div>
-))}
-
+        {["name", "email", "school", "phoneNumber"].map((field) => (
+          <div key={field} className="flex flex-col">
+            <label htmlFor={field} className="text-gray-300 font-medium">
+              {field === "phoneNumber"
+                ? "Phone Number"
+                : field.charAt(0).toUpperCase() + field.slice(1)}
+            </label>
+            <input
+              type={
+                field === "email"
+                  ? "email"
+                  : field === "phoneNumber"
+                  ? "tel"
+                  : "text"
+              }
+              id={field}
+              name={field}
+              value={formData[field]}
+              onChange={handleChange}
+              className="bg-gray-800 text-white p-2 rounded-md focus:ring-2 focus:ring-gray-500"
+              placeholder={
+                field === "phoneNumber"
+                  ? "Enter phone e.g. 0789383985"
+                  : `Enter ${field}`
+              }
+              {...(field === "phoneNumber"
+                ? {
+                    pattern: "^(07\\d{8}|01\\d{8})$",
+                    maxLength: 10,
+                    required: true,
+                  }
+                : {})}
+            />
+          </div>
+        ))}
 
         {/* Password */}
         <div className="flex flex-col">
@@ -131,6 +150,21 @@ const Register = () => {
                 : "bg-red-700 text-white focus:ring-red-400"
             }`}
           />
+        </div>
+        <div className="flex items-center gap-2 mt-2">
+          <input
+            type="checkbox"
+            id="pilot"
+            name="pilot"
+            checked={formData.pilot}
+            onChange={(e) =>
+              setFormData((prev) => ({ ...prev, pilot: e.target.checked }))
+            }
+            className="w-4 h-4 accent-blue-400"
+          />
+          <label htmlFor="pilot" className="text-gray-300 text-sm">
+            Join Pilot Program (Free / Early Access)
+          </label>
         </div>
 
         <button

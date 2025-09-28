@@ -9,6 +9,8 @@ const checkSchoolPaid = async (req, res, next) => {
     const school = await School.findById(schoolId);
     if (!school) return res.status(404).json({ message: "School not found" });
 
+    if (school.isPilotSchool) return next();
+
     const now = new Date();
 
     console.log(school)

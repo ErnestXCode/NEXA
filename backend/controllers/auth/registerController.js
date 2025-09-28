@@ -7,7 +7,7 @@ const jwt = require("jsonwebtoken");
 const handleRegister = async (req, res) => {
   console.log("hit register");
   const content = req.body;
-  const { name, email, password, role, children, phoneNumber } = content;
+  const { name, email, password, role, children, phoneNumber, pilot } = content;
 
   const requester = req.user;
   let assignedRole = role;
@@ -32,6 +32,7 @@ const handleRegister = async (req, res) => {
           feeTracking: true,
           communication: true,
         },
+        isPilotSchool: pilot
       });
       await schoolDoc.save();
     }
