@@ -2,7 +2,7 @@
 const PaymentProof = require("../../models/PaymentProof");
 const Student = require("../../models/Student");
 const User = require("../../models/User");
-const Fee = require("../../models/Fee");
+const Fee = require("../../models/FeeTransaction");
 
 // ---------------------
 // Parent submits proof

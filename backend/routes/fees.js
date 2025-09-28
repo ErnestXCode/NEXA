@@ -1,77 +1,59 @@
+// routes/feeRoutes.js
 const express = require("express");
 const verifyJWT = require("../middleware/verifyJWT");
 const authorize = require("../middleware/authorize");
 
 const {
-  addFee,
-  getStudentFees,
-  getOutstandingFees,
-  getAllFees,
-  getTotalOutstanding,
-  deleteFee,
-  editFee,
-  getStudentOutstanding,
+  recordTransaction,
+  getStudentBalance,
+  setFeeRules,
+  getStudentTransactions,
+  getSchoolSummary,
+  getClassSummary,
+  getDebtors,
 } = require("../controllers/fee/feeController");
 
-const { getLedger } = require("../controllers/fee/ledgerController");
-const { addFeesBulk } = require("../controllers/fee/bulkController");
-
-// 📌 Proof controller
 const {
   submitProof,
   reviewProof,
   getPendingProofs,
   getMyProofs,
 } = require("../controllers/fee/proofController");
-const checkSchoolPaid = require("../middleware/checkSchoolPaid");
-
 
 const router = express.Router();
 
-
-
 /* ---------------- FEES ---------------- */
-router.post("/", verifyJWT, authorize(["bursar", "admin"]), addFee);
-router.post("/bulk", verifyJWT, authorize(["bursar", "admin"]), addFeesBulk);
 
-router.get("/", verifyJWT, authorize(["bursar", "admin"]), getAllFees);
-router.get(
-  "/outstanding",
-  verifyJWT,
-  authorize(["admin", "teacher", "bursar"]),
-  getOutstandingFees
-);
-router.get("/outstanding/:studentId", verifyJWT, getStudentOutstanding);
+// 💰 Record new payment/adjustment
+router.post("/transactions", verifyJWT, recordTransaction);
 
-router.get(
-  "/total-outstanding",
-  verifyJWT,
-  authorize(["admin", "teacher", "bursar"]),
-  getTotalOutstanding
-);
-router.get(
-  "/ledger/:studentId",
-  verifyJWT,
-  authorize(["superadmin", "admin", "bursar"]),
-  getLedger
-);
+// 📊 Get balances for a student
+router.get("/students/:studentId/balance", verifyJWT, getStudentBalance);
 
-router.get(
-  "/student/:studentId",
-  verifyJWT,
-  authorize(["superadmin", "admin", "bursar"]),
-  getStudentFees
-);
+// 🔍 Fetch student transaction history
+router.get("/students/:studentId/transactions", verifyJWT, getStudentTransactions);
+
+// 🏫 Update school fee rules
+router.post("/schools/:schoolId/feerules", verifyJWT, setFeeRules);
+
+// 🏫 Whole school summary
+router.get("/schools/:schoolId/summary", verifyJWT, getSchoolSummary);
+
+// 📚 Class-level breakdown
+router.get("/schools/:schoolId/class-summary", verifyJWT, getClassSummary);
+
+// 🚨 Debtors list
+router.get("/schools/:schoolId/debtors", verifyJWT, getDebtors);
 
 /* ---------------- PROOFS ---------------- */
 
-// Parent submits a proof
+// Parent submits proof of payment
 router.post("/proofs", verifyJWT, authorize(["parent"]), submitProof);
 
-// Parent views own proofs
+// Parent fetches their own proofs
 router.get("/proofs/my", verifyJWT, authorize(["parent"]), getMyProofs);
 
-// Admin/bursar views all pending proofs
+// Admin/Bursar fetch pending proofs
 router.get(
   "/proofs/pending",
   verifyJWT,
@@ -79,15 +61,12 @@ router.get(
   getPendingProofs
 );
 
-// Admin/bursar reviews a proof (confirm/reject)
+// Admin/Bursar review (approve/reject) proof
 router.patch(
   "/proofs/:proofId/:action",
   verifyJWT,
   authorize(["admin", "bursar"]),
   reviewProof
 );
-
-router.patch("/:feeId", verifyJWT, authorize(["bursar", "admin"]), editFee);
-router.delete("/:feeId", verifyJWT, authorize(["bursar", "admin"]), deleteFee);
 
 module.exports = router;

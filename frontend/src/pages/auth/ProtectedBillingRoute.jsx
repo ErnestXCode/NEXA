@@ -9,11 +9,13 @@ const ProtectedBillingRoute = () => {
     return <Outlet />;
   }
 
+  
+
   const schoolPaid = user?.school?.paidPesapal;
 
   // If school hasn't paid
   if (!schoolPaid) {
-    if (user.role === "admin") {
+    if (user?.role === "admin") {
       // Admin should go to billing page
       return <Navigate to="/dashboard/billing" replace />;
     } else {

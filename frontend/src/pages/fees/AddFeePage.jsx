@@ -236,13 +236,7 @@ const AddFeePage = () => {
           </form>
         </div>
 
-        {/* --- Bulk Onboarding Upload --- */}
-        <div className="p-6 bg-gray-900 rounded-md shadow-md flex flex-col">
-          <h2 className="text-2xl font-bold mb-6 text-center">
-            Bulk Import Balances (Onboarding)
-          </h2>
-          <AddFeeBulkPage />
-        </div>
+       
       </div>
 
       {/* --- Proofs Management --- */}

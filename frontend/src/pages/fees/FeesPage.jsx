@@ -1,379 +1,271 @@
+// src/pages/admin/FeesPage.jsx
 import React, { useState } from "react";
-import api from "../../api/axios";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import api from "../../api/axios";
 
-const FeesPage = () => {
+// fetcher helper
+const fetcher = async (url) => {
+  const res = await api.get(url);
+  return res.data;
+};
+
+const FeesPage = ({ schoolId }) => {
   const queryClient = useQueryClient();
+  const [academicYear, setAcademicYear] = useState("2025/2026");
 
-  const [selectedTerm, setSelectedTerm] = useState("Term 1");
-  const [selectedClass, setSelectedClass] = useState("All");
-  const [onlyWithBalance, setOnlyWithBalance] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingFee, setEditingFee] = useState(null);
-  const [editAmount, setEditAmount] = useState("");
-  const [editType, setEditType] = useState("payment");
-  const [editMethod, setEditMethod] = useState("cash");
-  const [editNote, setEditNote] = useState("");
-
-  // -------------------------
-  // Queries
-  // -------------------------
-  const {
-    data: students = [],
-    isLoading: loadingStudents,
-    error: studentsError,
-  } = useQuery({
-    queryKey: ["students"],
-    queryFn: async () => {
-      const res = await api.get("/students");
-      return res.data;
-    },
+  // local state for new fee rule form
+  const [newRule, setNewRule] = useState({
+    academicYear: "2025/2026",
+    term: "Term 1",
+    fromClass: "",
+    toClass: "",
+    amount: "",
   });
 
-  const {
-    data: school,
-    isLoading: loadingSchool,
-    error: schoolError,
-  } = useQuery({
-    queryKey: ["school", "me"],
-    queryFn: async () => {
-      const res = await api.get("/schools/me");
-      return res.data;
-    },
+  /* ---------------- QUERIES ---------------- */
+  const { data: schoolSummary, isLoading: loadingSummary } = useQuery({
+    queryKey: ["schoolSummary", schoolId, academicYear],
+    queryFn: () =>
+      fetcher(`/fees/schools/${schoolId}/summary?academicYear=${academicYear}`),
   });
 
-  const {
-    data: totalOutstanding = 0,
-    isLoading: loadingOutstanding,
-  } = useQuery({
-    queryKey: ["fees", "outstanding", selectedTerm, selectedClass],
-    queryFn: async () => {
-      const query = `?term=${selectedTerm}&academicYear=2025/2026${
-        selectedClass !== "All" ? `&classLevel=${selectedClass}` : ""
-      }`;
-      const res = await api.get(`/fees/total-outstanding${query}`);
-      return res.data.totalOutstanding || 0;
-    },
-    enabled: !!students.length,
+  const { data: classSummary, isLoading: loadingClass } = useQuery({
+    queryKey: ["classSummary", schoolId, academicYear],
+    queryFn: () =>
+      fetcher(
+        `/fees/schools/${schoolId}/class-summary?academicYear=${academicYear}`
+      ),
   });
 
-  const {
-    data: studentBalances = {},
-    isLoading: loadingBalances,
-  } = useQuery({
-    queryKey: ["fees", "balances", selectedTerm, selectedClass, students],
-    queryFn: async () => {
-      const balancesMap = {};
-      await Promise.all(
-        students.map(async (student) => {
-          try {
-            const res = await api.get(
-              `/fees/outstanding/${student._id}?academicYear=2025/2026`
-            );
-            balancesMap[student._id] = res.data.balances[selectedTerm] || 0;
-          } catch (err) {
-            console.error("Error fetching student balance:", err);
-            balancesMap[student._id] = 0;
-          }
-        })
-      );
-      return balancesMap;
-    },
-    enabled: !!students.length,
+  const { data: debtors, isLoading: loadingDebtors } = useQuery({
+    queryKey: ["debtors", schoolId, academicYear],
+    queryFn: () =>
+      fetcher(`/fees/schools/${schoolId}/debtors?academicYear=${academicYear}`),
   });
 
-  // -------------------------
-  // Mutations
-  // -------------------------
-  const updateFeeMutation = useMutation({
-    mutationFn: async ({ feeId, payload }) => {
-      const res = await api.patch(`/fees/${feeId}`, payload);
-      return res.data;
-    },
+  const { data: feeRules, isLoading: loadingRules } = useQuery({
+    queryKey: ["feeRules", schoolId],
+    queryFn: () => fetcher(`/schools/${schoolId}`), // assuming GET /schools/:id returns feeRules
+    select: (d) => d.feeRules || [],
+  });
+
+  /* ---------------- MUTATION ---------------- */
+  const updateRulesMutation = useMutation({
+    mutationFn: async (rules) =>
+      api.post(`/fees/schools/${schoolId}/feerules`, { feeRules: rules }),
     onSuccess: () => {
-      queryClient.refetchQueries({ queryKey: ["students"] });
-      queryClient.refetchQueries({ queryKey: ["fees", "balances"] });
-      queryClient.refetchQueries({ queryKey: ["fees", "outstanding"] });
-      closeModal();
+      queryClient.invalidateQueries(["feeRules", schoolId]);
     },
   });
 
-  // -------------------------
-  // Handlers
-  // -------------------------
-  const openEditModal = (student) => {
-    const balance = studentBalances[student._id] ?? 0;
-
-    const fee = student.payments.find(
-      (p) => p.term === selectedTerm && p.category === "payment"
-    );
-
-    setEditingFee({ studentId: student._id, feeId: fee?._id });
-    setEditAmount(fee?.amount || balance);
-    setEditType(fee?.category || "payment");
-    setEditMethod(fee?.type || "cash");
-    setEditNote(fee?.note || "");
-    setIsModalOpen(true);
+  const addRule = () => {
+    if (!newRule.fromClass || !newRule.toClass || !newRule.amount) {
+      alert("Please fill all fields");
+      return;
+    }
+    const updatedRules = [...(feeRules || []), { ...newRule, amount: +newRule.amount }];
+    updateRulesMutation.mutate(updatedRules);
+    setNewRule({ academicYear, term: "Term 1", fromClass: "", toClass: "", amount: "" });
   };
 
-  const closeModal = () => setIsModalOpen(false);
-
-  const submitEdit = () => {
-    if (!editingFee) return;
-    updateFeeMutation.mutate({
-      feeId: editingFee.feeId,
-      payload: {
-        amount: editAmount,
-        type: editType,
-        method: editMethod,
-        note: editNote,
-      },
-    });
-  };
-
-  const getBalanceColor = (balance) => {
-    if (balance === 0) return "text-green-400";
-    if (balance > 0) return "text-red-400";
-    return "text-yellow-400";
-  };
-
-  const classLevels = ["All", ...new Set(students.map((s) => s.classLevel))];
-
-  const filteredStudents = students.filter((s) => {
-    const balance = studentBalances[s._id] ?? 0;
-    const classMatch = selectedClass === "All" || s.classLevel === selectedClass;
-    const balanceMatch = !onlyWithBalance || balance > 0;
-    const nameMatch = `${s.firstName} ${s.lastName}`
-      .toLowerCase()
-      .includes(searchQuery.toLowerCase());
-    return classMatch && balanceMatch && nameMatch;
-  });
-
-  // -------------------------
-  // Render
-  // -------------------------
-  if (loadingStudents || loadingSchool || loadingBalances || loadingOutstanding) {
-    return (
-      <div className="p-6 text-gray-300">
-        Loading fees data...
-      </div>
-    );
-  }
-
-  if (studentsError || schoolError) {
-    return (
-      <div className="p-6 text-red-400">
-        Error loading data.
-      </div>
-    );
-  }
-
+  /* ---------------- RENDER ---------------- */
   return (
-    <div className="max-w-6xl mx-auto p-6 bg-gray-950 text-gray-100 rounded-lg shadow-lg mt-6 overflow-hidden">
-      <h2 className="text-3xl font-bold mb-6 text-center text-gray-100">
-        Student Fees - {selectedTerm}
-      </h2>
+    <div className="p-6 space-y-6 bg-gray-950 min-h-screen text-gray-100">
+      <h1 className="text-2xl font-bold">💰 Fees Dashboard</h1>
 
-      {/* Filters */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        {/* Term Selector */}
-        <div className="bg-gray-900 p-4 rounded-lg shadow-md">
-          <label className="block mb-2 text-sm font-medium text-gray-300">
-            Select Term
-          </label>
-          <select
-            value={selectedTerm}
-            onChange={(e) => setSelectedTerm(e.target.value)}
-            className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            {["Term 1", "Term 2", "Term 3"].map((term) => (
-              <option key={term} value={term}>
-                {term}
-              </option>
-            ))}
-          </select>
-        </div>
+      {/* Academic year filter */}
+      <div className="flex items-center gap-2">
+        <label className="font-medium text-gray-300">Academic Year:</label>
+        <input
+          type="text"
+          value={academicYear}
+          onChange={(e) => setAcademicYear(e.target.value)}
+          className="bg-gray-900 border border-gray-700 px-2 py-1 rounded text-gray-100 focus:outline-none focus:ring focus:ring-blue-600"
+        />
+      </div>
 
-        {/* Class Selector */}
-        <div className="bg-gray-900 p-4 rounded-lg shadow-md">
-          <label className="block mb-2 text-sm font-medium text-gray-300">
-            Class Level
-          </label>
-          <select
-            value={selectedClass}
-            onChange={(e) => setSelectedClass(e.target.value)}
-            className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            {classLevels.map((level) => (
-              <option key={level} value={level}>
-                {level}
-              </option>
-            ))}
-          </select>
-        </div>
+      {/* ---------------- FEE RULES ---------------- */}
+      <section className="p-4 bg-gray-900 rounded-lg shadow border border-gray-800">
+        <h2 className="text-xl font-semibold mb-3">📏 Fee Rules</h2>
 
-        {/* Balance Only */}
-        <div className="bg-gray-900 p-4 rounded-lg shadow-md flex items-center justify-between">
-          <span className="text-sm font-medium">Only show balances</span>
-          <button
-            onClick={() => setOnlyWithBalance(!onlyWithBalance)}
-            className={`relative inline-flex h-6 w-12 items-center rounded-full transition-colors ${
-              onlyWithBalance ? "bg-red-500" : "bg-gray-600"
-            }`}
-          >
-            <span
-              className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${
-                onlyWithBalance ? "translate-x-6" : "translate-x-1"
-              }`}
-            />
-          </button>
-        </div>
+        {loadingRules ? (
+          <p className="text-gray-400">Loading rules...</p>
+        ) : (
+          <table className="w-full border border-gray-700 text-gray-200 mb-4">
+            <thead className="bg-gray-800 text-gray-300">
+              <tr>
+                <th className="p-2 border border-gray-700">Year</th>
+                <th className="p-2 border border-gray-700">Term</th>
+                <th className="p-2 border border-gray-700">From Class</th>
+                <th className="p-2 border border-gray-700">To Class</th>
+                <th className="p-2 border border-gray-700">Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              {feeRules?.map((r, i) => (
+                <tr key={i} className="text-center">
+                  <td className="border border-gray-700 p-2">{r.academicYear}</td>
+                  <td className="border border-gray-700 p-2">{r.term}</td>
+                  <td className="border border-gray-700 p-2">{r.fromClass}</td>
+                  <td className="border border-gray-700 p-2">{r.toClass}</td>
+                  <td className="border border-gray-700 p-2">KES {r.amount}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
 
-        {/* Search */}
-        <div className="bg-gray-900 p-4 rounded-lg shadow-md">
-          <label className="block mb-2 text-sm font-medium text-gray-300">
-            Search Student
-          </label>
+        {/* add new rule form */}
+        <div className="grid grid-cols-5 gap-2">
           <input
             type="text"
-            placeholder="Type a name..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="From Class"
+            value={newRule.fromClass}
+            onChange={(e) => setNewRule({ ...newRule, fromClass: e.target.value })}
+            className="bg-gray-800 border border-gray-700 p-2 rounded"
           />
+          <input
+            type="text"
+            placeholder="To Class"
+            value={newRule.toClass}
+            onChange={(e) => setNewRule({ ...newRule, toClass: e.target.value })}
+            className="bg-gray-800 border border-gray-700 p-2 rounded"
+          />
+          <select
+            value={newRule.term}
+            onChange={(e) => setNewRule({ ...newRule, term: e.target.value })}
+            className="bg-gray-800 border border-gray-700 p-2 rounded"
+          >
+            <option>Term 1</option>
+            <option>Term 2</option>
+            <option>Term 3</option>
+          </select>
+          <input
+            type="number"
+            placeholder="Amount"
+            value={newRule.amount}
+            onChange={(e) => setNewRule({ ...newRule, amount: e.target.value })}
+            className="bg-gray-800 border border-gray-700 p-2 rounded"
+          />
+          <button
+            onClick={addRule}
+            className="bg-blue-600 hover:bg-blue-700 p-2 rounded font-semibold"
+          >
+            ➕ Add Rule
+          </button>
         </div>
+      </section>
+
+      {/* ---------------- SCHOOL SUMMARY ---------------- */}
+        <div className="p-6 space-y-6 bg-gray-950 min-h-screen text-gray-100">
+      <h1 className="text-2xl font-bold">💰 Fees Dashboard</h1>
+
+      {/* Academic year filter */}
+      <div className="flex items-center gap-2">
+        <label className="font-medium text-gray-300">Academic Year:</label>
+        <input
+          type="text"
+          value={academicYear}
+          onChange={(e) => setAcademicYear(e.target.value)}
+          className="bg-gray-900 border border-gray-700 px-2 py-1 rounded text-gray-100 focus:outline-none focus:ring focus:ring-blue-600"
+        />
       </div>
 
-      {/* Total Outstanding */}
-      <div className="bg-gradient-to-r from-red-600 to-red-800 p-6 rounded-lg mb-6 shadow-md">
-        <h3 className="text-lg font-semibold text-gray-100 mb-2">
-          Total Outstanding Fees
-        </h3>
-        <p className="text-3xl font-bold text-white">
-          KSh {totalOutstanding.toLocaleString()}
-        </p>
-      </div>
-
-      {/* Student table */}
-      <div className="overflow-y-auto max-h-[290px] rounded-lg border border-gray-800">
-        <table className="w-full table-auto">
-          <thead className="bg-gray-900 sticky top-0">
-            <tr>
-              <th className="px-4 py-2 border-b border-gray-800 text-left">
-                Student
-              </th>
-              <th className="px-4 py-2 border-b border-gray-800 text-left">
-                Class
-              </th>
-              <th className="px-4 py-2 border-b border-gray-800 text-left">
-                Balance
-              </th>
-              <th className="px-4 py-2 border-b border-gray-800"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredStudents.map((s) => {
-              const balance = studentBalances[s._id] ?? 0;
-              return (
-                <tr key={s._id} className="hover:bg-gray-900 transition">
-                  <td className="px-4 py-2 border-b border-gray-800">
-                    {s.firstName} {s.lastName}
-                  </td>
-                  <td className="px-4 py-2 border-b border-gray-800">
-                    {s.classLevel}
-                  </td>
-                  <td
-                    className={`px-4 py-2 border-b border-gray-800 font-semibold ${getBalanceColor(
-                      balance
-                    )}`}
-                  >
-                    KSh {balance}
-                  </td>
-                  <td className="px-4 py-2 border-b border-gray-800">
-                    <button
-                      onClick={() => openEditModal(s)}
-                      className="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1 rounded"
-                    >
-                      Edit
-                    </button>
-                  </td>
-                </tr>
-              );
-            })}
-            {filteredStudents.length === 0 && (
-              <tr>
-                <td colSpan="4" className="px-4 py-4 text-center text-gray-400">
-                  No students found
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Edit Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-gray-900 p-6 rounded-lg w-96 shadow-lg">
-            <h3 className="text-xl font-bold mb-4 text-gray-100">Edit Fee</h3>
-
-            <label className="block mb-2 text-sm text-gray-300">Amount</label>
-            <input
-              type="number"
-              value={editAmount}
-              onChange={(e) => setEditAmount(Number(e.target.value))}
-              className="w-full mb-4 p-2 rounded bg-gray-800 border border-gray-700 text-gray-100"
-            />
-
-            <label className="block mb-2 text-sm text-gray-300">Type</label>
-            <select
-              value={editType}
-              onChange={(e) => setEditType(e.target.value)}
-              className="w-full mb-4 p-2 rounded bg-gray-800 border border-gray-700 text-gray-100"
-            >
-              <option value="payment">Payment</option>
-              <option value="adjustment">Adjustment</option>
-            </select>
-
-            <label className="block mb-2 text-sm text-gray-300">Method</label>
-            <select
-              value={editMethod}
-              onChange={(e) => setEditMethod(e.target.value)}
-              className="w-full mb-4 p-2 rounded bg-gray-800 border border-gray-700 text-gray-100"
-            >
-              <option value="cash">Cash</option>
-              <option value="mpesa">M-Pesa</option>
-              <option value="card">Card</option>
-              <option value="bank">Bank</option>
-            </select>
-
-            <label className="block mb-2 text-sm text-gray-300">Note</label>
-            <textarea
-              value={editNote}
-              onChange={(e) => setEditNote(e.target.value)}
-              className="w-full mb-4 p-2 rounded bg-gray-800 border border-gray-700 text-gray-100"
-            />
-
-            <div className="flex justify-end space-x-4">
-              <button
-                onClick={closeModal}
-                className="px-4 py-2 bg-gray-700 rounded hover:bg-gray-600"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={submitEdit}
-                className="px-4 py-2 bg-blue-600 rounded hover:bg-blue-500 text-white"
-                disabled={updateFeeMutation.isPending}
-              >
-                {updateFeeMutation.isPending ? "Saving..." : "Save"}
-              </button>
+      {/* ---------------- SCHOOL SUMMARY ---------------- */}
+      <section className="p-4 bg-gray-900 rounded-lg shadow border border-gray-800">
+        <h2 className="text-xl font-semibold mb-3">🏫 School Summary</h2>
+        {loadingSummary ? (
+          <p className="text-gray-400">Loading...</p>
+        ) : (
+          <div className="grid grid-cols-3 gap-4 text-center">
+            <div className="p-3 bg-blue-900/30 rounded">
+              <p className="text-gray-400">Expected</p>
+              <p className="text-lg font-bold text-blue-400">
+                KES {schoolSummary?.expected || 0}
+              </p>
+            </div>
+            <div className="p-3 bg-green-900/30 rounded">
+              <p className="text-gray-400">Paid</p>
+              <p className="text-lg font-bold text-green-400">
+                KES {schoolSummary?.paid || 0}
+              </p>
+            </div>
+            <div className="p-3 bg-red-900/30 rounded">
+              <p className="text-gray-400">Outstanding</p>
+              <p className="text-lg font-bold text-red-400">
+                KES {schoolSummary?.outstanding || 0}
+              </p>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </section>
+
+      {/* ---------------- CLASS SUMMARY ---------------- */}
+      <section className="p-4 bg-gray-900 rounded-lg shadow border border-gray-800">
+        <h2 className="text-xl font-semibold mb-3">📚 Class Breakdown</h2>
+        {loadingClass ? (
+          <p className="text-gray-400">Loading...</p>
+        ) : (
+          <table className="w-full border border-gray-700 text-gray-200">
+            <thead className="bg-gray-800 text-gray-300">
+              <tr>
+                <th className="p-2 border border-gray-700">Class</th>
+                <th className="p-2 border border-gray-700">Expected</th>
+                <th className="p-2 border border-gray-700">Paid</th>
+                <th className="p-2 border border-gray-700">Outstanding</th>
+              </tr>
+            </thead>
+            <tbody>
+              {Object.entries(classSummary || {}).map(([classLevel, stats]) => (
+                <tr key={classLevel} className="text-center">
+                  <td className="border border-gray-700 p-2">{classLevel}</td>
+                  <td className="border border-gray-700 p-2 text-blue-400">
+                    KES {stats.expected}
+                  </td>
+                  <td className="border border-gray-700 p-2 text-green-400">
+                    KES {stats.paid}
+                  </td>
+                  <td className="border border-gray-700 p-2 text-red-400">
+                    KES {stats.outstanding}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </section>
+
+      {/* ---------------- DEBTORS ---------------- */}
+      <section className="p-4 bg-gray-900 rounded-lg shadow border border-gray-800">
+        <h2 className="text-xl font-semibold mb-3">🚨 Debtors List</h2>
+        {loadingDebtors ? (
+          <p className="text-gray-400">Loading...</p>
+        ) : debtors?.length === 0 ? (
+          <p className="text-green-400">🎉 No debtors!</p>
+        ) : (
+          <table className="w-full border border-gray-700 text-gray-200">
+            <thead className="bg-gray-800 text-gray-300">
+              <tr>
+                <th className="p-2 border border-gray-700">Student</th>
+                <th className="p-2 border border-gray-700">Class</th>
+                <th className="p-2 border border-gray-700">Outstanding</th>
+              </tr>
+            </thead>
+            <tbody>
+              {debtors.map((d) => (
+                <tr key={d.studentId} className="text-center">
+                  <td className="border border-gray-700 p-2">{d.name}</td>
+                  <td className="border border-gray-700 p-2">{d.classLevel}</td>
+                  <td className="border border-gray-700 p-2 text-red-400">
+                    KES {d.outstanding}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </section>
+    </div>
     </div>
   );
 };

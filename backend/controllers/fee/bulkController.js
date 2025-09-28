@@ -1,4 +1,4 @@
-const Fee = require("../../models/Fee");
+const Fee = require("../../models/FeeTransaction");
 const Student = require("../../models/Student");
 
 // POST /fees/bulk

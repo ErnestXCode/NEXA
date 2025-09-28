@@ -14,11 +14,11 @@ const feeExpectationSchema = new mongoose.Schema({
 });
 
 const feeRuleSchema = new mongoose.Schema({
-  fromClass: { type: String, required: true },
-  toClass: { type: String, required: true },
+  academicYear: { type: String, required: true }, // e.g. "2025/2026"
   term: { type: String, enum: ["Term 1", "Term 2", "Term 3"], required: true },
-  academicYear: { type: String, required: true },
-  amount: { type: Number, required: true },
+  fromClass: { type: String, required: true }, // e.g. "Grade 1"
+  toClass: { type: String, required: true },   // e.g. "Grade 3"
+  amount: { type: Number, required: true },    // expected fee
 });
 
 const subjectsRuleSchema = new mongoose.Schema({
@@ -67,7 +67,7 @@ const schoolSchema = new mongoose.Schema(
       default: () => School.defaultFeeExpectations(),
     },
 
-    feeRules: { type: [feeRuleSchema], default: [] },
+    feeRules: [feeRuleSchema],
     subjectsByClass: {
       type: [subjectsRuleSchema],
       default: () => School.defaultCBCSubjectsByClass(),

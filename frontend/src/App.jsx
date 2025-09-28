@@ -70,8 +70,6 @@ function App() {
     return () => window.removeEventListener("focus", handleFocus);
   }, []);
 
-  const x = useSelector((state) => state.auth);
-  console.log(x);
 
   return (
     <div className="bg-gray-950 text-white min-h-screen">

@@ -5,7 +5,7 @@ const School = require("../models/School");
 const Student = require("../models/Student");
 const User = require("../models/User");
 const Exam = require("../models/Exam");
-const Fee = require("../models/Fee");
+const FeeTransaction = require("../models/FeeTransaction");
 const Attendance = require("../models/Attendance");
 
 const { Parser } = require("json2csv");
@@ -21,7 +21,7 @@ async function exportSchoolData(schoolId) {
     const students = await Student.find({ school: schoolId });
     const users = await User.find({ school: schoolId });
     const exams = await Exam.find({ school: schoolId });
-    const fees = await Fee.find({ school: schoolId });
+    const fees = await FeeTransaction.find({ school: schoolId });
     const attendance = await Attendance.find({ school: schoolId });
 
     return { school, students, users, exams, fees, attendance };
