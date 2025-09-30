@@ -3,6 +3,21 @@ import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "../../api/axios";
 
+import {
+  PieChart,
+  Pie,
+  Cell,
+  Tooltip,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Legend,
+  CartesianGrid,
+} from "recharts";
+
+
 // fetcher helper
 const fetcher = async (url) => {
   const res = await api.get(url);
@@ -37,6 +52,15 @@ const FeesPage = ({ schoolId }) => {
       ),
   });
 
+  const { data: termComparison, isLoading: loadingComparison } = useQuery({
+  queryKey: ["schoolTermComparison", schoolId, academicYear],
+  queryFn: () =>
+    fetcher(
+      `/fees/schools/${schoolId}/term-comparison?academicYear=${academicYear}`
+    ),
+});
+
+
   const { data: debtors, isLoading: loadingDebtors } = useQuery({
     queryKey: ["debtors", schoolId, academicYear],
     queryFn: () =>
@@ -45,8 +69,39 @@ const FeesPage = ({ schoolId }) => {
 
   const { data: feeRules, isLoading: loadingRules } = useQuery({
     queryKey: ["feeRules", schoolId],
-    queryFn: () => fetcher(`/schools/${schoolId}`), // assuming GET /schools/:id returns feeRules
+    queryFn: () => fetcher(`/schools/me`), // assuming GET /schools/:id returns feeRules
     select: (d) => d.feeRules || [],
+  });
+
+  // inside FeesPage component
+  const [selectedTerm, setSelectedTerm] = useState("Term 1");
+  const [selectedClass, setSelectedClass] = useState("Grade 1");
+
+  // term summary queries
+  const { data: schoolTermSummary, isLoading: loadingSchoolTerm } = useQuery({
+    queryKey: ["schoolTermSummary", schoolId, academicYear, selectedTerm],
+    queryFn: () =>
+      fetcher(
+        `/fees/schools/${schoolId}/term-summary?academicYear=${academicYear}&term=${encodeURIComponent(
+          selectedTerm
+        )}`
+      ),
+  });
+
+  const { data: classTermSummary, isLoading: loadingClassTerm } = useQuery({
+    queryKey: [
+      "classTermSummary",
+      schoolId,
+      academicYear,
+      selectedClass,
+      selectedTerm,
+    ],
+    queryFn: () =>
+      fetcher(
+        `/fees/schools/${schoolId}/class-term-summary?academicYear=${academicYear}&term=${encodeURIComponent(
+          selectedTerm
+        )}&className=${encodeURIComponent(selectedClass)}`
+      ),
   });
 
   /* ---------------- MUTATION ---------------- */
@@ -63,34 +118,70 @@ const FeesPage = ({ schoolId }) => {
       alert("Please fill all fields");
       return;
     }
-    const updatedRules = [...(feeRules || []), { ...newRule, amount: +newRule.amount }];
+    const updatedRules = [
+      ...(feeRules || []),
+      { ...newRule, amount: +newRule.amount },
+    ];
     updateRulesMutation.mutate(updatedRules);
-    setNewRule({ academicYear, term: "Term 1", fromClass: "", toClass: "", amount: "" });
+    setNewRule({
+      academicYear,
+      term: "Term 1",
+      fromClass: "",
+      toClass: "",
+      amount: "",
+    });
   };
 
   /* ---------------- RENDER ---------------- */
-  return (
-    <div className="p-6 space-y-6 bg-gray-950 min-h-screen text-gray-100">
-      <h1 className="text-2xl font-bold">💰 Fees Dashboard</h1>
+ return (
+  <div className="min-h-screen bg-gray-950 text-gray-100 p-6 space-y-8">
+    <h1 className="text-3xl font-extrabold">💰 Fees Dashboard</h1>
 
-      {/* Academic year filter */}
-      <div className="flex items-center gap-2">
-        <label className="font-medium text-gray-300">Academic Year:</label>
-        <input
-          type="text"
-          value={academicYear}
-          onChange={(e) => setAcademicYear(e.target.value)}
-          className="bg-gray-900 border border-gray-700 px-2 py-1 rounded text-gray-100 focus:outline-none focus:ring focus:ring-blue-600"
-        />
+    {/* Filters */}
+    <section className="bg-gray-900/80 p-4 rounded-lg border border-gray-800 shadow-md sticky top-0 z-10">
+      <div className="flex flex-wrap gap-6">
+        <div>
+          <label className="block text-gray-400 text-sm mb-1">Academic Year</label>
+          <input
+            type="text"
+            value={academicYear}
+            onChange={(e) => setAcademicYear(e.target.value)}
+            className="bg-gray-800 border border-gray-700 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+          />
+        </div>
+        <div>
+          <label className="block text-gray-400 text-sm mb-1">Term</label>
+          <select
+            value={selectedTerm}
+            onChange={(e) => setSelectedTerm(e.target.value)}
+            className="bg-gray-800 border border-gray-700 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+          >
+            <option>Term 1</option>
+            <option>Term 2</option>
+            <option>Term 3</option>
+          </select>
+        </div>
+        <div>
+          <label className="block text-gray-400 text-sm mb-1">Class</label>
+          <input
+            type="text"
+            value={selectedClass}
+            onChange={(e) => setSelectedClass(e.target.value)}
+            placeholder="e.g. Grade 4"
+            className="bg-gray-800 border border-gray-700 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+          />
+        </div>
       </div>
+    </section>
 
-      {/* ---------------- FEE RULES ---------------- */}
-      <section className="p-4 bg-gray-900 rounded-lg shadow border border-gray-800">
-        <h2 className="text-xl font-semibold mb-3">📏 Fee Rules</h2>
+    {/* Fee Rules */}
+    <section className="bg-gray-900 rounded-xl shadow border border-gray-800 p-6 space-y-4">
+      <h2 className="text-xl font-semibold border-b border-gray-800 pb-2">📏 Fee Rules</h2>
 
-        {loadingRules ? (
-          <p className="text-gray-400">Loading rules...</p>
-        ) : (
+      {loadingRules ? (
+        <p className="text-gray-400">Loading rules...</p>
+      ) : (
+        <div className="overflow-x-auto">
           <table className="w-full border border-gray-700 text-gray-200 mb-4">
             <thead className="bg-gray-800 text-gray-300">
               <tr>
@@ -103,7 +194,7 @@ const FeesPage = ({ schoolId }) => {
             </thead>
             <tbody>
               {feeRules?.map((r, i) => (
-                <tr key={i} className="text-center">
+                <tr key={i} className="text-center hover:bg-gray-800/40">
                   <td className="border border-gray-700 p-2">{r.academicYear}</td>
                   <td className="border border-gray-700 p-2">{r.term}</td>
                   <td className="border border-gray-700 p-2">{r.fromClass}</td>
@@ -113,161 +204,226 @@ const FeesPage = ({ schoolId }) => {
               ))}
             </tbody>
           </table>
-        )}
-
-        {/* add new rule form */}
-        <div className="grid grid-cols-5 gap-2">
-          <input
-            type="text"
-            placeholder="From Class"
-            value={newRule.fromClass}
-            onChange={(e) => setNewRule({ ...newRule, fromClass: e.target.value })}
-            className="bg-gray-800 border border-gray-700 p-2 rounded"
-          />
-          <input
-            type="text"
-            placeholder="To Class"
-            value={newRule.toClass}
-            onChange={(e) => setNewRule({ ...newRule, toClass: e.target.value })}
-            className="bg-gray-800 border border-gray-700 p-2 rounded"
-          />
-          <select
-            value={newRule.term}
-            onChange={(e) => setNewRule({ ...newRule, term: e.target.value })}
-            className="bg-gray-800 border border-gray-700 p-2 rounded"
-          >
-            <option>Term 1</option>
-            <option>Term 2</option>
-            <option>Term 3</option>
-          </select>
-          <input
-            type="number"
-            placeholder="Amount"
-            value={newRule.amount}
-            onChange={(e) => setNewRule({ ...newRule, amount: e.target.value })}
-            className="bg-gray-800 border border-gray-700 p-2 rounded"
-          />
-          <button
-            onClick={addRule}
-            className="bg-blue-600 hover:bg-blue-700 p-2 rounded font-semibold"
-          >
-            ➕ Add Rule
-          </button>
         </div>
-      </section>
+      )}
 
-      {/* ---------------- SCHOOL SUMMARY ---------------- */}
-        <div className="p-6 space-y-6 bg-gray-950 min-h-screen text-gray-100">
-      <h1 className="text-2xl font-bold">💰 Fees Dashboard</h1>
-
-      {/* Academic year filter */}
-      <div className="flex items-center gap-2">
-        <label className="font-medium text-gray-300">Academic Year:</label>
+      {/* add new rule form */}
+      <div className="grid grid-cols-5 gap-2">
         <input
           type="text"
-          value={academicYear}
-          onChange={(e) => setAcademicYear(e.target.value)}
-          className="bg-gray-900 border border-gray-700 px-2 py-1 rounded text-gray-100 focus:outline-none focus:ring focus:ring-blue-600"
+          placeholder="From Class"
+          value={newRule.fromClass}
+          onChange={(e) => setNewRule({ ...newRule, fromClass: e.target.value })}
+          className="bg-gray-800 border border-gray-700 p-2 rounded"
         />
+        <input
+          type="text"
+          placeholder="To Class"
+          value={newRule.toClass}
+          onChange={(e) => setNewRule({ ...newRule, toClass: e.target.value })}
+          className="bg-gray-800 border border-gray-700 p-2 rounded"
+        />
+        <select
+          value={newRule.term}
+          onChange={(e) => setNewRule({ ...newRule, term: e.target.value })}
+          className="bg-gray-800 border border-gray-700 p-2 rounded"
+        >
+          <option>Term 1</option>
+          <option>Term 2</option>
+          <option>Term 3</option>
+        </select>
+        <input
+          type="number"
+          placeholder="Amount"
+          value={newRule.amount}
+          onChange={(e) => setNewRule({ ...newRule, amount: e.target.value })}
+          className="bg-gray-800 border border-gray-700 p-2 rounded"
+        />
+        <button
+          onClick={addRule}
+          className="bg-blue-600 hover:bg-blue-700 p-2 rounded font-semibold"
+        >
+          ➕ Add Rule
+        </button>
       </div>
+    </section>
 
-      {/* ---------------- SCHOOL SUMMARY ---------------- */}
-      <section className="p-4 bg-gray-900 rounded-lg shadow border border-gray-800">
-        <h2 className="text-xl font-semibold mb-3">🏫 School Summary</h2>
-        {loadingSummary ? (
-          <p className="text-gray-400">Loading...</p>
-        ) : (
-          <div className="grid grid-cols-3 gap-4 text-center">
-            <div className="p-3 bg-blue-900/30 rounded">
-              <p className="text-gray-400">Expected</p>
-              <p className="text-lg font-bold text-blue-400">
-                KES {schoolSummary?.expected || 0}
-              </p>
-            </div>
-            <div className="p-3 bg-green-900/30 rounded">
-              <p className="text-gray-400">Paid</p>
-              <p className="text-lg font-bold text-green-400">
-                KES {schoolSummary?.paid || 0}
-              </p>
-            </div>
-            <div className="p-3 bg-red-900/30 rounded">
-              <p className="text-gray-400">Outstanding</p>
-              <p className="text-lg font-bold text-red-400">
-                KES {schoolSummary?.outstanding || 0}
-              </p>
-            </div>
-          </div>
-        )}
-      </section>
-
-      {/* ---------------- CLASS SUMMARY ---------------- */}
-      <section className="p-4 bg-gray-900 rounded-lg shadow border border-gray-800">
-        <h2 className="text-xl font-semibold mb-3">📚 Class Breakdown</h2>
-        {loadingClass ? (
-          <p className="text-gray-400">Loading...</p>
-        ) : (
-          <table className="w-full border border-gray-700 text-gray-200">
-            <thead className="bg-gray-800 text-gray-300">
-              <tr>
-                <th className="p-2 border border-gray-700">Class</th>
-                <th className="p-2 border border-gray-700">Expected</th>
-                <th className="p-2 border border-gray-700">Paid</th>
-                <th className="p-2 border border-gray-700">Outstanding</th>
-              </tr>
-            </thead>
-            <tbody>
-              {Object.entries(classSummary || {}).map(([classLevel, stats]) => (
-                <tr key={classLevel} className="text-center">
-                  <td className="border border-gray-700 p-2">{classLevel}</td>
-                  <td className="border border-gray-700 p-2 text-blue-400">
-                    KES {stats.expected}
-                  </td>
-                  <td className="border border-gray-700 p-2 text-green-400">
-                    KES {stats.paid}
-                  </td>
-                  <td className="border border-gray-700 p-2 text-red-400">
-                    KES {stats.outstanding}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </section>
-
-      {/* ---------------- DEBTORS ---------------- */}
-      <section className="p-4 bg-gray-900 rounded-lg shadow border border-gray-800">
-        <h2 className="text-xl font-semibold mb-3">🚨 Debtors List</h2>
-        {loadingDebtors ? (
-          <p className="text-gray-400">Loading...</p>
-        ) : debtors?.length === 0 ? (
-          <p className="text-green-400">🎉 No debtors!</p>
-        ) : (
-          <table className="w-full border border-gray-700 text-gray-200">
-            <thead className="bg-gray-800 text-gray-300">
-              <tr>
-                <th className="p-2 border border-gray-700">Student</th>
-                <th className="p-2 border border-gray-700">Class</th>
-                <th className="p-2 border border-gray-700">Outstanding</th>
-              </tr>
-            </thead>
-            <tbody>
-              {debtors.map((d) => (
-                <tr key={d.studentId} className="text-center">
-                  <td className="border border-gray-700 p-2">{d.name}</td>
-                  <td className="border border-gray-700 p-2">{d.classLevel}</td>
-                  <td className="border border-gray-700 p-2 text-red-400">
-                    KES {d.outstanding}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </section>
+    {/* Summaries */}
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <SummarySection title="🏫 School Summary" data={schoolSummary} loading={loadingSummary} />
+      <SummarySection title={`🏫 School Term Summary (${selectedTerm})`} data={schoolTermSummary} loading={loadingSchoolTerm} />
+      <SummarySection title={`📚 ${selectedClass} - ${selectedTerm}`} data={classTermSummary} loading={loadingClassTerm} />
     </div>
+
+    {/* Charts */}
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <ChartCard title="School Fees Distribution">
+        {schoolSummary && (
+          <ResponsiveContainer width="100%" height={250}>
+            <PieChart>
+              <Pie
+                data={[
+                  { name: "Paid", value: schoolSummary.paid },
+                  { name: "Outstanding", value: schoolSummary.outstanding },
+                ]}
+                cx="50%"
+                cy="50%"
+                outerRadius={90}
+                dataKey="value"
+                label
+              >
+                <Cell fill="#4ade80" /> {/* green */}
+                <Cell fill="#f87171" /> {/* red */}
+              </Pie>
+              <Tooltip formatter={(v) => `KES ${v}`} />
+            </PieChart>
+          </ResponsiveContainer>
+        )}
+      </ChartCard>
+
+      <ChartCard title="📊 Class Breakdown">
+        {classSummary && (
+          <ResponsiveContainer width="100%" height={250}>
+            <BarChart
+              data={Object.entries(classSummary).map(([cls, stats]) => ({
+                class: cls,
+                Paid: stats.paid,
+                Outstanding: stats.outstanding,
+              }))}
+            >
+              <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+              <XAxis dataKey="class" stroke="#9ca3af" />
+              <YAxis stroke="#9ca3af" />
+              <Tooltip formatter={(v) => `KES ${v}`} />
+              <Legend />
+              <Bar dataKey="Paid" stackId="a" fill="#4ade80" />
+              <Bar dataKey="Outstanding" stackId="a" fill="#f87171" />
+            </BarChart>
+          </ResponsiveContainer>
+        )}
+      </ChartCard>
     </div>
-  );
+
+    {/* Extra chart - term comparison */}
+   <ChartCard title="📈 Term Comparison">
+  {loadingComparison ? (
+    <p className="text-gray-400">Loading...</p>
+  ) : (
+    <ResponsiveContainer width="100%" height={250}>
+      <BarChart data={termComparison || []}>
+        <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+        <XAxis dataKey="term" stroke="#9ca3af" />
+        <YAxis stroke="#9ca3af" />
+        <Tooltip formatter={(v) => `KES ${v}`} />
+        <Legend />
+        <Bar dataKey="expected" fill="#60a5fa" />
+        <Bar dataKey="paid" fill="#4ade80" />
+        <Bar dataKey="outstanding" fill="#f87171" />
+      </BarChart>
+    </ResponsiveContainer>
+  )}
+</ChartCard>
+
+
+    {/* Class Breakdown Table */}
+    <section className="bg-gray-900 rounded-xl shadow border border-gray-800 p-6 overflow-x-auto">
+      <h2 className="text-xl font-semibold mb-4 border-b border-gray-800 pb-2">📚 Class Breakdown</h2>
+      <table className="w-full border-collapse">
+        <thead className="bg-gray-800">
+          <tr>
+            {["Class", "Expected", "Paid", "Outstanding"].map((h) => (
+              <th key={h} className="px-4 py-2 text-left text-gray-300">{h}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {Object.entries(classSummary || {}).map(([classLevel, stats], idx) => (
+            <tr
+              key={classLevel}
+              className={`${idx % 2 === 0 ? "bg-gray-950/40" : "bg-gray-900/40"} hover:bg-gray-800/60`}
+            >
+              <td className="px-4 py-2">{classLevel}</td>
+              <td className="px-4 py-2 text-blue-400">KES {stats.expected}</td>
+              <td className="px-4 py-2 text-green-400">KES {stats.paid}</td>
+              <td className="px-4 py-2 text-red-400">KES {stats.outstanding}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </section>
+
+    {/* Debtors */}
+    <section className="bg-gray-900 rounded-xl shadow border border-gray-800 p-6 overflow-x-auto">
+      <h2 className="text-xl font-semibold mb-4 border-b border-gray-800 pb-2">🚨 Debtors List</h2>
+      {loadingDebtors ? (
+        <p className="text-gray-400">Loading...</p>
+      ) : debtors?.length === 0 ? (
+        <p className="text-green-400">🎉 No debtors!</p>
+      ) : (
+        <table className="w-full border-collapse">
+          <thead className="bg-gray-800">
+            <tr>
+              {["Student", "Class", "Outstanding"].map((h) => (
+                <th key={h} className="px-4 py-2 text-left text-gray-300">{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {debtors.map((d, idx) => (
+              <tr
+                key={d.studentId}
+                className={`${idx % 2 === 0 ? "bg-gray-950/40" : "bg-gray-900/40"} hover:bg-gray-800/60`}
+              >
+                <td className="px-4 py-2">{d.name}</td>
+                <td className="px-4 py-2">{d.classLevel}</td>
+                <td className="px-4 py-2 text-red-400">KES {d.outstanding}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </section>
+  </div>
+);
+
+
 };
 
 export default FeesPage;
+
+const SummaryCard = ({ label, value, color }) => {
+  const colorMap = {
+    blue: "text-blue-400 bg-blue-900/30",
+    green: "text-green-400 bg-green-900/30",
+    red: "text-red-400 bg-red-900/30",
+  };
+
+  return (
+    <div className={`p-4 rounded-lg ${colorMap[color]} shadow-sm`}>
+      <p className="text-gray-400 text-sm">{label}</p>
+      <p className="text-xl font-bold">{value ? `KES ${value}` : "KES 0"}</p>
+    </div>
+  );
+};
+const SummarySection = ({ title, data, loading }) => (
+  <section className="bg-gray-900 rounded-xl shadow border border-gray-800 p-6">
+    <h2 className="text-lg font-semibold mb-4 border-b border-gray-800 pb-2">{title}</h2>
+    {loading ? (
+      <p className="text-gray-400">Loading...</p>
+    ) : (
+      <div className="grid grid-cols-3 gap-4 text-center">
+        <SummaryCard label="Expected" value={data?.expected} color="blue" />
+        <SummaryCard label="Paid" value={data?.paid} color="green" />
+        <SummaryCard label="Outstanding" value={data?.outstanding} color="red" />
+      </div>
+    )}
+  </section>
+);
+
+const ChartCard = ({ title, children }) => (
+  <section className="bg-gray-900 rounded-xl shadow border border-gray-800 p-6">
+    <h2 className="text-lg font-semibold mb-4 border-b border-gray-800 pb-2">{title}</h2>
+    {children}
+  </section>
+);
+

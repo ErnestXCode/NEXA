@@ -1,5 +1,11 @@
 optimize backend
 
+fees should show summary for terms as well for classes and for school
+
+download templates for adding people
+
+deleting paypal.acc
+
 student edit classlevel is not a dropdown , and middle name is for some reason above the other names
 
 alerts are ugly, use modals

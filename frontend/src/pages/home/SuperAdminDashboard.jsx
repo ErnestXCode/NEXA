@@ -1,5 +1,5 @@
 // src/pages/SuperAdmindashboard/SuperAdminDashboard.jsx
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "../../redux/slices/authSlice";
@@ -9,11 +9,39 @@ import api from "../../api/axios";
 const SuperAdminDashboard = () => {
   const currentUser = useSelector(selectCurrentUser);
 
+  // Local state for modal
+  const [modal, setModal] = useState({ open: false, title: "", message: "" });
+
   // Queries
   const teachersQuery = useQuery({
     queryKey: ["teachers"],
     queryFn: () => api.get("/personel/teacher").then((res) => res.data),
   });
+
+  const paymentsQuery = useQuery({
+    queryKey: ["manualPayments"],
+    queryFn: () => api.get("/manual-payments").then((res) => res.data),
+  });
+
+  // Approve / Reject actions
+  const handleVerify = async (id, status) => {
+    try {
+      const res = await api.post("/manual-payments/verify", { id, status });
+      setModal({
+        open: true,
+        title: "Payment Review",
+        message: res.data.msg,
+      });
+      paymentsQuery.refetch();
+    } catch (err) {
+      console.error("Verification error", err);
+      setModal({
+        open: true,
+        title: "Error",
+        message: "Error verifying payment",
+      });
+    }
+  };
 
   const bursarsQuery = useQuery({
     queryKey: ["bursars"],
@@ -35,11 +63,6 @@ const SuperAdminDashboard = () => {
     queryFn: () => api.get("/schools").then((res) => res.data),
   });
 
-  const activityQuery = useQuery({
-    queryKey: ["activities"],
-    queryFn: () => api.get("/activity").then((res) => res.data),
-  });
-
   // Derived values
   const teachers = teachersQuery.data?.slice(0, 3) || [];
   const bursars = bursarsQuery.data?.slice(0, 3) || [];
@@ -53,15 +76,12 @@ const SuperAdminDashboard = () => {
   const parentsLength = parentsQuery.data?.length || 0;
   const schoolsLength = schoolsQuery.data?.length || 0;
 
-  const recentActivities = activityQuery.data?.slice(0, 5) || [];
-
   if (
     teachersQuery.isLoading ||
     bursarsQuery.isLoading ||
     studentsQuery.isLoading ||
     parentsQuery.isLoading ||
-    schoolsQuery.isLoading ||
-    activityQuery.isLoading
+    schoolsQuery.isLoading
   ) {
     return <p className="p-6 text-gray-400">Loading dashboard...</p>;
   }
@@ -71,8 +91,7 @@ const SuperAdminDashboard = () => {
     bursarsQuery.isError ||
     studentsQuery.isError ||
     parentsQuery.isError ||
-    schoolsQuery.isError ||
-    activityQuery.isError
+    schoolsQuery.isError
   ) {
     return <p className="p-6 text-red-500">❌ Error loading dashboard data</p>;
   }
@@ -98,87 +117,8 @@ const SuperAdminDashboard = () => {
         ))}
       </div>
 
-      {/* Management Tables - 2 Column Layout */}
+      {/* Management Tables */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Left Column */}
-        <div className="space-y-6">
-          <ManagementTable
-            title="Manage Teachers"
-            data={teachers}
-            columns={[
-              "Name",
-              "Email",
-              "Phone",
-              "Subjects",
-              "Class Teacher?",
-              "Class Level",
-            ]}
-            viewAllLink="/dashboard/teachers"
-            addLink="/dashboard/createPersonel"
-            addText="+ Add Teacher"
-            minHeight="min-h-[350px]"
-            rowRender={(teacher) => [
-              teacher.name,
-              teacher.email,
-              teacher.phoneNumber || "-",
-              teacher.subjects && teacher.subjects.length > 0
-                ? teacher.subjects.join(", ")
-                : "-",
-              teacher.isClassTeacher ? "Yes" : "No",
-              teacher.isClassTeacher && teacher.classLevel
-                ? teacher.classLevel
-                : "-",
-            ]}
-          />
-
-          <ManagementTable
-            title="Manage Bursars"
-            data={bursars}
-            columns={["Name", "Email", "Phone"]}
-            viewAllLink="/dashboard/bursars"
-            addLink="/dashboard/createPersonel"
-            addText="+ Add Bursar"
-            minHeight="min-h-[300px]"
-            rowRender={(bursar) => [
-              bursar.name,
-              bursar.email,
-              bursar.phoneNumber || "-",
-            ]}
-          />
-        </div>
-
-        {/* Right Column */}
-        <div className="space-y-6">
-          <ManagementTable
-            title="Manage Students"
-            data={students}
-            columns={["Admission #", "Name", "Gender", "Class", "Phone"]}
-            viewAllLink="/dashboard/students"
-            addLink="/dashboard/createStudent"
-            addText="+ Add Student"
-            minHeight="min-h-[350px]"
-            rowRender={(student) => [
-              student.admissionNumber,
-              `${student.firstName} ${student.lastName}`,
-              student.gender,
-              student.classLevel,
-              student.guardianPhone,
-            ]}
-          />
-
-          <ManagementTable
-            title="Manage Parents"
-            data={parents}
-            columns={["Name", "Email", "Phone"]}
-            viewAllLink="/dashboard/parents"
-            addLink="/dashboard/createParent"
-            addText="+ Add Parent"
-            minHeight="min-h-[300px]"
-            rowRender={(parent) => [parent.name, parent.email, parent.phone]}
-          />
-        </div>
-
-        {/* School Table spans both columns */}
         <div className="col-span-2">
           <ManagementTable
             title="Manage Schools"
@@ -198,34 +138,92 @@ const SuperAdminDashboard = () => {
         </div>
       </div>
 
-      {/* Recent Activities */}
+      {/* Manual Payments Review */}
       <section className="bg-gray-900 p-6 rounded-lg shadow-lg border border-gray-800">
-        <h2 className="text-xl font-bold mb-4">Recent Activity</h2>
-        <ul className="space-y-3 text-sm">
-          {recentActivities.length > 0 ? (
-            recentActivities.map((act) => (
-              <li
-                key={act._id}
-                className="p-3 bg-gray-850 rounded flex justify-between items-center border border-gray-800 hover:bg-gray-800 transition"
-              >
-                <span>{act.description}</span>
-                <span className="text-gray-400 text-xs">
-                  {new Date(act.date).toLocaleString()}
-                </span>
-              </li>
-            ))
-          ) : (
-            <li className="text-gray-400">No recent activity</li>
-          )}
-        </ul>
+        <h2 className="text-xl font-bold mb-4">Manual Payment Proofs</h2>
+        {paymentsQuery.isLoading ? (
+          <p className="text-gray-400">Loading payments...</p>
+        ) : paymentsQuery.isError ? (
+          <p className="text-red-500">Error loading payments</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm border-collapse">
+              <thead className="bg-gray-800">
+                <tr>
+                  <th className="py-3 px-4 text-left">School</th>
+                  <th className="py-3 px-4 text-left">Plan</th>
+                  <th className="py-3 px-4 text-left">Amount</th>
+                  <th className="py-3 px-4 text-left">M-Pesa Code</th>
+                  <th className="py-3 px-4 text-left">Status</th>
+                  <th className="py-3 px-4 text-left">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {paymentsQuery.data.length > 0 ? (
+                  paymentsQuery.data.map((p) => (
+                    <tr key={p._id} className="hover:bg-gray-850 transition">
+                      <td className="py-2 px-4">{p.school?.name || "-"}</td>
+                      <td className="py-2 px-4">{p.plan}</td>
+                      <td className="py-2 px-4">KES {p.amount}</td>
+                      <td className="py-2 px-4">{p.mpesaCode}</td>
+                      <td className="py-2 px-4 capitalize">{p.status}</td>
+                      <td className="py-2 px-4 space-x-2">
+                        {p.status === "pending" ? (
+                          <>
+                            <button
+                              onClick={() => handleVerify(p._id, "verified")}
+                              className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700"
+                            >
+                              Approve
+                            </button>
+                            <button
+                              onClick={() => handleVerify(p._id, "rejected")}
+                              className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
+                            >
+                              Reject
+                            </button>
+                          </>
+                        ) : (
+                          <span className="text-gray-400">Reviewed</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={6} className="text-center py-6 text-gray-400">
+                      No payment proofs submitted.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
       </section>
+
+      {/* ✅ Modal */}
+      {modal.open && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-60 z-50">
+          <div className="bg-gray-900 border border-gray-700 p-6 rounded-xl shadow-lg w-96">
+            <h3 className="text-lg font-bold mb-2">{modal.title}</h3>
+            <p className="text-gray-300 mb-4">{modal.message}</p>
+            <button
+              onClick={() => setModal({ ...modal, open: false })}
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </main>
   );
 };
 
 export default SuperAdminDashboard;
 
-// Reusable Management Table Component with fixed height
+// Reusable Management Table
 const ManagementTable = ({
   title,
   data,

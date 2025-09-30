@@ -8,11 +8,14 @@ const AddFeePage = () => {
   const queryClient = useQueryClient();
 
   const [filteredStudents, setFilteredStudents] = useState([]);
+  const currentYear = new Date().getFullYear();
+  const defaultAcademicYear = `${currentYear}/${currentYear + 1}`;
+
   const [form, setForm] = useState({
     studentId: "",
     studentName: "",
     term: "Term 1",
-    academicYear: new Date().getFullYear(),
+    academicYear: defaultAcademicYear, // ✅ string "2025/2026"
     amount: "",
     type: "payment",
     method: "cash",
@@ -35,10 +38,7 @@ const AddFeePage = () => {
   });
 
   // ✅ Query: all proofs
-  const {
-    data: proofs = [],
-    isLoading: loadingProofs,
-  } = useQuery({
+  const { data: proofs = [], isLoading: loadingProofs } = useQuery({
     queryKey: ["proofs", "pending"],
     queryFn: async () => {
       const res = await api.get("/fees/proofs/pending");
@@ -51,7 +51,7 @@ const AddFeePage = () => {
   // ✅ Mutation: add fee
   const addFeeMutation = useMutation({
     mutationFn: async (newFee) => {
-      const res = await api.post("/fees", newFee);
+      const res = await api.post("/fees/transactions", newFee);
       return res.data;
     },
     onSuccess: () => {
@@ -60,7 +60,7 @@ const AddFeePage = () => {
         studentId: "",
         studentName: "",
         term: "Term 1",
-        academicYear: new Date().getFullYear(),
+        academicYear: defaultAcademicYear,
         amount: "",
         type: "payment",
         method: "cash",
@@ -104,7 +104,7 @@ const AddFeePage = () => {
       ...form,
       studentId: student._id,
       studentName: `${student.firstName} ${student.lastName}`,
-      academicYear: new Date().getFullYear(),
+      academicYear: defaultAcademicYear,
     });
     setFilteredStudents([]);
   };
@@ -112,7 +112,11 @@ const AddFeePage = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!form.studentId) return alert("Please select a valid student");
-    addFeeMutation.mutate(form);
+    addFeeMutation.mutate({
+      ...form,
+      amount: Number(form.amount), // ✅ ensure it's a number
+      academicYear: form.academicYear, // ✅ string
+    });
   };
 
   const handleProofAction = (id, action) => {
@@ -171,7 +175,7 @@ const AddFeePage = () => {
             </select>
 
             <input
-              type="number"
+              type="text"
               name="academicYear"
               value={form.academicYear}
               onChange={handleChange}
@@ -235,8 +239,6 @@ const AddFeePage = () => {
             </button>
           </form>
         </div>
-
-       
       </div>
 
       {/* --- Proofs Management --- */}
@@ -274,17 +276,13 @@ const AddFeePage = () => {
                     {p.status === "pending" && (
                       <>
                         <button
-                          onClick={() =>
-                            handleProofAction(p._id, "approve")
-                          }
+                          onClick={() => handleProofAction(p._id, "approve")}
                           className="bg-green-600 hover:bg-green-700 px-3 py-1 rounded"
                         >
                           Approve
                         </button>
                         <button
-                          onClick={() =>
-                            handleProofAction(p._id, "reject")
-                          }
+                          onClick={() => handleProofAction(p._id, "reject")}
                           className="bg-red-600 hover:bg-red-700 px-3 py-1 rounded"
                         >
                           Reject

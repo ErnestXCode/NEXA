@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { NavLink, Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import api from "../../api/axios";
 import { useQuery } from "@tanstack/react-query";
 
@@ -7,7 +7,6 @@ const plans = [
   {
     plan: "Starter",
     price: 1,
-    pesapalAvailable: true,
     features: [
       "Up to 100 students",
       "Basic exam reports",
@@ -18,7 +17,6 @@ const plans = [
   {
     plan: "Professional",
     price: 50000,
-    pesapalAvailable: false,
     features: [
       "Up to 500 students",
       "Detailed reports",
@@ -30,7 +28,6 @@ const plans = [
   {
     plan: "Enterprise",
     price: 0,
-    pesapalAvailable: false,
     features: [
       "Unlimited students",
       "Advanced analytics",
@@ -43,6 +40,10 @@ const plans = [
 const Billing = () => {
   const navigate = useNavigate();
   const [school, setSchool] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState(null);
+  const [mpesaCode, setMpesaCode] = useState("");
+  const [proofUrl, setProofUrl] = useState("");
 
   // Fetch logged-in school
   const { data, isLoading, isError } = useQuery({
@@ -57,27 +58,27 @@ const Billing = () => {
     if (data) setSchool(data);
   }, [data]);
 
-  const handlePayment = async (plan, amount) => {
-  if (!school?._id) {
-    navigate("/login");
-    return;
-  }
+  const handleManualPayment = (plan) => {
+    setSelectedPlan(plan);
+    setShowModal(true);
+  };
 
-  try {
-    const res = await api.post("/pesapal/create-payment", {
-      schoolId: school._id,
-      plan,
-      amount,
-    });
-
-
-    if (res.data.paymentUrl) window.open(res.data.paymentUrl, "_blank");
-    else alert("Payment link generation failed");
-  } catch (err) {
-    console.error(err);
-    alert("Error creating payment");
-  }
-};
+  const submitManualPayment = async () => {
+    try {
+      const res = await api.post("/manual-payments/submit", {
+        plan: selectedPlan.plan,
+        amount: selectedPlan.price,
+        mpesaCode,
+        proofUrl,
+      });
+      alert(res.data.msg);
+      setShowModal(false);
+      setMpesaCode("");
+      setProofUrl("");
+    } catch (err) {
+      alert("Error submitting proof");
+    }
+  };
 
   if (isLoading) return <p className="text-white p-6">Loading...</p>;
   if (isError)
@@ -108,12 +109,14 @@ const Billing = () => {
                 </li>
               ))}
             </ul>
-            {p.pesapalAvailable ? (
+
+            {/* Starter plan → allow proof upload */}
+            {p.plan === "Starter" ? (
               <button
-                onClick={() => handlePayment(p.plan, p.price)}
-                className="w-full px-5 py-2 bg-white text-black font-semibold rounded-xl hover:bg-gray-200 transition-colors"
+                onClick={() => handleManualPayment(p)}
+                className="w-full px-5 py-2 bg-green-500 text-white font-semibold rounded-xl hover:bg-green-600"
               >
-                Get Started
+                Upload M-Pesa Proof
               </button>
             ) : (
               <button
@@ -123,9 +126,56 @@ const Billing = () => {
                 Coming Soon
               </button>
             )}
+
+            {/* Pesapal disabled globally */}
+            <button
+              disabled
+              className="w-full mt-3 px-5 py-2 bg-gray-700 text-gray-400 font-semibold rounded-xl cursor-not-allowed"
+            >
+              Pay with Pesapal (Disabled)
+            </button>
           </div>
         ))}
       </section>
+
+      {/* Modal */}
+      {/* Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+          <div className="bg-gray-900 text-white p-8 rounded-2xl shadow-xl max-w-md w-full">
+            <h2 className="text-2xl font-bold mb-6">Submit Proof of Payment</h2>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block mb-1 text-gray-300">
+                  M-Pesa Transaction Code
+                </label>
+                <input
+                  type="text"
+                  value={mpesaCode}
+                  onChange={(e) => setMpesaCode(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg bg-gray-800 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-green-500"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                onClick={() => setShowModal(false)}
+                className="px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={submitManualPayment}
+                className="px-4 py-2 rounded-lg bg-green-500 hover:bg-green-600"
+              >
+                Submit
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 };

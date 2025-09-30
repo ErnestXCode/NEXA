@@ -26,6 +26,8 @@ exports.recordTransaction = async (req, res) => {
       handledBy: userId,
     });
 
+    console.log(txn)
+
     res.status(201).json({ message: "Transaction recorded", txn });
   } catch (err) {
     console.error("recordTransaction error:", err);
@@ -40,7 +42,7 @@ exports.getStudentBalance = async (req, res) => {
   try {
     const schoolId = req.user.school;
 
-    const { academicYear } = req.query;
+    const { academicYear, studentId } = req.query;
 
     const student = await Student.findById(studentId);
     if (!student) return res.status(404).json({ message: "Student not found" });
@@ -78,9 +80,25 @@ exports.setFeeRules = async (req, res) => {
 /* -------------------------------
    🔍 Get Transactions for Student
 --------------------------------*/
+exports.getStudentBalance = async (req, res) => {
+  try {
+    const { studentId } = req.params; // 👈 add this
+    const { academicYear } = req.query;
+
+    const student = await Student.findById(studentId);
+    if (!student) return res.status(404).json({ message: "Student not found" });
+
+    const balances = await student.computeBalances(academicYear);
+    res.json({ studentId, academicYear, balances });
+  } catch (err) {
+    console.error("getStudentBalance error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 exports.getStudentTransactions = async (req, res) => {
   try {
-    const schoolId = req.user.school;
+    const { studentId } = req.params; // 👈 add this
 
     const txns = await FeeTransaction.find({ student: studentId })
       .populate("handledBy", "name")
@@ -92,6 +110,82 @@ exports.getStudentTransactions = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+/* -------------------------------
+   🏫 Whole-School Term Summary
+--------------------------------*/
+exports.getSchoolTermSummary = async (req, res) => {
+  try {
+    const schoolId = req.user.school;
+    const { academicYear, term } = req.query;
+
+    const students = await Student.find({ school: schoolId });
+
+    let totalExpected = 0;
+    let totalPaid = 0;
+
+    for (const student of students) {
+      const expected = await student.getExpectedFee(academicYear, term);
+
+      const txns = await FeeTransaction.find({ student: student._id, academicYear, term });
+      const paid = txns.reduce((sum, t) => sum + t.amount, 0);
+
+      totalExpected += expected;
+      totalPaid += paid;
+    }
+
+    res.json({
+      schoolId,
+      academicYear,
+      term,
+      expected: totalExpected,
+      paid: totalPaid,
+      outstanding: totalExpected - totalPaid,
+    });
+  } catch (err) {
+    console.error("getSchoolTermSummary error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+/* -------------------------------
+   📚 Class-Level Term Summary
+--------------------------------*/
+exports.getClassTermSummary = async (req, res) => {
+  try {
+    const schoolId = req.user.school;
+    const { academicYear, term, className } = req.query;
+
+    const students = await Student.find({ school: schoolId, classLevel: className });
+
+    let expectedTotal = 0;
+    let paidTotal = 0;
+
+    for (const student of students) {
+      const expected = await student.getExpectedFee(academicYear, term);
+
+      const txns = await FeeTransaction.find({ student: student._id, academicYear, term });
+      const paid = txns.reduce((sum, t) => sum + t.amount, 0);
+
+      expectedTotal += expected;
+      paidTotal += paid;
+    }
+
+    res.json({
+      className,
+      academicYear,
+      term,
+      expected: expectedTotal,
+      paid: paidTotal,
+      outstanding: expectedTotal - paidTotal,
+    });
+  } catch (err) {
+    console.error("getClassTermSummary error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+
 
 /* -------------------------------
    🏫 Whole-School Summary
@@ -135,6 +229,59 @@ exports.getSchoolSummary = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+
+/* -------------------------------
+   📈 School Term Comparison
+--------------------------------*/
+exports.getSchoolTermComparison = async (req, res) => {
+  try {
+    const { schoolId } = req.user.school;
+    console.log('schoolId', req.user)
+    const { academicYear } = req.query;
+
+    const terms = ["Term 1", "Term 2", "Term 3"];
+
+    const school = await School.findById(schoolId);
+    if (!school) return res.status(404).json({ msg: "School not found" });
+
+    // fetch all students in school
+    const students = await Student.find({ school: schoolId });
+
+    // fetch all transactions for the year
+    const transactions = await FeeTransaction.find({
+      student: { $in: students.map((s) => s._id) },
+      academicYear,
+    });
+
+    // reduce per term
+    const comparison = terms.map((term) => {
+      const expected = students.reduce(
+        (sum, s) => sum + s.getExpectedFees(academicYear, term),
+        0
+      );
+
+      const paid = transactions
+        .filter((t) => t.term === term)
+        .reduce((sum, t) => sum + t.amount, 0);
+
+      return {
+        term,
+        expected,
+        paid,
+        outstanding: expected - paid,
+      };
+    });
+
+    console.log(comparison)
+
+    res.json(comparison);
+  } catch (err) {
+    console.error("Error in getSchoolTermComparison", err);
+    res.status(500).json({ msg: "Server error", error: err.message });
+  }
+};
+
 
 /* -------------------------------
    📚 Class-Level Breakdown

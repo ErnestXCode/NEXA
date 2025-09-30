@@ -9,6 +9,9 @@ const {
   setFeeRules,
   getStudentTransactions,
   getSchoolSummary,
+  getSchoolTermSummary,
+  getClassTermSummary,
+  getSchoolTermComparison,
   getClassSummary,
   getDebtors,
 } = require("../controllers/fee/feeController");
@@ -31,7 +34,11 @@ router.post("/transactions", verifyJWT, recordTransaction);
 router.get("/students/:studentId/balance", verifyJWT, getStudentBalance);
 
 // 🔍 Fetch student transaction history
-router.get("/students/:studentId/transactions", verifyJWT, getStudentTransactions);
+router.get(
+  "/students/:studentId/transactions",
+  verifyJWT,
+  getStudentTransactions
+);
 
 // 🏫 Update school fee rules
 router.post("/schools/:schoolId/feerules", verifyJWT, setFeeRules);
@@ -44,6 +51,25 @@ router.get("/schools/:schoolId/class-summary", verifyJWT, getClassSummary);
 
 // 🚨 Debtors list
 router.get("/schools/:schoolId/debtors", verifyJWT, getDebtors);
+
+router.get(
+  "/schools/:schoolId/term-summary",
+  verifyJWT,
+  getSchoolTermSummary
+);
+
+router.get(
+  "/schools/:schoolId/class-term-summary",
+  verifyJWT,
+  getClassTermSummary
+);
+
+router.get(
+  "/schools/:schoolId/term-comparison",
+  verifyJWT,
+  getSchoolTermComparison
+);
+
 
 /* ---------------- PROOFS ---------------- */
 
