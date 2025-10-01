@@ -111,7 +111,7 @@ const ParentDashboard = () => {
   const fetchFeeBalances = async (studentId) => {
     try {
       const res = await api.get(
-        `/fees/outstanding/${studentId}?academicYear=2025/2026`
+        `/fees/outstanding/${studentId}`
       );
       setFeeBalances(res.data.balances || {});
     } catch (err) {

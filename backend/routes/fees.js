@@ -14,6 +14,7 @@ const {
   getSchoolTermComparison,
   getClassSummary,
   getDebtors,
+  onboardStudents,
 } = require("../controllers/fee/feeController");
 
 const {
@@ -57,6 +58,14 @@ router.get(
   verifyJWT,
   getSchoolTermSummary
 );
+
+router.post(
+  "/schools/:schoolId/onboard-students",
+  verifyJWT,
+  authorize(["admin", "bursar"]), 
+  onboardStudents
+);
+
 
 router.get(
   "/schools/:schoolId/class-term-summary",

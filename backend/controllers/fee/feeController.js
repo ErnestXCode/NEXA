@@ -389,3 +389,66 @@ exports.getDebtors = async (req, res) => {
   }
 };
 
+exports.onboardStudents = async (req, res) => {
+  try {
+    const schoolId = req.user.school;
+    const { students, academicYear, term, viaCSV } = req.body;
+
+    if (!students || !Array.isArray(students)) {
+      return res.status(400).json({ message: "students[] is required" });
+    }
+
+    const created = [];
+    const unmatched = [];
+
+    for (const s of students) {
+      let student;
+
+      if (viaCSV) {
+        // CSV upload: match by name + class
+        student = await Student.findOne({
+          firstName: s.firstName,
+          lastName: s.lastName,
+          classLevel: s.classLevel,
+          school: schoolId,
+        });
+
+        if (!student) {
+          unmatched.push(s);
+          continue; // skip unmatched rows
+        }
+      } else {
+        // Manual onboarding: use existing ID
+        student = await Student.findById(s.studentId);
+        if (!student) continue;
+      }
+
+      // Record opening balance
+      if (s.openingBalance && s.openingBalance !== 0) {
+        await FeeTransaction.create({
+          student: student._id,
+          school: schoolId,
+          academicYear,
+          term,
+          amount: -s.openingBalance,
+          type: "opening",
+          method: "system",
+          note: "Imported opening balance",
+          handledBy: req.user.userId,
+        });
+      }
+
+      created.push(student);
+    }
+
+    res.status(201).json({
+      message: "Students onboarded successfully",
+      count: created.length,
+      students: created,
+      unmatched: viaCSV ? unmatched : undefined,
+    });
+  } catch (err) {
+    console.error("onboardStudents error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};

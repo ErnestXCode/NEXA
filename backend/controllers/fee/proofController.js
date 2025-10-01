@@ -1,8 +1,8 @@
 // controllers/proofController.js
 const PaymentProof = require("../../models/PaymentProof");
 const Student = require("../../models/Student");
-const User = require("../../models/User");
-const Fee = require("../../models/FeeTransaction");
+const FeeTransaction = require("../../models/FeeTransaction");
+const School = require("../../models/School");
 
 // ---------------------
 // Parent submits proof
@@ -10,7 +10,7 @@ const Fee = require("../../models/FeeTransaction");
 exports.submitProof = async (req, res) => {
   try {
     const { studentId, amount, method, txnCode } = req.body;
-    const parentId = req.user.userId; // assume auth middleware attaches user
+    const parentId = req.user.userId;
 
     // Verify student belongs to parent
     const student = await Student.findById(studentId);
@@ -19,13 +19,21 @@ exports.submitProof = async (req, res) => {
       return res.status(403).json({ message: "Not authorized for this student" });
     }
 
+    // Optional: auto-fill academicYear and term from school
+    const school = await School.findById(student.school).lean();
+    const academicYear = school?.currentAcademicYear || "2025/2026";
+    const term = school?.currentTerm || "Term 1";
+
     const proof = new PaymentProof({
       studentId,
       parentId,
       amount,
       method,
       txnCode,
+      academicYear,
+      term,
     });
+
     await proof.save();
 
     res.status(201).json({ message: "Proof submitted successfully", proof });
@@ -36,21 +44,15 @@ exports.submitProof = async (req, res) => {
 };
 
 // ---------------------
-// Admin confirms/rejects
+// Admin confirms/rejects proof
 // ---------------------
 exports.reviewProof = async (req, res) => {
   try {
     const { proofId, action } = req.params;
-    const academicYear = '2025/2026'
-    const term = 'Term 1'
-    // action: "confirm" or "reject"
 
     const proof = await PaymentProof.findById(proofId).populate("studentId");
     if (!proof) return res.status(404).json({ message: "Proof not found" });
-
-    if (proof.status !== "pending") {
-      return res.status(400).json({ message: "Proof already reviewed" });
-    }
+    if (proof.status !== "pending") return res.status(400).json({ message: "Proof already reviewed" });
 
     if (action === "reject") {
       proof.status = "rejected";
@@ -58,50 +60,36 @@ exports.reviewProof = async (req, res) => {
       return res.json({ message: "Proof rejected", proof });
     }
 
-    if (action === "approve") {
-  const student = await Student.findById(proof.studentId._id);
+    if (action === "confirm") {
+      const student = await Student.findById(proof.studentId._id);
 
-  // Record official payment in Fee collection
-  const fee = await Fee.create({
-    student: student._id,
-    term,
-    academicYear,
-    classLevel: student.classLevel,
-    amount: proof.amount,
-    type: "payment",
-    method: proof.method,
-    note: `Confirmed via proof txn ${proof.txnCode}`,
-    handledBy: req.user.userId, // admin/bursar ID
-    school: student.school,
-  });
+      // Optional: auto-fill academicYear and term from school
+      const school = await School.findById(student.school).lean();
+      const academicYear = school?.currentAcademicYear || "2025/2026";
+      const term = school?.currentTerm || "Term 1";
 
-  // Also push to student.payments for quick lookup
-  student.payments.push({
-    academicYear,
-    term,
-    amount: proof.amount,
-    category: "payment",
-    type: proof.method,
-    note: `Confirmed via proof txn ${proof.txnCode}`,
-  });
+      // Record official payment in FeeTransaction
+      const feeTxn = await FeeTransaction.create({
+        student: student._id,
+        school: student.school,
+        academicYear,
+        term,
+        amount: proof.amount,
+        type: "payment",
+        method: proof.method,
+        note: `Confirmed via proof txn ${proof.txnCode}`,
+        handledBy: req.user.userId, // admin/bursar ID
+      });
 
-  // Update term totals
-  if (term === "Term 1") student.amtPaidTerm1 += proof.amount;
-  if (term === "Term 2") student.amtPaidTerm2 += proof.amount;
-  if (term === "Term 3") student.amtPaidTerm3 += proof.amount;
+      proof.status = "confirmed";
+      await proof.save();
 
-  await student.save();
-
-  proof.status = "confirmed";
-  await proof.save();
-
-  return res.json({
-    message: "Proof confirmed, payment recorded in fees",
-    proof,
-    fee,
-  });
-}
-
+      return res.json({
+        message: "Proof confirmed, payment recorded",
+        proof,
+        feeTxn,
+      });
+    }
 
     res.status(400).json({ message: "Invalid action" });
   } catch (err) {
@@ -111,7 +99,7 @@ exports.reviewProof = async (req, res) => {
 };
 
 // ---------------------
-// Admin/bursar fetch pending proofs
+// Admin fetches pending proofs
 // ---------------------
 exports.getPendingProofs = async (req, res) => {
   try {
@@ -127,7 +115,7 @@ exports.getPendingProofs = async (req, res) => {
 };
 
 // ---------------------
-// Parent fetch own proofs
+// Parent fetches own proofs
 // ---------------------
 exports.getMyProofs = async (req, res) => {
   try {

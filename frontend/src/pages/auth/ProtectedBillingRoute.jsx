@@ -3,7 +3,9 @@ import { useSelector } from "react-redux";
 
 const ProtectedBillingRoute = () => {
   const { accessToken , user } = useSelector((state) => state.auth);
-  if(!accessToken) return
+    if (accessToken === undefined || !user) {
+    return <p className="p-6 text-gray-400">Loading...</p>;
+  }
 
   // If pilot school, skip all checks
   if (user?.school?.isPilotSchool) {

@@ -169,12 +169,58 @@ const FeesPage = ({ schoolId }) => {
         </div>
       </section>
 
-      {/* General School Summary (yearly) */}
-      <SummarySection
-        title="🏫 School Summary"
-        data={schoolSummary}
-        loading={loadingSummary}
-      />
+      <ChartCard title="🏫 School Fees Distribution">
+        <div className="flex flex-col lg:flex-row gap-4 items-center lg:items-start">
+          {/* Summary Cards (vertical stack) */}
+          <div className="flex flex-col gap-2 w-full lg:w-1/3">
+            <SummaryCard
+              label="Expected"
+              value={schoolSummary?.expected}
+              color="blue"
+            />
+            <SummaryCard
+              label="Paid"
+              value={schoolSummary?.paid}
+              color="green"
+            />
+            <SummaryCard
+              label="Outstanding"
+              value={schoolSummary?.outstanding}
+              color="red"
+            />
+          </div>
+
+          {/* Pie Chart */}
+          <div className="w-full lg:w-2/3 h-64">
+            {schoolSummary && (
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={[
+                      { name: "Paid", value: schoolSummary.paid },
+                      { name: "Outstanding", value: schoolSummary.outstanding },
+                    ]}
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={90}
+                    dataKey="value"
+                    label={({ name, value }) =>
+                      `${name}: KES ${value.toLocaleString()}`
+                    }
+                  >
+                    {[{ fill: "#4ade80" }, { fill: "#f87171" }].map(
+                      (entry, index) => (
+                        <Cell key={`cell-${index}`} {...entry} />
+                      )
+                    )}
+                  </Pie>
+                  <Tooltip formatter={(v) => `KES ${v.toLocaleString()}`} />
+                </PieChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+        </div>
+      </ChartCard>
 
       {/* Fee Rules */}
       <section className="bg-gray-900 rounded-xl shadow border border-gray-800 p-6 space-y-4">
@@ -323,35 +369,6 @@ const FeesPage = ({ schoolId }) => {
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-       <ChartCard title="School Fees Distribution">
-  {schoolSummary && (
-    <ResponsiveContainer width="100%" height={250}>
-      <PieChart>
-        <Pie
-          data={[
-            { name: "Paid", value: schoolSummary.paid },
-            { name: "Outstanding", value: schoolSummary.outstanding },
-          ]}
-          cx="50%"
-          cy="50%"
-          outerRadius={90}
-          dataKey="value"
-          label={({ name, value }) => `${name}: KES ${value.toLocaleString()}`}
-        >
-          {[
-            { fill: "#4ade80" }, // green
-            { fill: "#f87171" }, // red
-          ].map((entry, index) => (
-            <Cell key={`cell-${index}`} {...entry} />
-          ))}
-        </Pie>
-        <Tooltip formatter={(v) => `KES ${v.toLocaleString()}`} />
-      </PieChart>
-    </ResponsiveContainer>
-  )}
-</ChartCard>
-
-
         <ChartCard title="📊 Class Breakdown">
           {classSummary && (
             <ResponsiveContainer width="100%" height={250}>
@@ -393,33 +410,33 @@ const FeesPage = ({ schoolId }) => {
             </ResponsiveContainer>
           )}
         </ChartCard>
+        {/* Extra chart - term comparison */}
+        <ChartCard title="📈 Term Comparison">
+          {loadingComparison ? (
+            <p className="text-gray-400">Loading...</p>
+          ) : (
+            <ResponsiveContainer width="100%" height={250}>
+              <BarChart data={termComparison || []}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                <XAxis dataKey="term" stroke="#9ca3af" />
+                <YAxis stroke="#9ca3af" />
+                <Tooltip formatter={(v) => `KES ${v.toLocaleString()}`} />
+
+                <Legend />
+                <Bar dataKey="expected" fill="#60a5fa" />
+                <Bar dataKey="paid" fill="#4ade80" />
+                <Bar dataKey="outstanding" fill="#f87171" />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
+        </ChartCard>
       </div>
-
-      {/* Extra chart - term comparison */}
-      <ChartCard title="📈 Term Comparison">
-        {loadingComparison ? (
-          <p className="text-gray-400">Loading...</p>
-        ) : (
-          <ResponsiveContainer width="100%" height={250}>
-            <BarChart data={termComparison || []}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-              <XAxis dataKey="term" stroke="#9ca3af" />
-              <YAxis stroke="#9ca3af" />
-              <Tooltip formatter={(v) => `KES ${v.toLocaleString()}`} />
-
-              <Legend />
-              <Bar dataKey="expected" fill="#60a5fa" />
-              <Bar dataKey="paid" fill="#4ade80" />
-              <Bar dataKey="outstanding" fill="#f87171" />
-            </BarChart>
-          </ResponsiveContainer>
-        )}
-      </ChartCard>
 
       {/* Class Breakdown Table */}
       <section className="bg-gray-900 rounded-xl shadow border border-gray-800 p-6 overflow-x-auto">
         <h2 className="text-xl font-semibold mb-4 border-b border-gray-800 pb-2">
-          📚 Class Breakdown
+          📚 Class Breakdown{" "}
+          <span className="text-sm text-gray-300">(For the year)</span>
         </h2>
         <table className="w-full border-collapse">
           <thead className="bg-gray-800">

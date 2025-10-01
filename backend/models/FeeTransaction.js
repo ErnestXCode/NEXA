@@ -7,7 +7,11 @@ const feeTransactionSchema = new mongoose.Schema({
   term: { type: String, enum: ["Term 1", "Term 2", "Term 3"], required: true },
 
   amount: { type: Number, required: true },
-  type: { type: String, enum: ["payment", "adjustment", "fine", "refund"], default: "payment" },
+ type: { 
+  type: String, 
+  enum: ["payment", "adjustment", "fine", "refund", "opening"], 
+  default: "payment" 
+},
   method: { type: String, enum: ["cash", "mpesa", "card", "bank", "system"], default: "cash" },
 
   note: String,
