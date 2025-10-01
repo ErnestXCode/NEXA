@@ -61,11 +61,41 @@ const FeesPage = ({ schoolId }) => {
 });
 
 
-  const { data: debtors, isLoading: loadingDebtors } = useQuery({
-    queryKey: ["debtors", schoolId, academicYear],
-    queryFn: () =>
-      fetcher(`/fees/schools/${schoolId}/debtors?academicYear=${academicYear}`),
-  });
+  // inside FeesPage component
+const [debtorPage, setDebtorPage] = useState(1);
+const [debtorLimit] = useState(10); // default page size
+
+const { data: debtors, isLoading: loadingDebtors } = useQuery({
+  queryKey: ["debtors", schoolId, academicYear, debtorPage, debtorLimit],
+  queryFn: () =>
+    fetcher(
+      `/fees/schools/${schoolId}/debtors?academicYear=${academicYear}&page=${debtorPage}&limit=${debtorLimit}`
+    ),
+  keepPreviousData: true,
+});
+
+const ALL_CLASSES = [
+  "PP1",
+  "PP2",
+  "Grade 1",
+  "Grade 2",
+  "Grade 3",
+  "Grade 4",
+  "Grade 5",
+  "Grade 6",
+  "Grade 7",
+  "Grade 8",
+  "Grade 9",
+  "Grade 10",
+];
+
+const chartData = ALL_CLASSES.map((cls) => ({
+  class: cls,
+  Paid: classSummary?.[cls]?.paid || 0,
+  Outstanding: classSummary?.[cls]?.outstanding || 0,
+}));
+
+
 
   const { data: feeRules, isLoading: loadingRules } = useQuery({
     queryKey: ["feeRules", schoolId],
@@ -131,6 +161,8 @@ const FeesPage = ({ schoolId }) => {
       amount: "",
     });
   };
+
+  console.log(classSummary)
 
   /* ---------------- RENDER ---------------- */
  return (
@@ -281,27 +313,29 @@ const FeesPage = ({ schoolId }) => {
         )}
       </ChartCard>
 
-      <ChartCard title="📊 Class Breakdown">
-        {classSummary && (
-          <ResponsiveContainer width="100%" height={250}>
-            <BarChart
-              data={Object.entries(classSummary).map(([cls, stats]) => ({
-                class: cls,
-                Paid: stats.paid,
-                Outstanding: stats.outstanding,
-              }))}
-            >
-              <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-              <XAxis dataKey="class" stroke="#9ca3af" />
-              <YAxis stroke="#9ca3af" />
-              <Tooltip formatter={(v) => `KES ${v}`} />
-              <Legend />
-              <Bar dataKey="Paid" stackId="a" fill="#4ade80" />
-              <Bar dataKey="Outstanding" stackId="a" fill="#f87171" />
-            </BarChart>
-          </ResponsiveContainer>
-        )}
-      </ChartCard>
+    <ChartCard title="📊 Class Breakdown">
+  {classSummary && (
+    <ResponsiveContainer width="100%" height={250}>
+     <BarChart data={chartData}>
+  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+  <XAxis
+  dataKey="class"
+  stroke="#9ca3af"
+  interval={0}          // <- force show all ticks
+  tick={{ fontSize: 12 }} // optional: shrink font to avoid overlap
+/>
+
+  <YAxis stroke="#9ca3af" />
+  <Tooltip formatter={(v) => `KES ${v}`} />
+  <Legend />
+  <Bar dataKey="Paid" stackId="a" fill="#4ade80" />
+  <Bar dataKey="Outstanding" stackId="a" fill="#f87171" />
+</BarChart>
+
+    </ResponsiveContainer>
+  )}
+</ChartCard>
+
     </div>
 
     {/* Extra chart - term comparison */}
@@ -353,36 +387,82 @@ const FeesPage = ({ schoolId }) => {
     </section>
 
     {/* Debtors */}
-    <section className="bg-gray-900 rounded-xl shadow border border-gray-800 p-6 overflow-x-auto">
-      <h2 className="text-xl font-semibold mb-4 border-b border-gray-800 pb-2">🚨 Debtors List</h2>
-      {loadingDebtors ? (
-        <p className="text-gray-400">Loading...</p>
-      ) : debtors?.length === 0 ? (
-        <p className="text-green-400">🎉 No debtors!</p>
-      ) : (
-        <table className="w-full border-collapse">
-          <thead className="bg-gray-800">
-            <tr>
-              {["Student", "Class", "Outstanding"].map((h) => (
-                <th key={h} className="px-4 py-2 text-left text-gray-300">{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {debtors.map((d, idx) => (
-              <tr
-                key={d.studentId}
-                className={`${idx % 2 === 0 ? "bg-gray-950/40" : "bg-gray-900/40"} hover:bg-gray-800/60`}
-              >
-                <td className="px-4 py-2">{d.name}</td>
-                <td className="px-4 py-2">{d.classLevel}</td>
-                <td className="px-4 py-2 text-red-400">KES {d.outstanding}</td>
-              </tr>
+   {/* Debtors */}
+<section className="bg-gray-900 rounded-xl shadow border border-gray-800 p-6 overflow-x-auto">
+  <h2 className="text-xl font-semibold mb-4 border-b border-gray-800 pb-2">
+    🚨 Debtors List
+  </h2>
+
+  {loadingDebtors ? (
+    <p className="text-gray-400">Loading...</p>
+  ) : debtors?.totalDebtors === 0 ? (
+    <p className="text-green-400">🎉 No debtors!</p>
+  ) : (
+    <>
+      <table className="w-full border-collapse">
+        <thead className="bg-gray-800">
+          <tr>
+            {["Student", "Class", "Outstanding"].map((h) => (
+              <th key={h} className="px-4 py-2 text-left text-gray-300">
+                {h}
+              </th>
             ))}
-          </tbody>
-        </table>
-      )}
-    </section>
+          </tr>
+        </thead>
+        <tbody>
+          {debtors.debtors.map((d, idx) => (
+            <tr
+              key={d.studentId}
+              className={`${
+                idx % 2 === 0 ? "bg-gray-950/40" : "bg-gray-900/40"
+              } hover:bg-gray-800/60`}
+            >
+              <td className="px-4 py-2">{d.name}</td>
+              <td className="px-4 py-2">{d.classLevel}</td>
+             <td className="px-4 py-2 text-red-400">
+  KES {d.totalOutstanding}
+  <div className="text-xs text-gray-400 mt-1">
+    {d.terms.map((t) => (
+      <div key={t.term}>
+        {t.term}: KES {t.outstanding}
+      </div>
+    ))}
+  </div>
+</td>
+
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      {/* Pagination controls */}
+      <div className="flex justify-between items-center mt-4 text-sm text-gray-300">
+        <span>
+          Page {debtors.currentPage} of {debtors.totalPages}
+        </span>
+        <div className="space-x-2">
+          <button
+            disabled={debtorPage === 1}
+            onClick={() => setDebtorPage((p) => Math.max(p - 1, 1))}
+            className="px-3 py-1 bg-gray-800 rounded disabled:opacity-50"
+          >
+            ⬅ Prev
+          </button>
+          <button
+            disabled={debtorPage === debtors.totalPages}
+            onClick={() =>
+              setDebtorPage((p) => Math.min(p + 1, debtors.totalPages))
+            }
+            className="px-3 py-1 bg-gray-800 rounded disabled:opacity-50"
+          >
+            Next ➡
+          </button>
+        </div>
+      </div>
+    </>
+  )}
+</section>
+
   </div>
 );
 

@@ -236,8 +236,7 @@ exports.getSchoolSummary = async (req, res) => {
 --------------------------------*/
 exports.getSchoolTermComparison = async (req, res) => {
   try {
-    const { schoolId } = req.user.school;
-    console.log('schoolId', req.user)
+    const schoolId = req.user.school;
     const { academicYear } = req.query;
 
     const terms = ["Term 1", "Term 2", "Term 3"];
@@ -245,35 +244,34 @@ exports.getSchoolTermComparison = async (req, res) => {
     const school = await School.findById(schoolId);
     if (!school) return res.status(404).json({ msg: "School not found" });
 
-    // fetch all students in school
     const students = await Student.find({ school: schoolId });
 
-    // fetch all transactions for the year
     const transactions = await FeeTransaction.find({
       student: { $in: students.map((s) => s._id) },
       academicYear,
     });
 
-    // reduce per term
-    const comparison = terms.map((term) => {
-      const expected = students.reduce(
-        (sum, s) => sum + s.getExpectedFees(academicYear, term),
-        0
-      );
+    const comparison = [];
 
+    for (const term of terms) {
+      // expected = sum of each student's expected fee
+      const expectedList = await Promise.all(
+        students.map((s) => s.getExpectedFee(academicYear, term))
+      );
+      const expected = expectedList.reduce((sum, e) => sum + e, 0);
+
+      // paid = sum of all transactions for that term
       const paid = transactions
         .filter((t) => t.term === term)
         .reduce((sum, t) => sum + t.amount, 0);
 
-      return {
+      comparison.push({
         term,
         expected,
         paid,
         outstanding: expected - paid,
-      };
-    });
-
-    console.log(comparison)
+      });
+    }
 
     res.json(comparison);
   } catch (err) {
@@ -281,6 +279,7 @@ exports.getSchoolTermComparison = async (req, res) => {
     res.status(500).json({ msg: "Server error", error: err.message });
   }
 };
+
 
 
 /* -------------------------------
@@ -328,21 +327,30 @@ exports.getClassSummary = async (req, res) => {
 /* -------------------------------
    🚨 Debtors List (Sorted)
 --------------------------------*/
+/* -------------------------------
+   🚨 Debtors List (with Pagination)
+--------------------------------*/
 exports.getDebtors = async (req, res) => {
   try {
     const schoolId = req.user.school;
-
-    const { academicYear } = req.query;
+    const { academicYear, page = 1, limit = 10 } = req.query;
 
     const students = await Student.find({ school: schoolId });
 
-    const debtors = [];
+    let debtors = [];
 
     for (const student of students) {
       const balances = await student.computeBalances(academicYear);
 
-      const totalOutstanding = Object.values(balances).reduce(
-        (a, b) => a + (b.amount || b),
+      // Term-wise outstanding
+      const termBreakdown = Object.entries(balances).map(([term, data]) => ({
+        term,
+        outstanding: data.amount || data, // depending on how computeBalances returns
+      }));
+
+      // Total outstanding across all terms
+      const totalOutstanding = termBreakdown.reduce(
+        (sum, t) => sum + t.outstanding,
         0
       );
 
@@ -351,16 +359,33 @@ exports.getDebtors = async (req, res) => {
           studentId: student._id,
           name: `${student.firstName} ${student.lastName}`,
           classLevel: student.classLevel,
-          outstanding: totalOutstanding,
+          totalOutstanding,
+          terms: termBreakdown.filter((t) => t.outstanding > 0), // only include terms with debt
         });
       }
     }
 
-    debtors.sort((a, b) => b.outstanding - a.outstanding); // highest first
+    // Sort by highest outstanding
+    debtors.sort((a, b) => b.totalOutstanding - a.totalOutstanding);
 
-    res.json(debtors);
+    // Pagination
+    const pageInt = parseInt(page, 10);
+    const limitInt = parseInt(limit, 10);
+    const startIndex = (pageInt - 1) * limitInt;
+    const endIndex = pageInt * limitInt;
+
+    const paginatedDebtors = debtors.slice(startIndex, endIndex);
+
+    res.json({
+      totalDebtors: debtors.length,
+      totalPages: Math.ceil(debtors.length / limitInt),
+      currentPage: pageInt,
+      pageSize: limitInt,
+      debtors: paginatedDebtors,
+    });
   } catch (err) {
     console.error("getDebtors error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
+
