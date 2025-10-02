@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
 import api from "../../../api/axios";
 import useUnreadMessages from "../../../hooks/useUnreadMessages";
+import { useQuery } from "@tanstack/react-query";
 
 const ParentDashboard = () => {
   const [children, setChildren] = useState([]);
@@ -66,6 +67,24 @@ const ParentDashboard = () => {
       setAttendanceSummary(null);
     }
   };
+
+  const {
+      data: schoolData,
+      isLoading,
+      isError,
+    } = useQuery({
+      queryKey: ["school", "me"],
+      queryFn: async () => {
+        const res = await api.get(`/schools/me`);
+        return res.data;
+      },
+    });
+  
+    const [school, setSchool] = useState(null);
+  
+    useEffect(() => {
+      if (schoolData) setSchool(schoolData);
+    }, [schoolData]);
 
   const fetchChildExams = async (studentId) => {
     try {
@@ -232,22 +251,54 @@ const ParentDashboard = () => {
             </div>
           )}
 
-          {/* MPESA Pay Section */}
-          <div className="bg-gradient-to-r from-gray-900 to-gray-800 p-6 rounded-2xl shadow-md text-center">
-            <h2 className="text-xl sm:text-2xl font-bold mb-2">
-              Pay Fees via MPESA
-            </h2>
-            <p className="text-gray-400 mb-2">
-              To pay your child's school fees, use MPESA and send the amount to:
-            </p>
-            <p className="font-bold text-blue-400 text-lg sm:text-xl">
-              +254 xxx xxx xxx
-            </p>
-            <p className="text-gray-400 mt-2 text-sm sm:text-base">
-              After payment, please inform the school to update your payment
-              status.
-            </p>
-          </div>
+        {/* Payment Options */}
+{school?.paymentOptions?.length > 0 && (
+  <div className="bg-gradient-to-r from-gray-900 to-gray-800 p-6 rounded-2xl shadow-md text-center">
+    <h2 className="text-xl sm:text-2xl font-bold mb-4">Pay Fees</h2>
+    <p className="text-gray-400 mb-6">
+      Choose one of the school’s official payment methods:
+    </p>
+
+    <div
+      className={`grid gap-4 ${
+        school.paymentOptions.length === 1
+          ? "mx-auto max-w-sm sm:max-w-md md:max-w-lg" // scales with screen
+          : "sm:grid-cols-2"
+      }`}
+    >
+      {school.paymentOptions.map((opt, idx) => (
+        <div
+          key={idx}
+          className="bg-gray-950 p-6 rounded-xl shadow text-left"
+        >
+          <p className="font-semibold text-blue-400 text-lg mb-2">
+            {opt.type === "mpesa_paybill" && "M-Pesa Paybill"}
+            {opt.type === "mpesa_till" && "M-Pesa Till"}
+            {opt.type === "phone" && "Phone Number"}
+            {opt.type === "bank" && "Bank Account"}
+          </p>
+
+          <p className="text-gray-300 text-base mb-2">
+            <span className="font-bold">{opt.account}</span>
+          </p>
+
+          {opt.instructions && (
+            <ul className="list-disc list-inside text-gray-400 text-sm space-y-1">
+              {opt.instructions
+                .split("\n")
+                .filter(line => line.trim() !== "")
+                .map((line, i) => (
+                  <li key={i}>{line}</li>
+                ))}
+            </ul>
+          )}
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+
+
 
           {/* My Proofs Section */}
           <div className="bg-gray-900 p-6 rounded-2xl shadow-md mt-6">
@@ -383,6 +434,98 @@ const ParentDashboard = () => {
               </div>
             </div>
           )}
+
+          {/* Exams Section */}
+{/* Exams Section */}
+{childExams.length > 0 && (
+  <div className="bg-gradient-to-r from-gray-900 to-gray-800 p-6 rounded-2xl shadow-md">
+    <h2 className="text-xl sm:text-2xl font-bold mb-4 border-b border-gray-700 pb-2">
+      Exam Results
+    </h2>
+
+    {/* Dropdown to pick exam */}
+    <div className="mb-4">
+      <select
+        value={selectedExamId}
+        onChange={(e) => setSelectedExamId(e.target.value)}
+        className="w-full p-2 rounded bg-gray-800 text-white border border-gray-700"
+      >
+        <option value="">Select Exam</option>
+        {childExams.map((exam) => (
+          <option key={exam.examId} value={exam.examId}>
+            {exam.examName} – {exam.term}
+          </option>
+        ))}
+      </select>
+    </div>
+
+    {/* Show chosen exam */}
+    {(() => {
+      const examToShow =
+        selectedExamId &&
+        childExams.find((exam) => exam.examId === selectedExamId);
+
+      if (!examToShow) return null;
+
+      return (
+        <div className="space-y-4">
+          {/* Exam meta */}
+          <div className="bg-gray-950 p-4 rounded-xl shadow">
+            <p className="text-gray-300 text-sm">
+              <span className="font-semibold">Exam:</span> {examToShow.examName}
+            </p>
+            <p className="text-gray-300 text-sm">
+              <span className="font-semibold">Term:</span> {examToShow.term}
+            </p>
+            <p className="text-gray-300 text-sm">
+              <span className="font-semibold">Date:</span>{" "}
+              {new Date(examToShow.date).toLocaleDateString()}
+            </p>
+          </div>
+
+          {/* Subjects table */}
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm text-gray-300 border border-gray-700 rounded-lg">
+              <thead className="bg-gray-800 text-gray-200">
+                <tr>
+                  <th className="px-4 py-2 text-left">Subject</th>
+                  <th className="px-4 py-2 text-right">Score</th>
+                  <th className="px-4 py-2 text-right">Grade</th>
+                  <th className="px-4 py-2 text-right">Remark</th>
+                </tr>
+              </thead>
+              <tbody>
+                {examToShow.subjects.map((subj, idx) => (
+                  <tr
+                    key={idx}
+                    className={
+                      idx % 2 === 0 ? "bg-gray-950/40" : "bg-gray-900/40"
+                    }
+                  >
+                    <td className="px-4 py-2">{subj.name}</td>
+                    <td className="px-4 py-2 text-right">{subj.score}</td>
+                    <td className="px-4 py-2 text-right">{subj.grade}</td>
+                    <td className="px-4 py-2 text-right">{subj.remark}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Totals */}
+          <div className="bg-gray-950 p-4 rounded-xl shadow flex justify-between text-sm">
+            <span>Total: {examToShow.total}</span>
+            <span>Average: {examToShow.average}</span>
+            {/* <span>Grade: {examToShow.grade}</span>
+            <span>Remark: {examToShow.remark}</span> */}
+          </div>
+        </div>
+      );
+    })()}
+  </div>
+)}
+
+
         </div>
       )}
     </div>

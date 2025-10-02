@@ -393,6 +393,7 @@ exports.onboardStudents = async (req, res) => {
   try {
     const schoolId = req.user.school;
     const { students, academicYear, term, viaCSV } = req.body;
+    console.log(req.body)
 
     if (!students || !Array.isArray(students)) {
       return res.status(400).json({ message: "students[] is required" });
@@ -429,8 +430,8 @@ exports.onboardStudents = async (req, res) => {
           student: student._id,
           school: schoolId,
           academicYear,
-          term,
-          amount: -s.openingBalance,
+           term: s.term || term,
+          amount: s.openingBalance,
           type: "opening",
           method: "system",
           note: "Imported opening balance",
@@ -449,6 +450,32 @@ exports.onboardStudents = async (req, res) => {
     });
   } catch (err) {
     console.error("onboardStudents error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+
+/* -------------------------------
+   ❌ Delete a Fee Rule
+--------------------------------*/
+exports.deleteFeeRule = async (req, res) => {
+  try {
+    const schoolId = req.user.school;
+    const { ruleId } = req.params;
+
+    const school = await School.findById(schoolId);
+    if (!school) return res.status(404).json({ message: "School not found" });
+
+    // Pull removes matching object by _id
+    school.feeRules = school.feeRules.filter(
+      (rule) => rule._id.toString() !== ruleId
+    );
+
+    await school.save();
+
+    res.json({ message: "Fee rule deleted", feeRules: school.feeRules });
+  } catch (err) {
+    console.error("deleteFeeRule error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };

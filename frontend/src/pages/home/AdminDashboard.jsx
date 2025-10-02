@@ -288,17 +288,44 @@ const AdminDashboard = () => {
         },{
           title: "Students per Class",
           content: (
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={studentsPerClass}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#444"/>
-             <XAxis dataKey="class" stroke="#bbb" interval={0} angle={-30} textAnchor="end"/>
+           <ResponsiveContainer width="100%" height={300}>
+  <BarChart
+    data={studentsPerClass
+      .sort((a, b) => {
+        const classA = a.class;
+        const classB = b.class;
 
-                <YAxis stroke="#bbb"/>
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="count" fill="#22d3ee" />
-              </BarChart>
-            </ResponsiveContainer>
+        // Handle PP classes first
+        if (classA.startsWith("PP") && classB.startsWith("PP")) {
+          return classA.localeCompare(classB, undefined, { numeric: true });
+        }
+        if (classA.startsWith("PP")) return -1;
+        if (classB.startsWith("PP")) return 1;
+
+        // Then numeric grades
+        const numA = parseInt(classA.replace(/\D/g, ""), 10);
+        const numB = parseInt(classB.replace(/\D/g, ""), 10);
+
+        if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+
+        // Fallback: alphabetical
+        return classA.localeCompare(classB);
+      })}
+  >
+    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+    <XAxis
+      dataKey="class"
+      stroke="#9ca3af"
+      interval={0}
+      tick={{ fontSize: 12 }}
+    />
+    <YAxis stroke="#9ca3af" />
+    <Tooltip />
+    <Legend />
+    <Bar dataKey="count" fill="#60a5fa" />
+  </BarChart>
+</ResponsiveContainer>
+
           ),
         },{
           title: "Teachers per Subject",

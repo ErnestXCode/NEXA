@@ -60,7 +60,7 @@ exports.reviewProof = async (req, res) => {
       return res.json({ message: "Proof rejected", proof });
     }
 
-    if (action === "confirm") {
+    if (action === "confirm" || action === 'approve') {
       const student = await Student.findById(proof.studentId._id);
 
       // Optional: auto-fill academicYear and term from school

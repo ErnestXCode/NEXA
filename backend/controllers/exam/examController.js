@@ -3,20 +3,6 @@ const Student = require("../../models/Student");
 const School = require("../../models/School");
 const { getAllowedSubjectsForClass } = require("../../utils/subjectHelper");
 
-/**
- * Helper: compute grade & remark from school's grading system given average
- */
-// function computeGrade(average, gradingSystem) {
-//   if (!Array.isArray(gradingSystem) || gradingSystem.length === 0) {
-//     gradingSystem = School.defaultGradingSystem();
-//   }
-//   for (let g of gradingSystem) {
-//     if (average >= g.min && average <= g.max) {
-//       return { grade: g.grade, remark: g.remark || "" };
-//     }
-//   }
-//   return { grade: "N/A", remark: "" };
-// }
 
 // Create exam (whole school)
 const createExam = async (req, res) => {

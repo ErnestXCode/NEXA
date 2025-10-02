@@ -100,6 +100,29 @@ const SchoolSettings = ({ onNext }) => {
     setSchool((prev) => ({ ...prev, feeRules: newRules }));
   };
 
+  // --- Payment Options helpers (NEW) ---
+const addPaymentOption = () => {
+  setSchool((prev) => ({
+    ...prev,
+    paymentOptions: [
+      ...(prev.paymentOptions || []),
+      { type: "mpesa_paybill", label: "", account: "", instructions: "" },
+    ],
+  }));
+};
+
+const updatePaymentOption = (idx, key, value) => {
+  const newOpts = [...(school.paymentOptions || [])];
+  newOpts[idx] = { ...newOpts[idx], [key]: value };
+  setSchool((prev) => ({ ...prev, paymentOptions: newOpts }));
+};
+
+const removePaymentOption = (idx) => {
+  const newOpts = (school.paymentOptions || []).filter((_, i) => i !== idx);
+  setSchool((prev) => ({ ...prev, paymentOptions: newOpts }));
+};
+
+
   // --- Subjects by Class Range helpers (NEW) ---
   const addSubjectsRule = () => {
     const fromDefault = school.classLevels?.[0]?.name || "";
@@ -206,6 +229,97 @@ const SchoolSettings = ({ onNext }) => {
               />
             </div>
           </section>
+
+          {/* Payment Options (NEW) */}
+{/* Payment Options (Simplified) */}
+<section>
+  <h2 className="text-gray-200 font-semibold mb-3 border-b border-gray-700 pb-1">
+    Payment Methods
+  </h2>
+  <div className="space-y-3">
+    {school.paymentOptions?.map((opt, idx) => {
+      // dynamic placeholder based on type
+      const getAccountPlaceholder = (type) => {
+        switch (type) {
+          case "mpesa_paybill":
+            return "Enter Paybill Number";
+          case "mpesa_till":
+            return "Enter Till Number";
+          case "phone":
+            return "Enter Phone Number";
+          case "bank":
+            return "Enter Bank Account Number";
+          default:
+            return "Enter Account Reference";
+        }
+      };
+
+      return (
+        <div
+          key={idx}
+          className="bg-gray-800 p-3 rounded border border-gray-700 space-y-2"
+        >
+          {/* Type selector (dropdown is effectively the "label") */}
+          <select
+            value={opt.type}
+            onChange={(e) => updatePaymentOption(idx, "type", e.target.value)}
+            className="w-full p-2 rounded bg-gray-700 text-white text-sm"
+          >
+            <option value="mpesa_paybill">M-Pesa Paybill</option>
+            <option value="mpesa_till">M-Pesa Till</option>
+            <option value="phone">Phone Number</option>
+            <option value="bank">Bank Account</option>
+          </select>
+
+          {/* Account field with dynamic placeholder */}
+          <input
+            type="text"
+            placeholder={getAccountPlaceholder(opt.type)}
+            value={opt.account || ""}
+            onChange={(e) => updatePaymentOption(idx, "account", e.target.value)}
+            className="w-full p-2 rounded bg-gray-700 text-white text-sm"
+          />
+
+          {/* Instructions */}
+         {/* Instructions */}
+<div>
+  <label className="block text-gray-400 text-sm mb-1">
+    Payment Instructions (one per line)
+  </label>
+  <textarea
+    placeholder={`Example:\n- Use Admission Number as Ref\n- Keep payment receipt`}
+    value={opt.instructions || ""}
+    onChange={(e) =>
+      updatePaymentOption(idx, "instructions", e.target.value)
+    }
+    className="w-full p-2 rounded bg-gray-700 text-white text-sm"
+    rows={3}
+  />
+</div>
+
+
+          <button
+            type="button"
+            onClick={() => removePaymentOption(idx)}
+            className="text-red-400 hover:text-red-600 text-sm"
+          >
+            ✕ Remove Payment Method
+          </button>
+        </div>
+      );
+    })}
+
+    <button
+      type="button"
+      onClick={addPaymentOption}
+      className="px-3 py-1 bg-gray-700 text-white rounded hover:bg-gray-600 text-sm"
+    >
+      ➕ Add Payment Method
+    </button>
+  </div>
+</section>
+
+
 
           {/* Global Subjects */}
           <section>
@@ -495,6 +609,8 @@ const SchoolSettings = ({ onNext }) => {
               </div>
             </section>
           )}
+
+          
 
           <button
             type="button"

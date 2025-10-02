@@ -15,6 +15,7 @@ const {
   getClassSummary,
   getDebtors,
   onboardStudents,
+  deleteFeeRule,
 } = require("../controllers/fee/feeController");
 
 const {
@@ -43,6 +44,8 @@ router.get(
 
 // 🏫 Update school fee rules
 router.post("/schools/:schoolId/feerules", verifyJWT, setFeeRules);
+
+router.delete("/fee-rules/:ruleId", verifyJWT, deleteFeeRule);
 
 // 🏫 Whole school summary
 router.get("/schools/:schoolId/summary", verifyJWT, getSchoolSummary);

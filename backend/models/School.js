@@ -33,6 +33,18 @@ const classLevelSchema = new mongoose.Schema({
   feeExpectations: { type: [feeExpectationSchema], default: [] },
 });
 
+
+const paymentOptionSchema = new mongoose.Schema({
+  type: { 
+    type: String, 
+    enum: ["mpesa_paybill", "mpesa_till", "bank", "phone"], 
+    required: true 
+  },
+  label: { type: String }, // e.g. "School Paybill", "Bank A/C"
+  account: { type: String, required: true }, // paybill no, till no, account number, or phone
+  instructions: { type: String }, // optional text e.g. "Use student's full name as reference"
+});
+
 const schoolSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, unique: true },
@@ -50,6 +62,8 @@ const schoolSchema = new mongoose.Schema(
 
     isPilotSchool: { type: Boolean, default: false },
     isFreeTrial: { type: Boolean, default: false },
+
+    
 
     classLevels: {
       type: [classLevelSchema],
@@ -72,6 +86,11 @@ const schoolSchema = new mongoose.Schema(
       type: [subjectsRuleSchema],
       default: () => School.defaultCBCSubjectsByClass(),
     },
+
+     paymentOptions: {
+      type: [paymentOptionSchema],
+      default: [],
+    }, //for fees not billing
 
     modules: {
       exams: { type: Boolean, default: true },

@@ -232,10 +232,15 @@ const getChildrenExams = async (req, res) => {
     if (!studentId)
       return res.status(400).json({ msg: "studentId is required" });
 
-    // Fetch parent and populate children
-    const parent = await User.findById(req.user.userId).populate(
-      "children"
-    );
+    // Fetch parent and populate children + their exam refs
+    const parent = await User.findById(req.user.userId).populate({
+      path: "children",
+      populate: {
+        path: "examResults.exam",
+        select: "name date term academicYear",
+      },
+    });
+
     if (!parent || parent.role !== "parent")
       return res.status(404).json({ msg: "Parent not found" });
 
@@ -246,10 +251,11 @@ const getChildrenExams = async (req, res) => {
 
     // Map exams for this child only
     const examsWithResults = (child.examResults || []).map((er) => ({
-      examId: er.exam,
-      examName: er.examName || "Exam", // fallback if name not stored
-      term: er.term,
-      date: er.date,
+      examId: er.exam?._id,
+      examName: er.exam?.name || "Exam",
+      date: er.exam?.date || null,
+      term: er.exam?.term || er.term,
+      academicYear: er.exam?.academicYear || er.academicYear,
       subjects: er.subjects || [],
       total: er.total || 0,
       average: er.average || 0,
@@ -267,6 +273,7 @@ const getChildrenExams = async (req, res) => {
     res.status(500).json({ msg: "Server error", error: err.message });
   }
 };
+
 
 
 module.exports = {

@@ -147,7 +147,14 @@ const FeesPage = ({ schoolId }) => {
     });
   };
 
-  console.log(classSummary);
+  const handleDeleteRule = async (ruleId) => {
+    try {
+      await api.delete(`/fees/fee-rules/${ruleId}`);
+      queryClient.invalidateQueries(["feeRules", schoolId]);
+    } catch (err) {
+      console.error("Failed to delete rule", err);
+    }
+  };
 
   /* ---------------- RENDER ---------------- */
   return (
@@ -243,7 +250,7 @@ const FeesPage = ({ schoolId }) => {
                 </tr>
               </thead>
               <tbody>
-                {feeRules?.map((r, i) => (
+                {/* {feeRules?.map((r, i) => (
                   <tr key={i} className="text-center hover:bg-gray-800/40">
                     <td className="border border-gray-700 p-2">
                       {r.academicYear}
@@ -257,7 +264,32 @@ const FeesPage = ({ schoolId }) => {
                       KES {r.amount}
                     </td>
                   </tr>
+                ))} */}
+
+                {feeRules?.map((r) => (
+                  <tr key={r._id} className="text-center hover:bg-gray-800/40">
+                    <td className="border border-gray-700 p-2">
+                      {r.academicYear}
+                    </td>
+                    <td className="border border-gray-700 p-2">{r.term}</td>
+                    <td className="border border-gray-700 p-2">
+                      {r.fromClass}
+                    </td>
+                    <td className="border border-gray-700 p-2">{r.toClass}</td>
+                    <td className="border border-gray-700 p-2">
+                      KES {r.amount}
+                    </td>
+                    <td className="border border-gray-700 p-2">
+                      <button
+                        onClick={() => handleDeleteRule(r._id)}
+                        className="text-red-500 hover:text-red-400"
+                      >
+                        ❌ Delete
+                      </button>
+                    </td>
+                  </tr>
                 ))}
+              
               </tbody>
             </table>
           </div>
@@ -449,28 +481,44 @@ const FeesPage = ({ schoolId }) => {
             </tr>
           </thead>
           <tbody>
-            {Object.entries(classSummary || {}).map(
-              ([classLevel, stats], idx) => (
-                <tr
-                  key={classLevel}
-                  className={`${
-                    idx % 2 === 0 ? "bg-gray-950/40" : "bg-gray-900/40"
-                  } hover:bg-gray-800/60`}
-                >
-                  <td className="px-4 py-2">{classLevel}</td>
-                  <td className="px-4 py-2 text-blue-400">
-                    KES {stats.expected.toLocaleString()}
-                  </td>
-                  <td className="px-4 py-2 text-green-400">
-                    KES {stats.paid.toLocaleString()}
-                  </td>
-                  <td className="px-4 py-2 text-red-400">
-                    KES {stats.outstanding.toLocaleString()}
-                  </td>
-                </tr>
-              )
-            )}
-          </tbody>
+  {Object.entries(classSummary || {})
+    .sort(([a], [b]) => {
+      // Handle PP classes first
+      if (a.startsWith("PP") && b.startsWith("PP")) {
+        return a.localeCompare(b, undefined, { numeric: true });
+      }
+      if (a.startsWith("PP")) return -1;
+      if (b.startsWith("PP")) return 1;
+
+      // Numeric Grades
+      const numA = parseInt(a.replace(/\D/g, ""), 10);
+      const numB = parseInt(b.replace(/\D/g, ""), 10);
+      if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+
+      // Fallback alphabetical
+      return a.localeCompare(b);
+    })
+    .map(([classLevel, stats], idx) => (
+      <tr
+        key={classLevel}
+        className={`${
+          idx % 2 === 0 ? "bg-gray-950/40" : "bg-gray-900/40"
+        } hover:bg-gray-800/60`}
+      >
+        <td className="px-4 py-2">{classLevel}</td>
+        <td className="px-4 py-2 text-blue-400">
+          KES {stats.expected.toLocaleString()}
+        </td>
+        <td className="px-4 py-2 text-green-400">
+          KES {stats.paid.toLocaleString()}
+        </td>
+        <td className="px-4 py-2 text-red-400">
+          KES {stats.outstanding.toLocaleString()}
+        </td>
+      </tr>
+    ))}
+</tbody>
+
         </table>
       </section>
 
