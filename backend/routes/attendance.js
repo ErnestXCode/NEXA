@@ -15,6 +15,8 @@ router.post("/", verifyJWT, controller.saveAttendance);
 // Get attendance for a specific date (teacher sees own class)
 router.get("/", verifyJWT, controller.getAttendanceByDate);
 
+router.get("/logs", verifyJWT, controller.getAllAttendanceLogs);
+
 // Stats for a date range (teacher: own class, admin: all classes)
 router.get("/range", verifyJWT, controller.getStatsByRange);
 

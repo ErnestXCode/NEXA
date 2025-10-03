@@ -44,6 +44,9 @@ import { useSelector } from "react-redux";
 import ReviewPage from "./pages/review/ReviewPage";
 import { useEffect } from "react";
 import Billing from "./pages/home/Billing";
+import AttendanceLogsPage from "./pages/attendance/AttendanceLogsPage";
+import ResultsAuditPage from "./pages/exams/ResultsAuditPage";
+import FeeAuditPage from "./pages/fees/FeeAuditPage";
 
 const FeeHistoryWrapper = () => {
   const { studentId } = useParams();
@@ -97,6 +100,7 @@ function App() {
                 <Route index element={<Dashboard />} />
                 <Route path="fees" element={<FeesPage />} />
                 <Route path="fees/add" element={<AddFeePage />} />
+                <Route path="fees/logs" element={<FeeAuditPage />} />
                 <Route
                   path="fees/student/:studentId"
                   element={<StudentFeesPage />}
@@ -116,6 +120,7 @@ function App() {
 
                 <Route path="attendance" element={<AttendanceDashboard />} />
                 <Route path="attendance/mark" element={<AttendancePage />} />
+                <Route path="attendance/logs" element={<AttendanceLogsPage />} />
 
                 <Route path="communication" element={<Communication />} />
                 <Route
@@ -155,6 +160,7 @@ function App() {
                 <Route path="exams" element={<ExamsPage />} />
                 <Route path="exams/record" element={<RecordResultsPage />} />
                 <Route path="exams/report" element={<ReportCardsPage />} />
+                <Route path="exams/logs" element={<ResultsAuditPage />} />
 
                 <Route path="review" element={<ReviewPage />} />
               </Route>

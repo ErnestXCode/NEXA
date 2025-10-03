@@ -154,6 +154,9 @@ const Navigation = () => {
             Mark Attendance
           </NavLink>
         )}
+        <NavLink end onClick={handleCloseSidenav} to="/dashboard/attendance/logs" className={navLinkClasses}>
+           Attendance Logs
+        </NavLink>
       </div>
 
       <div>
@@ -167,6 +170,9 @@ const Navigation = () => {
         <NavLink end onClick={handleCloseSidenav} to="/dashboard/exams/report" className={navLinkClasses}>
           Report Cards
         </NavLink>
+        <NavLink end onClick={handleCloseSidenav} to="/dashboard/exams/logs" className={navLinkClasses}>
+          Exam Logs
+        </NavLink>
       </div>
 
       <div>
@@ -176,6 +182,9 @@ const Navigation = () => {
         </NavLink>
         <NavLink end onClick={handleCloseSidenav} to="/dashboard/fees/add" className={navLinkClasses}>
           Record Payment
+        </NavLink>
+        <NavLink end onClick={handleCloseSidenav} to="/dashboard/fees/logs" className={navLinkClasses}>
+          Fee Logs
         </NavLink>
       </div>
 

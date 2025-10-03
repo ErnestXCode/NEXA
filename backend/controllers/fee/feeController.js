@@ -9,6 +9,20 @@ exports.recordTransaction = async (req, res) => {
   try {
     const { studentId, academicYear, term, amount, type, method, note } =
       req.body;
+
+    // ✅ sanitize amount
+    let amt = Number(amount);
+
+    if (type === "payment") {
+      amt = Math.abs(amt); // always positive
+    } else if (type === "adjustment") {
+      amt = Number(amount); // keep + or - as entered
+    }
+
+    if (isNaN(amt)) {
+      return res.status(400).json({ message: "Amount must be a valid number" });
+    }
+
     const userId = req.user.userId; // from auth middleware
 
     const student = await Student.findById(studentId).populate("school");
@@ -19,14 +33,14 @@ exports.recordTransaction = async (req, res) => {
       school: student.school._id,
       academicYear,
       term,
-      amount,
+      amount: amt, // ⚡ use sanitized amount
       type,
       method,
       note,
       handledBy: userId,
     });
 
-    console.log(txn)
+    console.log(txn);
 
     res.status(201).json({ message: "Transaction recorded", txn });
   } catch (err) {
@@ -34,6 +48,40 @@ exports.recordTransaction = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+/* -------------------------------
+   📋 Get All Fee Transactions (Audit)
+--------------------------------*/
+exports.getAllTransactions = async (req, res) => {
+  try {
+    const schoolId = req.user.school;
+    const { academicYear, term, classLevel } = req.query;
+
+    // Build filter
+    const filter = { school: schoolId };
+    if (academicYear) filter.academicYear = academicYear;
+    if (term) filter.term = term;
+
+    // Optional: filter by class
+    let studentFilter = {};
+    if (classLevel) studentFilter.classLevel = classLevel;
+
+    const students = await Student.find({ school: schoolId, ...studentFilter });
+
+    filter.student = { $in: students.map((s) => s._id) };
+
+    const transactions = await FeeTransaction.find(filter)
+      .populate("student", "firstName lastName classLevel")
+      .populate("handledBy", "name")
+      .sort({ createdAt: -1 });
+
+    res.json(transactions);
+  } catch (err) {
+    console.error("getAllTransactions error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 
 /* -------------------------------
    📊 Get Balance for a Student
@@ -127,7 +175,11 @@ exports.getSchoolTermSummary = async (req, res) => {
     for (const student of students) {
       const expected = await student.getExpectedFee(academicYear, term);
 
-      const txns = await FeeTransaction.find({ student: student._id, academicYear, term });
+      const txns = await FeeTransaction.find({
+        student: student._id,
+        academicYear,
+        term,
+      });
       const paid = txns.reduce((sum, t) => sum + t.amount, 0);
 
       totalExpected += expected;
@@ -156,7 +208,10 @@ exports.getClassTermSummary = async (req, res) => {
     const schoolId = req.user.school;
     const { academicYear, term, className } = req.query;
 
-    const students = await Student.find({ school: schoolId, classLevel: className });
+    const students = await Student.find({
+      school: schoolId,
+      classLevel: className,
+    });
 
     let expectedTotal = 0;
     let paidTotal = 0;
@@ -164,7 +219,11 @@ exports.getClassTermSummary = async (req, res) => {
     for (const student of students) {
       const expected = await student.getExpectedFee(academicYear, term);
 
-      const txns = await FeeTransaction.find({ student: student._id, academicYear, term });
+      const txns = await FeeTransaction.find({
+        student: student._id,
+        academicYear,
+        term,
+      });
       const paid = txns.reduce((sum, t) => sum + t.amount, 0);
 
       expectedTotal += expected;
@@ -184,8 +243,6 @@ exports.getClassTermSummary = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
-
-
 
 /* -------------------------------
    🏫 Whole-School Summary
@@ -229,7 +286,6 @@ exports.getSchoolSummary = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
-
 
 /* -------------------------------
    📈 School Term Comparison
@@ -279,8 +335,6 @@ exports.getSchoolTermComparison = async (req, res) => {
     res.status(500).json({ msg: "Server error", error: err.message });
   }
 };
-
-
 
 /* -------------------------------
    📚 Class-Level Breakdown
@@ -393,7 +447,7 @@ exports.onboardStudents = async (req, res) => {
   try {
     const schoolId = req.user.school;
     const { students, academicYear, term, viaCSV } = req.body;
-    console.log(req.body)
+    console.log(req.body);
 
     if (!students || !Array.isArray(students)) {
       return res.status(400).json({ message: "students[] is required" });
@@ -430,7 +484,7 @@ exports.onboardStudents = async (req, res) => {
           student: student._id,
           school: schoolId,
           academicYear,
-           term: s.term || term,
+          term: s.term || term,
           amount: s.openingBalance,
           type: "opening",
           method: "system",
@@ -453,7 +507,6 @@ exports.onboardStudents = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
-
 
 /* -------------------------------
    ❌ Delete a Fee Rule

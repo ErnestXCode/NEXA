@@ -75,6 +75,53 @@ exports.saveAttendance = async (req, res) => {
   }
 };
 
+
+exports.getAllAttendanceLogs = async (req, res) => {
+  try {
+    const {
+      date,
+      academicYear,
+      term,
+      classLevel,
+      status,
+      search, // student name
+      page = 1,
+      limit = 50,
+    } = req.query;
+
+    const query = {};
+
+    if (date) query.date = new Date(date);
+    if (academicYear) query.academicYear = academicYear;
+    if (term) query.term = term;
+    if (classLevel) query.classLevel = classLevel;
+    if (status) query.status = status;
+
+    let recordsQuery = Attendance.find(query)
+      .populate("student", "firstName lastName classLevel")
+      .populate("markedBy", "name")
+      .populate("school", "name")
+      .sort({ date: -1 });
+
+    if (search) {
+      recordsQuery = recordsQuery.where("student").populate({
+        path: "student",
+        match: { firstName: { $regex: search, $options: "i" } },
+      });
+    }
+
+    const total = await Attendance.countDocuments(query);
+    const records = await recordsQuery
+      .skip((page - 1) * limit)
+      .limit(Number(limit));
+
+    res.json({ total, page: Number(page), limit: Number(limit), records });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ msg: "Failed to fetch attendance logs" });
+  }
+};
+
 // --- Get attendance by date ---
 exports.getAttendanceByDate = async (req, res) => {
   try {

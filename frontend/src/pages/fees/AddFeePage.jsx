@@ -145,9 +145,14 @@ const AddFeePage = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!form.studentId) return alert("Please select a valid student");
+    let amountToSend = Number(form.amount);
+    if (form.type === "payment") {
+      // always positive for payment
+      amountToSend = Math.abs(amountToSend);
+    }
     addFeeMutation.mutate({
       ...form,
-      amount: Number(form.amount),
+      amount: amountToSend,
       academicYear: form.academicYear,
     });
   };
@@ -301,30 +306,34 @@ const AddFeePage = () => {
               className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
 
+            {/* Type */}
+            <select
+              name="type"
+              value={form.type}
+              onChange={handleChange}
+              className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              {feeTypes.map((t) => (
+                <option key={t} value={t}>
+                  {t.charAt(0).toUpperCase() + t.slice(1)}
+                </option>
+              ))}
+            </select>
+
             {/* Amount */}
             <input
               type="number"
               name="amount"
               value={form.amount}
               onChange={handleChange}
-              placeholder="Amount"
+              placeholder={
+                form.type === "adjustment"
+                  ? "Enter positive or negative amount"
+                  : "Amount"
+              }
               required
               className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
-
-            {/* Type */}
-            <input
-              list="feeTypes"
-              name="type"
-              value={form.type}
-              onChange={handleChange}
-              className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <datalist id="feeTypes">
-              {feeTypes.map((t) => (
-                <option key={t} value={t} />
-              ))}
-            </datalist>
 
             {/* Method */}
             <select

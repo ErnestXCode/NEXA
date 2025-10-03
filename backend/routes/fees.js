@@ -16,6 +16,7 @@ const {
   getDebtors,
   onboardStudents,
   deleteFeeRule,
+  getAllTransactions,
 } = require("../controllers/fee/feeController");
 
 const {
@@ -31,6 +32,8 @@ const router = express.Router();
 
 // 💰 Record new payment/adjustment
 router.post("/transactions", verifyJWT, recordTransaction);
+
+router.get("/transactions/all", verifyJWT, authorize(["admin", "bursar"]), getAllTransactions);
 
 // 📊 Get balances for a student
 router.get("/students/:studentId/balance", verifyJWT, getStudentBalance);

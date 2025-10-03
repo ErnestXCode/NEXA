@@ -42,6 +42,8 @@ const studentSchema = new mongoose.Schema(
         average: Number,
         grade: String, // overall grade (optional in CBC, keep for now)
         remark: String, // overall remark
+        recordedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" }, // ✅ add for audit
+        recordedAt: Date, // ✅ timestamp
       },
     ],
 

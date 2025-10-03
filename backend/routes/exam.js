@@ -4,7 +4,8 @@ const {
   createExam,
   getAllExams,
   recordResult,
-  getResultsForExamClass
+  getResultsForExamClass,
+  getResultsAudit
 } = require("../controllers/exam/examController");
 const verifyJWT = require("../middleware/verifyJWT");
 const checkSchoolPaid = require("../middleware/checkSchoolPaid");
@@ -23,6 +24,10 @@ router.get("/", verifyJWT, authorize(["superadmin", "admin", "teacher"]), getAll
 // Record results (bulk upsert)
 router.post("/results", verifyJWT, authorize(["teacher", "admin"]), recordResult);
 
+router.get("/results/audit", verifyJWT, authorize(["teacher", "admin"]), getResultsAudit);
+
+
+
 // Fetch saved results for exam + class
 router.get(
   "/results/:examId/:classLevel",
@@ -30,5 +35,7 @@ router.get(
   authorize(["teacher", "admin"]),
   getResultsForExamClass
 );
+
+
 
 module.exports = router;
