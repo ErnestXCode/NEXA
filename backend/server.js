@@ -64,28 +64,28 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.use(cookieParser());
 
-// app.use((req, res, next) => {
-//   if (!req.body && !req.query && !req.params) return next();
-//   try {
-//     xss()(req, res, next);
-//   } catch (err) {
-//     console.warn("XSS middleware skipped for non-HTTP request", err);
-//     next();
-//   }
-// });
+app.use((req, res, next) => {
+  if (!req.body && !req.query && !req.params) return next();
+  try {
+    xss()(req, res, next);
+  } catch (err) {
+    console.warn("XSS middleware skipped for non-HTTP request", err);
+    next();
+  }
+});
 
-// app.use((req, res, next) => {
-//   // Skip WebSocket connections or anything without req.body/query/params
-//   if (!req.body && !req.query && !req.params) return next();
+app.use((req, res, next) => {
+  // Skip WebSocket connections or anything without req.body/query/params
+  if (!req.body && !req.query && !req.params) return next();
 
-//   // Only apply if req.body/query/params are objects
-//   try {
-//     mongoSanitize()(req, res, next);
-//   } catch (err) {
-//     console.warn('Mongo sanitize skipped for non-HTTP request', err);
-//     next();
-//   }
-// });
+  // Only apply if req.body/query/params are objects
+  try {
+    mongoSanitize()(req, res, next);
+  } catch (err) {
+    console.warn('Mongo sanitize skipped for non-HTTP request', err);
+    next();
+  }
+});
 
 
 // Routes
