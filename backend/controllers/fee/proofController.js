@@ -3,6 +3,9 @@ const PaymentProof = require("../../models/PaymentProof");
 const Student = require("../../models/Student");
 const FeeTransaction = require("../../models/FeeTransaction");
 const School = require("../../models/School");
+const pushSubscription = require("../../models/pushSubscription");
+const webpush = require("web-push");
+
 
 // ---------------------
 // Parent submits proof
@@ -85,7 +88,7 @@ exports.submitProof = async (req, res) => {
     });
 
     // 🔹 PUSH NOTIFICATIONS for offline admins/bursars
-    const subscriptions = await PushSubscription.find({
+    const subscriptions = await pushSubscription.find({
       school: student.school,
     }).populate("user");
 

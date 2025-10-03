@@ -47,14 +47,20 @@ const AdminDashboard = () => {
     queryKey: ["activities"],
     queryFn: () => api.get("/activity").then((res) => res.data),
   });
-  const activities = useMemo(() => activityQuery.data || [], [activityQuery.data]);
-  const teachers = useMemo(() => teachersQuery.data || [], [teachersQuery.data]);
+  const activities = useMemo(
+    () => activityQuery.data || [],
+    [activityQuery.data]
+  );
+  const teachers = useMemo(
+    () => teachersQuery.data || [],
+    [teachersQuery.data]
+  );
   const bursars = useMemo(() => bursarsQuery.data || [], [bursarsQuery.data]);
-  const students = useMemo(() => studentsQuery.data || [], [studentsQuery.data]);
+  const students = useMemo(
+    () => studentsQuery.data || [],
+    [studentsQuery.data]
+  );
   const parents = useMemo(() => parentsQuery.data || [], [parentsQuery.data]);
-
-  
-
 
   const GENDER_COLORS = ["#22d3ee", "#f43f5e"];
   const genderData = useMemo(() => {
@@ -65,26 +71,26 @@ const AdminDashboard = () => {
       { name: "Female", value: females },
     ];
   }, [students]);
-  
- const studentsPerClass = useMemo(() => {
-  // count students per class
-  const counts = {};
-  students.forEach((s) => {
-    const cls = s.classLevel || "Unassigned";
-    counts[cls] = (counts[cls] || 0) + 1;
-  });
 
-  // dynamically get all unique classes from students data
-  const allClasses = Array.from(new Set(students.map((s) => s.classLevel || "Unassigned")));
+  const studentsPerClass = useMemo(() => {
+    // count students per class
+    const counts = {};
+    students.forEach((s) => {
+      const cls = s.classLevel || "Unassigned";
+      counts[cls] = (counts[cls] || 0) + 1;
+    });
 
-  // map to chart data, ensuring each class appears
-  return allClasses.map((cls) => ({
-    class: cls,
-    count: counts[cls] || 0,
-  }));
-}, [students]);
-;
-  
+    // dynamically get all unique classes from students data
+    const allClasses = Array.from(
+      new Set(students.map((s) => s.classLevel || "Unassigned"))
+    );
+
+    // map to chart data, ensuring each class appears
+    return allClasses.map((cls) => ({
+      class: cls,
+      count: counts[cls] || 0,
+    }));
+  }, [students]);
   const teachersPerSubject = useMemo(() => {
     const counts = {};
     teachers.forEach((t) => {
@@ -97,7 +103,7 @@ const AdminDashboard = () => {
       count: counts[subj],
     }));
   }, [teachers]);
-  
+
   const activitiesTrend = useMemo(() => {
     const today = new Date();
     const last7Days = Array.from({ length: 7 }, (_, i) => {
@@ -105,17 +111,16 @@ const AdminDashboard = () => {
       d.setDate(today.getDate() - i);
       return d.toISOString().split("T")[0];
     }).reverse();
-  
+
     const counts = last7Days.map((date) => ({
       date,
       count: activities.filter(
         (a) => new Date(a.date).toISOString().split("T")[0] === date
       ).length,
     }));
-  
+
     return counts;
   }, [activities]);
-
 
   if (
     teachersQuery.isLoading ||
@@ -138,8 +143,6 @@ const AdminDashboard = () => {
   }
 
   // ================= Derived Data =================
-  
-
 
   const teachersLength = teachers.length;
   const bursarsLength = bursars.length;
@@ -149,7 +152,6 @@ const AdminDashboard = () => {
   const recentActivities = activities
     .sort((a, b) => new Date(b.date) - new Date(a.date))
     .slice(0, 5);
-
 
   const COLORS = ["#22d3ee", "#4ade80", "#facc15", "#f43f5e", "#a855f7"];
 
@@ -196,11 +198,23 @@ const AdminDashboard = () => {
               teacher.name,
               teacher.email,
               teacher.phoneNumber || "-",
-              teacher.subjects && teacher.subjects.length > 0
-                ? teacher.subjects.length > 1
-                  ? `${teacher.subjects[0]}...`
-                  : teacher.subjects[0]
-                : "-",
+              // ===== Subjects column updated =====
+              teacher.subjects && teacher.subjects.length > 0 ? (
+                <div className="flex flex-wrap gap-1 max-w-xs">
+                  {teacher.subjects.map((subj, idx) => (
+                    <span
+                      key={idx}
+                      className="bg-gray-800 text-white px-2 py-0.5 rounded text-xs font-medium truncate"
+                      style={{ minWidth: "50px" }}
+                      title={subj} // shows full name on hover
+                    >
+                      {subj}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                "-"
+              ),
               teacher.isClassTeacher ? "Yes" : "No",
               teacher.isClassTeacher && teacher.classLevel
                 ? teacher.classLevel
@@ -261,102 +275,122 @@ const AdminDashboard = () => {
 
       {/* ================= Charts Section ================= */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {[{
-          title: "Students by Gender",
-          content: (
-            <ResponsiveContainer width="100%" height={250}>
-              <PieChart>
-                <Pie
-                  data={genderData}
-                  dataKey="value"
-                  nameKey="name"
-                  outerRadius={80}
-                  label
+        {[
+          {
+            title: "Students by Gender",
+            content: (
+              <ResponsiveContainer width="100%" height={250}>
+                <PieChart>
+                  <Pie
+                    data={genderData}
+                    dataKey="value"
+                    nameKey="name"
+                    outerRadius={80}
+                    label
+                  >
+                    {genderData.map((entry, index) => (
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={GENDER_COLORS[index % GENDER_COLORS.length]}
+                      />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            ),
+          },
+          {
+            title: "Students per Class",
+            content: (
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart
+                  data={studentsPerClass.sort((a, b) => {
+                    const classA = a.class;
+                    const classB = b.class;
+
+                    // Handle PP classes first
+                    if (classA.startsWith("PP") && classB.startsWith("PP")) {
+                      return classA.localeCompare(classB, undefined, {
+                        numeric: true,
+                      });
+                    }
+                    if (classA.startsWith("PP")) return -1;
+                    if (classB.startsWith("PP")) return 1;
+
+                    // Then numeric grades
+                    const numA = parseInt(classA.replace(/\D/g, ""), 10);
+                    const numB = parseInt(classB.replace(/\D/g, ""), 10);
+
+                    if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+
+                    // Fallback: alphabetical
+                    return classA.localeCompare(classB);
+                  })}
                 >
-                  {genderData.map((entry, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={GENDER_COLORS[index % GENDER_COLORS.length]}
-                    />
-                  ))}
-                </Pie>
-                <Tooltip />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
-          ),
-        },{
-          title: "Students per Class",
-          content: (
-           <ResponsiveContainer width="100%" height={300}>
-  <BarChart
-    data={studentsPerClass
-      .sort((a, b) => {
-        const classA = a.class;
-        const classB = b.class;
-
-        // Handle PP classes first
-        if (classA.startsWith("PP") && classB.startsWith("PP")) {
-          return classA.localeCompare(classB, undefined, { numeric: true });
-        }
-        if (classA.startsWith("PP")) return -1;
-        if (classB.startsWith("PP")) return 1;
-
-        // Then numeric grades
-        const numA = parseInt(classA.replace(/\D/g, ""), 10);
-        const numB = parseInt(classB.replace(/\D/g, ""), 10);
-
-        if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
-
-        // Fallback: alphabetical
-        return classA.localeCompare(classB);
-      })}
-  >
-    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-    <XAxis
-      dataKey="class"
-      stroke="#9ca3af"
-      interval={0}
-      tick={{ fontSize: 12 }}
-    />
-    <YAxis stroke="#9ca3af" />
-    <Tooltip />
-    <Legend />
-    <Bar dataKey="count" fill="#60a5fa" />
-  </BarChart>
-</ResponsiveContainer>
-
-          ),
-        },{
-          title: "Teachers per Subject",
-          content: (
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={teachersPerSubject}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#444"/>
-                <XAxis dataKey="subject" interval={0} angle={-30} textAnchor="end" stroke="#bbb"/>
-                <YAxis stroke="#bbb"/>
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="count" fill="#facc15" />
-              </BarChart>
-            </ResponsiveContainer>
-          ),
-        },{
-          title: "Activities Trend (Last 7 Days)",
-          content: (
-            <ResponsiveContainer width="100%" height={250}>
-              <LineChart data={activitiesTrend}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#444"/>
-                <XAxis dataKey="date" stroke="#bbb"/>
-                <YAxis allowDecimals={false} stroke="#bbb"/>
-                <Tooltip />
-                <Legend />
-                <Line type="monotone" dataKey="count" stroke="#f43f5e" strokeWidth={2}/>
-              </LineChart>
-            </ResponsiveContainer>
-          ),
-        }].map((chart,i)=>(
-          <div key={i} className="bg-gray-900 p-4 rounded-2xl shadow-lg border border-gray-800">
+                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                  <XAxis
+                    dataKey="class"
+                    stroke="#9ca3af"
+                    interval={0}
+                    tick={{ fontSize: 12 }}
+                  />
+                  <YAxis stroke="#9ca3af" />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="count" fill="#60a5fa" />
+                </BarChart>
+              </ResponsiveContainer>
+            ),
+          },
+          {
+            title: "Teachers per Subject",
+            content: (
+              <ResponsiveContainer width="100%" height={400}>
+                <BarChart data={teachersPerSubject}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#444" />
+                  <XAxis
+                    dataKey="subject"
+                    interval={0}
+                    angle={-45} // or -60 for vertical-ish
+                    textAnchor="end"
+                    stroke="#bbb"
+                    height={80} // increase XAxis height to accommodate labels
+                  />
+                  <YAxis stroke="#bbb" />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="count" fill="#facc15" />
+                </BarChart>
+              </ResponsiveContainer>
+            ),
+          },
+          {
+            title: "Activities Trend (Last 7 Days)",
+            content: (
+              <ResponsiveContainer width="100%" height={400}>
+                <LineChart data={activitiesTrend}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#444" />
+                  <XAxis dataKey="date" stroke="#bbb" />
+                  <YAxis allowDecimals={false} stroke="#bbb" />
+                  <Tooltip />
+                  <Legend />
+                  <Line
+                    type="monotone"
+                    dataKey="count"
+                    stroke="#f43f5e"
+                    strokeWidth={2}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            ),
+          },
+        ].map((chart, i) => (
+          <div
+            key={i}
+            className="bg-gray-900 p-4 rounded-2xl shadow-lg border border-gray-800"
+          >
             <h3 className="text-lg font-semibold mb-2">{chart.title}</h3>
             {chart.content}
           </div>

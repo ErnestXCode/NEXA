@@ -33,15 +33,13 @@ const ReviewPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.message) return alert("message is required");
+    if (!form.message) return alert("Message is required");
 
     setSubmitting(true);
     try {
       const { data } = await api.post("/reviews", form);
 
-      // mark the new review as local so UI knows it's fresh
       setReviews((prev) => [{ ...data.review, local: true }, ...prev]);
-
       setForm({ message: "", rating: 5 });
     } catch (err) {
       console.error(err);
@@ -52,10 +50,10 @@ const ReviewPage = () => {
   };
 
   return (
-    <div className=" bg-gray-950 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="bg-gray-950 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto space-y-16">
         {/* Form Section */}
-        <div className="bg-gradient-to-r from-purple-900 via-gray-900 to-gray-950 rounded-3xl p-8 shadow-lg border border-gray-800">
+        <div className="bg-gray-900 rounded-3xl p-8 shadow-lg border border-gray-800">
           <h2 className="text-3xl font-bold mb-6 text-center text-white">
             Share Your Experience
           </h2>
@@ -67,7 +65,7 @@ const ReviewPage = () => {
               value={form.message}
               onChange={handleChange}
               required
-              className="w-full p-4 rounded-xl bg-gray-800 border border-gray-700 focus:border-indigo-500 focus:ring focus:ring-indigo-500/30 outline-none transition"
+              className="w-full p-4 rounded-xl bg-gray-950 border border-gray-700 focus:border-indigo-500 focus:ring focus:ring-indigo-500/30 outline-none transition text-white placeholder-gray-400"
             />
             <div className="flex items-center space-x-2 justify-center">
               {Array(5)
@@ -108,14 +106,14 @@ const ReviewPage = () => {
               reviews.map((r, i) => (
                 <div
                   key={i}
-                  className="p-6 bg-gray-900 rounded-2xl border border-gray-800 shadow hover:shadow-xl transition transform hover:-translate-y-1"
+                  className="p-6 bg-gray-950 rounded-2xl border border-gray-800 shadow hover:shadow-lg transition transform hover:-translate-y-1"
                 >
                   <div className="flex items-center space-x-3 mb-3">
                     {r.avatar && (
                       <img
                         src={r.avatar}
                         alt={r.name}
-                        className="w-12 h-12 rounded-full object-cover"
+                        className="w-12 h-12 rounded-full object-cover border border-gray-700"
                       />
                     )}
                     <p className="font-semibold text-white">

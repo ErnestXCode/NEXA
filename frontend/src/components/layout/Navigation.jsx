@@ -254,7 +254,7 @@ const Navigation = () => {
                     to="/dashboard/exams"
                     className={navLinkClasses}
                   >
-                    Exams
+                    Create Exams
                   </NavLink>
                   <NavLink
                     end

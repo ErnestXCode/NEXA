@@ -226,6 +226,21 @@ const FeesPage = ({ schoolId }) => {
               </ResponsiveContainer>
             )}
           </div>
+
+          <div className="mt-4 bg-gray-800/50 p-3 rounded-lg">
+  <p className="text-sm text-gray-400 mb-2">Top Debtors</p>
+  {debtors?.debtors?.slice(0, 3).map((d) => (
+    <div key={d.studentId} className="flex justify-between text-sm text-gray-300">
+      <span>{d.name} ({d.classLevel})</span>
+      <span className="text-red-400">KES {d.totalOutstanding.toLocaleString()}</span>
+    </div>
+  ))}
+</div>
+<div className="text-sm text-gray-400 mt-4 space-y-1">
+  <p>Paid: {(schoolSummary?.paid / schoolSummary?.expected * 100).toFixed(1)}%</p>
+  <p>Outstanding: {(schoolSummary?.outstanding / schoolSummary?.expected * 100).toFixed(1)}%</p>
+</div>
+
         </div>
       </ChartCard>
 

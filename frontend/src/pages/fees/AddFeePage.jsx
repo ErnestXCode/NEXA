@@ -369,167 +369,189 @@ const AddFeePage = () => {
         </div>
 
         {/* --- Fee assignment --- */}
-        <div className="p-6 bg-gray-900 rounded-md shadow-md flex flex-col">
-          <h2 className="text-2xl font-bold mb-6 text-center">
-            Fee Assignment
-          </h2>
+       {/* --- Fee assignment --- */}
+<div className="p-6 bg-gray-900 rounded-md shadow-md flex flex-col space-y-6">
+  <h2 className="text-2xl font-bold text-center border-b border-gray-800 pb-2">
+    Fee Assignment
+  </h2>
 
-          {/* Year & Term */}
-          <div className="flex gap-4 mb-4">
-            <input
-              type="text"
-              value={bulkYear}
-              onChange={(e) => setBulkYear(e.target.value)}
-              placeholder="Academic Year"
-              className="border p-2 rounded w-1/2 bg-gray-800 border-gray-700"
-            />
-            <select
-              value={bulkTerm}
-              onChange={(e) => setBulkTerm(e.target.value)}
-              className="border p-2 rounded w-1/2 bg-gray-800 border-gray-700"
-            >
-              {terms.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
-          </div>
+  {/* Year & Term */}
+  <div className="flex gap-4">
+    <input
+      type="text"
+      value={bulkYear}
+      onChange={(e) => setBulkYear(e.target.value)}
+      placeholder="Academic Year"
+      className="border p-2 rounded-lg w-1/2 bg-gray-800 border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+    />
+    <select
+      value={bulkTerm}
+      onChange={(e) => setBulkTerm(e.target.value)}
+      className="border p-2 rounded-lg w-1/2 bg-gray-800 border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+    >
+      {terms.map((t) => (
+        <option key={t} value={t}>
+          {t}
+        </option>
+      ))}
+    </select>
+  </div>
 
-          {bulkStudents.map((s, i) => (
-            <div key={i} className="grid grid-cols-4 gap-2 mb-2 relative">
-              {/* Student Typeahead */}
-              <div className="col-span-2 relative">
-                <input
-                  type="text"
-                  placeholder="Type name..."
-                  value={`${s.firstName} ${s.lastName}`.trim()}
-                  onChange={(e) => {
-                    const val = e.target.value.toLowerCase();
-                    const matches = students.filter((st) =>
-                      `${st.firstName} ${st.lastName}`
-                        .toLowerCase()
-                        .includes(val)
-                    );
-                    handleBulkChange(i, "searchMatches", matches);
-                    handleBulkChange(
-                      i,
-                      "firstName",
-                      e.target.value.split(" ")[0] || ""
-                    );
-                    handleBulkChange(
-                      i,
-                      "lastName",
-                      e.target.value.split(" ")[1] || ""
-                    );
-                    handleBulkChange(i, "studentId", ""); // reset ID until selected
-                    handleBulkChange(i, "classLevel", ""); // reset class until selected
+  {/* Bulk Students List */}
+  <div className="space-y-4">
+    {bulkStudents.map((s, i) => (
+      <div
+        key={i}
+        className="grid grid-cols-12 gap-3 items-center bg-gray-800 p-4 rounded-lg shadow relative"
+      >
+        {/* Student Typeahead */}
+        <div className="col-span-5 relative">
+          <input
+            type="text"
+            placeholder="Search student..."
+            value={`${s.firstName} ${s.lastName}`.trim()}
+            onChange={(e) => {
+              const val = e.target.value.toLowerCase();
+              const matches = students.filter((st) =>
+                `${st.firstName} ${st.lastName}`.toLowerCase().includes(val)
+              );
+              handleBulkChange(i, "searchMatches", matches);
+              handleBulkChange(
+                i,
+                "firstName",
+                e.target.value.split(" ")[0] || ""
+              );
+              handleBulkChange(
+                i,
+                "lastName",
+                e.target.value.split(" ")[1] || ""
+              );
+              handleBulkChange(i, "studentId", "");
+              handleBulkChange(i, "classLevel", "");
+            }}
+            className="border p-2 rounded-lg w-full bg-gray-900 border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          {s.searchMatches?.length > 0 && (
+            <ul className="absolute bg-gray-900 border border-gray-700 mt-1 max-h-40 overflow-auto rounded shadow-lg z-20 w-full">
+              {s.searchMatches.map((st) => (
+                <li
+                  key={st._id}
+                  onClick={() => {
+                    handleBulkChange(i, "firstName", st.firstName);
+                    handleBulkChange(i, "lastName", st.lastName);
+                    handleBulkChange(i, "studentId", st._id);
+                    handleBulkChange(i, "classLevel", st.classLevel);
+                    handleBulkChange(i, "searchMatches", []);
                   }}
-                  className="border p-2 rounded w-full bg-gray-800 border-gray-700"
-                />
-                {s.searchMatches?.length > 0 && (
-                  <ul className="absolute bg-gray-800 border border-gray-700 mt-1 max-h-40 overflow-auto rounded shadow-lg z-20 w-full">
-                    {s.searchMatches.map((st) => (
-                      <li
-                        key={st._id}
-                        onClick={() => {
-                          handleBulkChange(i, "firstName", st.firstName);
-                          handleBulkChange(i, "lastName", st.lastName);
-                          handleBulkChange(i, "studentId", st._id);
-                          handleBulkChange(i, "classLevel", st.classLevel); // auto-detect class
-                          handleBulkChange(i, "searchMatches", []);
-                        }}
-                        className="px-3 py-2 hover:bg-gray-700 cursor-pointer"
-                      >
-                        {st.firstName} {st.lastName} ({st.classLevel})
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-
-              {/* Display Auto-Detected Class */}
-              <div className="flex items-center p-2 bg-gray-800 border border-gray-700 rounded">
-                {s.classLevel || "Class will appear here"}
-              </div>
-
-              {/* Opening Balance */}
-              <input
-                type="number"
-                placeholder="Opening Balance"
-                value={s.openingBalance}
-                onChange={(e) =>
-                  handleBulkChange(
-                    i,
-                    "openingBalance",
-                    parseFloat(e.target.value) || 0
-                  )
-                }
-                className="border p-2 rounded bg-gray-800 border-gray-700"
-              />
-            </div>
-          ))}
-
-          <button
-            onClick={addBulkRow}
-            className="px-3 py-1 bg-blue-500 text-white rounded mb-3"
-          >
-            + Add Row
-          </button>
-
-          <button
-            onClick={() => onboardMutation.mutate()}
-            disabled={onboardMutation.isPending}
-            className="px-4 py-2 bg-green-600 text-white rounded"
-          >
-            {onboardMutation.isPending ? "Submitting..." : "Submit"}
-          </button>
-
-          {onboardMutation.isSuccess && (
-            <p className="mt-2 text-green-600">
-              ✅ {onboardMutation.data.count} students onboarded successfully!
-            </p>
+                  className="px-3 py-2 hover:bg-gray-700 cursor-pointer"
+                >
+                  {st.firstName} {st.lastName}{" "}
+                  <span className="ml-2 text-xs bg-blue-600 text-white px-2 py-0.5 rounded-full">
+                    {st.classLevel}
+                  </span>
+                </li>
+              ))}
+            </ul>
           )}
-          {onboardMutation.isError && (
-            <p className="mt-2 text-red-600">
-              ❌ Error: {onboardMutation.error.message}
-            </p>
-          )}
-
-          <section className="bg-gray-900 rounded-xl shadow border border-gray-800 p-6">
-            <h2 className="text-xl font-semibold mb-4 border-b border-gray-800 pb-2">
-              📂 Bulk Upload via Excel / CSV
-            </h2>
-            <input
-              type="file"
-              accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel"
-              onChange={handleFileUpload}
-              className="bg-gray-800 border border-gray-700 p-2 rounded w-full"
-            />
-            <button
-              onClick={() =>
-                onboardMutation.mutate({
-                  academicYear: bulkYear,
-                  term: bulkTerm,
-                  students: bulkStudents.map((s) => ({
-                    studentId: s.studentId,
-                    firstName: s.firstName,
-                    lastName: s.lastName,
-                    classLevel: s.classLevel,
-                    openingBalance: s.openingBalance,
-                    term: s.term || bulkTerm,
-                    academicYear: s.academicYear || bulkYear,
-                  })),
-                  viaCSV: isCSVUpload, // ✅ pass flag
-                })
-              }
-              disabled={onboardMutation.isPending}
-              className="px-4 py-2 bg-green-600 text-white rounded"
-            >
-              {onboardMutation.isPending ? "Submitting..." : "Submit"}
-            </button>
-          </section>
         </div>
+
+        {/* Class Badge */}
+        <div className="col-span-3 flex justify-center">
+          <span
+            className={`px-3 py-1 rounded-full text-sm ${
+              s.classLevel
+                ? "bg-blue-600 text-white"
+                : "bg-gray-700 text-gray-400"
+            }`}
+          >
+            {s.classLevel || "No class"}
+          </span>
+        </div>
+
+        {/* Opening Balance */}
+        <div className="col-span-4">
+          <input
+            type="number"
+            placeholder="Opening Balance"
+            value={s.openingBalance}
+            onChange={(e) =>
+              handleBulkChange(
+                i,
+                "openingBalance",
+                parseFloat(e.target.value) || 0
+              )
+            }
+            className="border p-2 rounded-lg w-full bg-gray-900 border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+      </div>
+    ))}
+  </div>
+
+  {/* Buttons */}
+  <div className="flex gap-4">
+    <button
+      onClick={addBulkRow}
+      className="flex-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition"
+    >
+      + Add Row
+    </button>
+    <button
+      onClick={() => onboardMutation.mutate()}
+      disabled={onboardMutation.isPending}
+      className="flex-1 px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition"
+    >
+      {onboardMutation.isPending ? "Submitting..." : "Submit"}
+    </button>
+  </div>
+
+  {onboardMutation.isSuccess && (
+    <p className="mt-2 text-green-400 text-sm">
+      ✅ {onboardMutation.data.count} students onboarded successfully!
+    </p>
+  )}
+  {onboardMutation.isError && (
+    <p className="mt-2 text-red-400 text-sm">
+      ❌ Error: {onboardMutation.error.message}
+    </p>
+  )}
+
+  {/* CSV Upload Section */}
+  <section className="bg-gray-800 rounded-lg shadow border border-gray-700 p-6 space-y-4">
+    <h3 className="text-lg font-semibold border-b border-gray-700 pb-2">
+      📂 Bulk Upload via Excel / CSV
+    </h3>
+    <input
+      type="file"
+      accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel"
+      onChange={handleFileUpload}
+      className="bg-gray-900 border border-gray-700 p-2 rounded w-full"
+    />
+    <button
+      onClick={() =>
+        onboardMutation.mutate({
+          academicYear: bulkYear,
+          term: bulkTerm,
+          students: bulkStudents.map((s) => ({
+            studentId: s.studentId,
+            firstName: s.firstName,
+            lastName: s.lastName,
+            classLevel: s.classLevel,
+            openingBalance: s.openingBalance,
+            term: s.term || bulkTerm,
+            academicYear: s.academicYear || bulkYear,
+          })),
+          viaCSV: isCSVUpload,
+        })
+      }
+      disabled={onboardMutation.isPending}
+      className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition"
+    >
+      {onboardMutation.isPending ? "Submitting..." : "Submit CSV"}
+    </button>
+  </section>
+</div>
+
       </div>
 
       {/* --- Proofs Management --- */}

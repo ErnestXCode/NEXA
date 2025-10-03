@@ -130,11 +130,25 @@ const AllTeachers = () => {
                   <td className="p-2 text-white">{t.name}</td>
                   <td className="p-2 text-white">{t.email}</td>
                   <td className="p-2 text-white">{t.phoneNumber}</td>
-                  <td className="p-2 text-white">
-                    {t.subjects && t.subjects.length > 0
-                      ? t.subjects.join(", ")
-                      : "-"}
-                  </td>
+                  <td className="p-2">
+  {t.subjects && t.subjects.length > 0 ? (
+    <div className="flex flex-wrap gap-1 max-w-xs">
+      {t.subjects.map((subj, idx) => (
+        <span
+          key={idx}
+          className="bg-gray-800 text-white px-2 py-0.5 rounded text-xs font-medium truncate"
+          style={{ minWidth: "50px" }}
+          title={subj} // shows full subject on hover
+        >
+          {subj}
+        </span>
+      ))}
+    </div>
+  ) : (
+    "-"
+  )}
+</td>
+
                   <td className="p-2 text-white">
                     {t.isClassTeacher ? "Yes" : "No"}
                   </td>
