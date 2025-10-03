@@ -8,6 +8,11 @@ const connectDB = require("./config/connectDB");
 const http = require("http");
 const { Server } = require("socket.io");
 
+const helmet = require("helmet"); // secure headers
+const mongoSanitize = require("express-mongo-sanitize"); // prevent Mongo injection
+const xss = require("xss-clean"); // prevent XSS attacks
+const rateLimit = require("express-rate-limit"); 
+
 // 🔹 Add cron
 const cron = require("node-cron");
 const Student = require("./models/Student"); // adjust path if needed
@@ -47,9 +52,41 @@ const corsOptions = {
   credentials: true,
 };
 
-app.use(express.json());
+
+app.use(
+  helmet({
+    contentSecurityPolicy: false, // or customize it
+    crossOriginEmbedderPolicy: false, // only if needed
+  })
+);
+
 app.use(cors(corsOptions));
+app.use(express.json());
 app.use(cookieParser());
+
+app.use((req, res, next) => {
+  if (!req.body && !req.query && !req.params) return next();
+  try {
+    xss()(req, res, next);
+  } catch (err) {
+    console.warn("XSS middleware skipped for non-HTTP request", err);
+    next();
+  }
+});
+
+app.use((req, res, next) => {
+  // Skip WebSocket connections or anything without req.body/query/params
+  if (!req.body && !req.query && !req.params) return next();
+
+  // Only apply if req.body/query/params are objects
+  try {
+    mongoSanitize()(req, res, next);
+  } catch (err) {
+    console.warn('Mongo sanitize skipped for non-HTTP request', err);
+    next();
+  }
+});
+
 
 // Routes
 app.use("/api/attendance", require("./routes/attendance"));
