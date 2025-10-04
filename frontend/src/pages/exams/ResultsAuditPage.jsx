@@ -101,8 +101,6 @@ const ResultsAuditPage = () => {
               <th className="p-2">Student</th>
               <th className="p-2">Class</th>
               <th className="p-2">Subjects</th>
-              <th className="p-2">Total</th>
-              <th className="p-2">Average</th>
               <th className="p-2">Recorded By</th>
               <th className="p-2">Recorded At</th>
             </tr>
@@ -134,15 +132,14 @@ const ResultsAuditPage = () => {
 </td>
 
       </td>
-      <td className="p-2 text-right font-semibold">{log.total}</td>
-      <td className="p-2 text-right">{log.average?.toFixed(2)}</td>
+    
       <td className="p-2 text-gray-400">{log.recordedBy}</td>
       <td className="p-2 text-gray-400">{new Date(log.recordedAt).toLocaleString()}</td>
     </tr>
   ))}
   {auditLogs.length === 0 && (
     <tr>
-      <td colSpan="7" className="p-4 text-center text-gray-400">
+      <td colSpan="5" className="p-4 text-center text-gray-400">
         No audit logs found
       </td>
     </tr>

@@ -82,7 +82,6 @@ exports.getAllTransactions = async (req, res) => {
   }
 };
 
-
 /* -------------------------------
    📊 Get Balance for a Student
 --------------------------------*/
@@ -341,35 +340,40 @@ exports.getSchoolTermComparison = async (req, res) => {
 --------------------------------*/
 exports.getClassSummary = async (req, res) => {
   try {
+    console.log("hit this guy");
     const schoolId = req.user.school;
-
     const { academicYear } = req.query;
 
     const students = await Student.find({ school: schoolId });
 
     const summary = {};
 
+    const terms = ["Term 1", "Term 2", "Term 3"];
+
     for (const student of students) {
       const classLevel = student.classLevel;
-      if (!summary[classLevel]) {
-        summary[classLevel] = { expected: 0, paid: 0, outstanding: 0 };
-      }
 
-      const expected =
-        (await student.getExpectedFee(academicYear, "Term 1")) +
-        (await student.getExpectedFee(academicYear, "Term 2")) +
-        (await student.getExpectedFee(academicYear, "Term 3"));
+      if (!summary[classLevel]) {
+        summary[classLevel] = {};
+        terms.forEach((term) => {
+          summary[classLevel][term] = { expected: 0, paid: 0, outstanding: 0 };
+        });
+      }
 
       const balances = await student.computeBalances(academicYear);
 
-      const paid =
-        expected -
-        Object.values(balances).reduce((a, b) => a + (b.amount || b), 0);
+      for (const term of terms) {
+        const expected = await student.getExpectedFee(academicYear, term);
+        const termBalance = balances[term] || 0;
+        const paid = expected - termBalance;
 
-      summary[classLevel].expected += expected;
-      summary[classLevel].paid += paid;
-      summary[classLevel].outstanding += expected - paid;
+        summary[classLevel][term].expected += expected;
+        summary[classLevel][term].paid += paid;
+        summary[classLevel][term].outstanding += termBalance;
+      }
     }
+
+    console.log("summary", summary);
 
     res.json(summary);
   } catch (err) {
@@ -384,51 +388,69 @@ exports.getClassSummary = async (req, res) => {
 /* -------------------------------
    🚨 Debtors List (with Pagination)
 --------------------------------*/
+// ✅ Enhanced Debtors Controller with Filters
 exports.getDebtors = async (req, res) => {
   try {
     const schoolId = req.user.school;
-    const { academicYear, page = 1, limit = 10 } = req.query;
+    const {
+      academicYear,
+      classLevel, // e.g. "Grade 1"
+      minOutstanding = 0,
+      maxOutstanding,
+      search = "",
+      page = 1,
+      limit = 10,
+    } = req.query;
 
-    const students = await Student.find({ school: schoolId });
+    const students = await Student.find({
+      school: schoolId,
+      ...(classLevel ? { classLevel } : {}),
+      ...(search
+        ? {
+            $or: [
+              { firstName: new RegExp(search, "i") },
+              { lastName: new RegExp(search, "i") },
+            ],
+          }
+        : {}),
+    });
 
     let debtors = [];
 
     for (const student of students) {
       const balances = await student.computeBalances(academicYear);
 
-      // Term-wise outstanding
       const termBreakdown = Object.entries(balances).map(([term, data]) => ({
         term,
-        outstanding: data.amount || data, // depending on how computeBalances returns
+        outstanding: data.amount || data,
       }));
 
-      // Total outstanding across all terms
       const totalOutstanding = termBreakdown.reduce(
         (sum, t) => sum + t.outstanding,
         0
       );
 
-      if (totalOutstanding > 0) {
+      if (
+        totalOutstanding > Number(minOutstanding) &&
+        (!maxOutstanding || totalOutstanding <= Number(maxOutstanding))
+      ) {
         debtors.push({
           studentId: student._id,
           name: `${student.firstName} ${student.lastName}`,
           classLevel: student.classLevel,
           totalOutstanding,
-          terms: termBreakdown.filter((t) => t.outstanding > 0), // only include terms with debt
+          terms: termBreakdown.filter((t) => t.outstanding > 0),
         });
       }
     }
 
-    // Sort by highest outstanding
     debtors.sort((a, b) => b.totalOutstanding - a.totalOutstanding);
 
     // Pagination
     const pageInt = parseInt(page, 10);
     const limitInt = parseInt(limit, 10);
     const startIndex = (pageInt - 1) * limitInt;
-    const endIndex = pageInt * limitInt;
-
-    const paginatedDebtors = debtors.slice(startIndex, endIndex);
+    const paginatedDebtors = debtors.slice(startIndex, startIndex + limitInt);
 
     res.json({
       totalDebtors: debtors.length,

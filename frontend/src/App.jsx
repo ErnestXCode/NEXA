@@ -64,14 +64,14 @@ const HomeRedirect = () => {
 };
 
 function App() {
-  useEffect(() => {
-    const handleFocus = () => {
-      if ("clearAppBadge" in navigator)
-        navigator.clearAppBadge().catch(() => {});
-    };
-    window.addEventListener("focus", handleFocus);
-    return () => window.removeEventListener("focus", handleFocus);
-  }, []);
+  // useEffect(() => {
+  //   const handleFocus = () => {
+  //     if ("clearAppBadge" in navigator)
+  //       navigator.clearAppBadge().catch(() => {});
+  //   };
+  //   window.addEventListener("focus", handleFocus);
+  //   return () => window.removeEventListener("focus", handleFocus);
+  // }, []);
 
 
   return (

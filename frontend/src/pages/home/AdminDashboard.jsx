@@ -20,6 +20,25 @@ import {
   Line,
 } from "recharts";
 
+const darkTheme = {
+  grid: "#1f2937", // darker bluish-gray
+  axis: "#94a3b8", // slate-400
+  text: "#e2e8f0", // slate-200
+  tooltipBg: "#0f172a", // almost black-blue
+  tooltipText: "#f8fafc",
+  legendText: "#cbd5e1",
+  // new muted rich colors
+  colors: [
+    "#2563eb", // deep blue
+    "#9333ea", // dark violet
+    "#059669", // rich emerald
+    "#f59e0b", // warm amber
+    "#dc2626", // muted crimson
+    "#0ea5e9", // cool cyan
+    "#7c3aed", // indigo
+  ],
+};
+
 const AdminDashboard = () => {
   const currentUser = useSelector(selectCurrentUser);
   // ================= Queries =================
@@ -200,21 +219,18 @@ const AdminDashboard = () => {
               teacher.phoneNumber || "-",
               // ===== Subjects column updated =====
               teacher.subjects && teacher.subjects.length > 0 ? (
-                <div className="flex flex-wrap gap-1 max-w-xs">
-                  {teacher.subjects.map((subj, idx) => (
-                    <span
-                      key={idx}
-                      className="bg-gray-800 text-white px-2 py-0.5 rounded text-xs font-medium truncate"
-                      style={{ minWidth: "50px" }}
-                      title={subj} // shows full name on hover
-                    >
-                      {subj}
-                    </span>
-                  ))}
-                </div>
+                <span
+                  className="bg-gray-800 text-white px-2 py-0.5 rounded text-xs font-medium truncate"
+                  title={teacher.subjects.join(", ")} // hover shows all
+                >
+                  {teacher.subjects.length > 1
+                    ? `${teacher.subjects[0]}...`
+                    : teacher.subjects[0]}
+                </span>
               ) : (
                 "-"
               ),
+
               teacher.isClassTeacher ? "Yes" : "No",
               teacher.isClassTeacher && teacher.classLevel
                 ? teacher.classLevel
@@ -281,22 +297,48 @@ const AdminDashboard = () => {
             content: (
               <ResponsiveContainer width="100%" height={250}>
                 <PieChart>
+                  <defs>
+                    {/* Optional subtle radial gradient for depth */}
+                    {darkTheme.colors.map((color, i) => (
+                      <radialGradient id={`grad-${i}`} key={i}>
+                        <stop offset="0%" stopColor={color} stopOpacity={0.9} />
+                        <stop
+                          offset="100%"
+                          stopColor="#0f172a"
+                          stopOpacity={0.4}
+                        />
+                      </radialGradient>
+                    ))}
+                  </defs>
+
                   <Pie
                     data={genderData}
                     dataKey="value"
                     nameKey="name"
                     outerRadius={80}
-                    label
+                    label={({ name, value }) => `${name} (${value})`}
+                    labelStyle={{ fill: darkTheme.text }}
                   >
                     {genderData.map((entry, index) => (
                       <Cell
                         key={`cell-${index}`}
-                        fill={GENDER_COLORS[index % GENDER_COLORS.length]}
+                        fill={`url(#grad-${index % darkTheme.colors.length})`}
+                        stroke="#1e293b"
+                        strokeWidth={1}
                       />
                     ))}
                   </Pie>
-                  <Tooltip />
-                  <Legend />
+
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: darkTheme.tooltipBg,
+                      border: "none",
+                      borderRadius: "8px",
+                    }}
+                    labelStyle={{ color: darkTheme.tooltipText }}
+                    itemStyle={{ color: darkTheme.tooltipText }}
+                  />
+                  <Legend wrapperStyle={{ color: darkTheme.legendText }} />
                 </PieChart>
               </ResponsiveContainer>
             ),
@@ -306,7 +348,7 @@ const AdminDashboard = () => {
             content: (
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart
-                  data={studentsPerClass.sort((a, b) => {
+                  data={[...studentsPerClass].sort((a, b) => {
                     const classA = a.class;
                     const classB = b.class;
 
@@ -329,17 +371,30 @@ const AdminDashboard = () => {
                     return classA.localeCompare(classB);
                   })}
                 >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke={darkTheme.grid}
+                  />
                   <XAxis
                     dataKey="class"
-                    stroke="#9ca3af"
+                    stroke={darkTheme.axis}
+                    tick={{ fontSize: 12, fill: darkTheme.text }}
                     interval={0}
-                    tick={{ fontSize: 12 }}
                   />
-                  <YAxis stroke="#9ca3af" />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="count" fill="#60a5fa" />
+                  <YAxis
+                    stroke={darkTheme.axis}
+                    tick={{ fill: darkTheme.text }}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: darkTheme.tooltipBg,
+                      border: "none",
+                    }}
+                    labelStyle={{ color: darkTheme.tooltipText }}
+                    itemStyle={{ color: darkTheme.tooltipText }}
+                  />
+                  <Legend wrapperStyle={{ color: darkTheme.legendText }} />
+                  <Bar dataKey="count" fill={darkTheme.colors[0]} />
                 </BarChart>
               </ResponsiveContainer>
             ),
@@ -348,20 +403,34 @@ const AdminDashboard = () => {
             title: "Teachers per Subject",
             content: (
               <ResponsiveContainer width="100%" height={400}>
-                <BarChart data={teachersPerSubject}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#444" />
+                <BarChart data={teachersPerSubject}  >
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke={darkTheme.grid}
+                  />
                   <XAxis
                     dataKey="subject"
                     interval={0}
-                    angle={-45} // or -60 for vertical-ish
+                    angle={-45}
                     textAnchor="end"
-                    stroke="#bbb"
-                    height={80} // increase XAxis height to accommodate labels
+                    stroke={darkTheme.axis}
+                    height={80}
+                    tick={{ fill: darkTheme.text }}
                   />
-                  <YAxis stroke="#bbb" />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="count" fill="#facc15" />
+                  <YAxis
+                    stroke={darkTheme.axis}
+                    tick={{ fill: darkTheme.text }}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: darkTheme.tooltipBg,
+                      border: "none",
+                    }}
+                    labelStyle={{ color: darkTheme.tooltipText }}
+                    itemStyle={{ color: darkTheme.tooltipText }}
+                  />
+                  <Legend wrapperStyle={{ color: darkTheme.legendText }} />
+                  <Bar dataKey="count" fill={darkTheme.colors[3]} />
                 </BarChart>
               </ResponsiveContainer>
             ),
@@ -371,15 +440,33 @@ const AdminDashboard = () => {
             content: (
               <ResponsiveContainer width="100%" height={400}>
                 <LineChart data={activitiesTrend}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#444" />
-                  <XAxis dataKey="date" stroke="#bbb" />
-                  <YAxis allowDecimals={false} stroke="#bbb" />
-                  <Tooltip />
-                  <Legend />
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke={darkTheme.grid}
+                  />
+                  <XAxis
+                    dataKey="date"
+                    stroke={darkTheme.axis}
+                    tick={{ fill: darkTheme.text }}
+                  />
+                  <YAxis
+                    allowDecimals={false}
+                    stroke={darkTheme.axis}
+                    tick={{ fill: darkTheme.text }}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: darkTheme.tooltipBg,
+                      border: "none",
+                    }}
+                    labelStyle={{ color: darkTheme.tooltipText }}
+                    itemStyle={{ color: darkTheme.tooltipText }}
+                  />
+                  <Legend wrapperStyle={{ color: darkTheme.legendText }} />
                   <Line
                     type="monotone"
                     dataKey="count"
-                    stroke="#f43f5e"
+                    stroke={darkTheme.colors[5]}
                     strokeWidth={2}
                   />
                 </LineChart>
@@ -389,7 +476,7 @@ const AdminDashboard = () => {
         ].map((chart, i) => (
           <div
             key={i}
-            className="bg-gray-900 p-4 rounded-2xl shadow-lg border border-gray-800"
+            className="bg-gray-900/70 backdrop-blur-sm p-4 rounded-2xl shadow-lg border border-gray-800"
           >
             <h3 className="text-lg font-semibold mb-2">{chart.title}</h3>
             {chart.content}

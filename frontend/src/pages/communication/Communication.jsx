@@ -54,7 +54,7 @@ const Communication = () => {
               : "bg-gray-800 hover:bg-gray-700 text-gray-300"
           }`}
         >
-          In-App Messages
+          School Broadcasts
         </button>
 
         {/* {showEmailTab && (
@@ -84,21 +84,25 @@ const Communication = () => {
       )}
 
       {/* Chat Tab */}
-      {activeTab === "chat" && (
-        <div className="flex flex-col md:flex-row flex-1 gap-6">
-          {/* Messages List */}
-          <div className="flex-1 flex flex-col bg-gray-900 rounded-2xl shadow-lg overflow-hidden">
-            <MessagesList />
-          </div>
+     {/* Chat Tab */}
+{activeTab === "chat" && (
+  <div className="flex flex-col md:flex-row flex-1 gap-6">
+    {/* Messages List */}
+    <div className="flex-1 flex flex-col bg-gray-900 rounded-2xl shadow-lg overflow-hidden">
+      <MessagesList />
+    </div>
 
-          {/* Send Message Form */}
-          <div className="md:flex-1 md:max-w-md">
-            <div className="md:static fixed bottom-0 left-0 w-full md:w-auto p-4 bg-gray-950 md:bg-transparent z-10">
-              <SendMessageForm type="chat" mobile />
-            </div>
-          </div>
+    {/* Send Message Form (hidden for parents) */}
+    {currentUser?.role !== "parent" && (
+      <div className="md:flex-1 md:max-w-md">
+        <div className="md:static fixed bottom-0 left-0 w-full md:w-auto p-4 bg-gray-950 md:bg-transparent z-10">
+          <SendMessageForm type="chat" mobile />
         </div>
-      )}
+      </div>
+    )}
+  </div>
+)}
+
 
       {/* Email Tab */}
       {activeTab === "email" && showEmailTab && (

@@ -423,10 +423,10 @@ const ParentDashboard = () => {
                         className={`font-bold text-${colors[idx]} mt-2 text-lg`}
                       >
                         {status === "Present"
-                          ? `${attendanceSummary.present} days`
+                          ? `${attendanceSummary.present} day(s)`
                           : status === "Absent"
-                          ? `${attendanceSummary.absent} days`
-                          : `${attendanceSummary.late} days`}
+                          ? `${attendanceSummary.absent} day(s)`
+                          : `${attendanceSummary.late} day(s)`}
                       </p>
                     </div>
                   );

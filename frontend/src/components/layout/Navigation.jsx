@@ -112,14 +112,16 @@ const Navigation = () => {
               >
                 Reviews
               </NavLink>
-              <NavLink
-                end
-                onClick={handleCloseSidenav}
-                to="/dashboard/billing"
-                className={navLinkClasses}
-              >
-                Billing
-              </NavLink>
+              {isSuperAdminOrAdmin && (
+                <NavLink
+                  end
+                  onClick={handleCloseSidenav}
+                  to="/dashboard/billing"
+                  className={navLinkClasses}
+                >
+                  Billing
+                </NavLink>
+              )}
 
               <NavLink
                 end
@@ -396,6 +398,15 @@ const Navigation = () => {
                   className={navLinkClasses}
                 >
                   Record Payment
+                </NavLink>
+
+                <NavLink
+                  end
+                  onClick={handleCloseSidenav}
+                  to="/dashboard/fees/logs"
+                  className={navLinkClasses}
+                >
+                  Fee Logs
                 </NavLink>
               </div>
             )}

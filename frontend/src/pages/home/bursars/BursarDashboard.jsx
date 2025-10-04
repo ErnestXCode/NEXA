@@ -8,27 +8,35 @@ const BursarDashboard = () => {
   const currentUser = useSelector(selectCurrentUser);
   const { unreadCount } = useUnreadMessages(currentUser);
 
-  const actions = [
-    {
-      title: "Messages",
-      description: "Send or view in-app messages.",
-      link: "/dashboard/communication",
-      gradient: "from-indigo-700 via-purple-700 to-pink-700",
-      hasBadge: true,
-    },
-    {
-      title: "View Fees",
-      description: "Check student fees records.",
-      link: "/dashboard/fees",
-      gradient: "from-blue-700 via-cyan-600 to-sky-500",
-    },
-    {
-      title: "Record Payment",
-      description: "Add a new student payment.",
-      link: "/dashboard/fees/add",
-      gradient: "from-green-700 via-lime-600 to-emerald-500",
-    },
-  ];
+const actions = [
+  {
+    title: "Messages",
+    description: "Send or view in-app messages.",
+    link: "/dashboard/communication",
+    gradient: "from-indigo-700 via-purple-700 to-pink-700",
+    hasBadge: true,
+  },
+  {
+    title: "View Fees",
+    description: "Check student fees records.",
+    link: "/dashboard/fees",
+    gradient: "from-blue-700 via-cyan-600 to-sky-500",
+  },
+  {
+    title: "Record Payment",
+    description: "Add a new student payment.",
+    link: "/dashboard/fees/add",
+    gradient: "from-green-700 via-lime-600 to-emerald-500",
+  },
+  {
+    title: "Fee Logs",
+    description: "View all student fee transactions and history.",
+    link: "/dashboard/fees/logs",
+   gradient: "from-red-700 via-red-600 to-orange-500"
+
+  }
+];
+
 
   return (
     <div className="min-h-screen bg-gray-950 p-6">

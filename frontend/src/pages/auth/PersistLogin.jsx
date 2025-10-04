@@ -23,6 +23,7 @@ const PersistLogin = ({hideNav}) => {
           err.response?.status,
           err.response?.data
         );
+        
       } finally {
         if (isMounted) setLoading(false);
       }
