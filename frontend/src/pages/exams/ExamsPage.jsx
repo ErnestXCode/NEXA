@@ -7,7 +7,7 @@ const ExamsPage = () => {
     name: "",
     term: "",
     date: "",
-    academicYear: "",
+    academicYear: `${new Date().getFullYear()}/${new Date().getFullYear() + 1}`,
   });
 
   const fetchExams = async () => {
@@ -85,9 +85,7 @@ const ExamsPage = () => {
             type="text"
             placeholder="Academic Year (e.g. 2025/2026)"
             value={form.academicYear}
-            onChange={(e) =>
-              setForm({ ...form, academicYear: e.target.value })
-            }
+            onChange={(e) => setForm({ ...form, academicYear: e.target.value })}
             className="p-3 w-full rounded-xl bg-gray-800 border border-gray-700 focus:border-blue-500 focus:ring focus:ring-blue-500/30 outline-none transition"
             required
           />

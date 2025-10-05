@@ -89,7 +89,9 @@ exports.getAllAttendanceLogs = async (req, res) => {
       limit = 50,
     } = req.query;
 
-    const query = {};
+    const query = {
+      school: req.user.school
+    };
 
     if (date) query.date = new Date(date);
     if (academicYear) query.academicYear = academicYear;
@@ -258,6 +260,7 @@ exports.getStatsByRange = async (req, res) => {
           date: { $gte: new Date(startDate), $lte: new Date(endDate) },
           academicYear: academicYear, // ✅ keep as string
           term,
+          school: req.user.school
         },
       },
       {

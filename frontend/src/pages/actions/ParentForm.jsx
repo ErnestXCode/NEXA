@@ -55,6 +55,7 @@ const ParentForm = ({ onNext }) => {
     },
     onSuccess: () => {
       queryClient.refetchQueries({ queryKey: ["parents"], exact: true });
+      queryClient.refetchQueries(["students"]);
       if (onNext) onNext();
     },
   });

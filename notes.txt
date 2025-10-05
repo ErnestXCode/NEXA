@@ -8,62 +8,7 @@ deleting paypal.acc
 
 notification system
 
-  {/* Class Breakdown Table */}
-      {/* <section className="bg-gray-900 rounded-xl shadow border border-gray-800 p-6 overflow-x-auto">
-        <h2 className="text-xl font-semibold mb-4 border-b border-gray-800 pb-2">
-          📚 Class Breakdown{" "}
-          <span className="text-sm text-gray-300">(For the year)</span>
-        </h2>
-        <table className="w-full border-collapse">
-          <thead className="bg-gray-800">
-            <tr>
-              {["Class", "Expected", "Paid", "Outstanding"].map((h) => (
-                <th key={h} className="px-4 py-2 text-left text-gray-300">
-                  {h}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {Object.entries(classSummary || {})
-              .sort(([a], [b]) => {
-                // Handle PP classes first
-                if (a.startsWith("PP") && b.startsWith("PP")) {
-                  return a.localeCompare(b, undefined, { numeric: true });
-                }
-                if (a.startsWith("PP")) return -1;
-                if (b.startsWith("PP")) return 1;
-
-                // Numeric Grades
-                const numA = parseInt(a.replace(/\D/g, ""), 10);
-                const numB = parseInt(b.replace(/\D/g, ""), 10);
-                if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
-
-                // Fallback alphabetical
-                return a.localeCompare(b);
-              })
-              .map(([classLevel, stats], idx) => (
-                <tr
-                  key={classLevel}
-                  className={`${
-                    idx % 2 === 0 ? "bg-gray-950/40" : "bg-gray-900/40"
-                  } hover:bg-gray-800/60`}
-                >
-                  <td className="px-4 py-2">{classLevel}</td>
-                  <td className="px-4 py-2 text-blue-400">
-                    KES {stats.expected.toLocaleString()}
-                  </td>
-                  <td className="px-4 py-2 text-green-400">
-                    KES {stats.paid.toLocaleString()}
-                  </td>
-                  <td className="px-4 py-2 text-red-400">
-                    KES {stats.outstanding.toLocaleString()}
-                  </td>
-                </tr>
-              ))}
-          </tbody>
-        </table>
-      </section> */}
+ you see how the three files look where parents have children whose names are in students and onboarding also has those students in students.xlsx.......i want you to see how they are and give me 3 similar files, one for students, one for parents and one for onboarding -- with same headers but different parents , different emails, different names , different children etc-----i empahsize you see how the students in students.xlsx are being used in onboarding.xlsx and parents.xlsx in children section,,,see how they use only first name and last name in some parts and some parts they use all names including middlename,,,, dont screw this up, i wont be able to upload these for reference again,,,,,the ones i have uploaded is data for one fake school, now create for another fake school---remember they should have different emails and phonenumbers and names and details as the mongodb is the same----also another thing that really matters is that the three xlsx files you give me actually are conected like the ones i gave you
 
 student edit classlevel is not a dropdown , and middle name is for some reason above the other names
 

@@ -4,12 +4,11 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import * as XLSX from "xlsx";
 
 const AddFeePage = () => {
-  const queryClient = useQueryClient();
-
+  
   const [filteredStudents, setFilteredStudents] = useState([]);
   const currentYear = new Date().getFullYear();
   const defaultAcademicYear = `${currentYear}/${currentYear + 1}`;
-
+  
   const [form, setForm] = useState({
     studentId: "",
     studentName: "",
@@ -31,14 +30,17 @@ const AddFeePage = () => {
       studentId: "",
     },
   ]);
-
+  
   const [bulkYear, setBulkYear] = useState(defaultAcademicYear);
   const [bulkTerm, setBulkTerm] = useState("Term 1");
-
+  
   const feeTypes = ["payment", "adjustment"];
   const methods = ["cash", "mpesa", "card"];
   const terms = ["Term 1", "Term 2", "Term 3"];
+  
+  const queryClient = useQueryClient();
 
+  
   // ✅ Query: all students
   const { data: students = [] } = useQuery({
     queryKey: ["students"],
@@ -46,8 +48,6 @@ const AddFeePage = () => {
       const res = await api.get("/students");
       return res.data;
     },
-    staleTime: Infinity,
-    cacheTime: Infinity,
   });
 
   // ✅ Query: all proofs
@@ -57,8 +57,6 @@ const AddFeePage = () => {
       const res = await api.get("/fees/proofs/pending");
       return res.data || [];
     },
-    staleTime: Infinity,
-    cacheTime: Infinity,
   });
 
   // ✅ Mutation: add fee
@@ -85,6 +83,7 @@ const AddFeePage = () => {
       queryClient.refetchQueries(["schoolTermSummary"]);
       queryClient.refetchQueries(["classTermSummary"]);
       queryClient.refetchQueries(["debtors"]);
+
     },
     onError: (err) => {
       alert(err.response?.data?.message || "Error submitting payment");

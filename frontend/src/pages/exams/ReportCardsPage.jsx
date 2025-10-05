@@ -15,7 +15,12 @@ import {
 } from "recharts";
 
 const ReportCardsPage = () => {
-  const [academicYear, setAcademicYear] = useState("2025/2026");
+  const currentYear = new Date().getFullYear();
+  const nextYear = currentYear + 1;
+  const defaultAcademicYear = `${currentYear}/${nextYear}`;
+
+  const [academicYear, setAcademicYear] = useState(defaultAcademicYear);
+
   const [exams, setExams] = useState([]);
   const [students, setStudents] = useState([]);
   const [subjectsByClass, setSubjectsByClass] = useState({});
@@ -88,9 +93,40 @@ const ReportCardsPage = () => {
     fetchResults();
   }, [examId, selectedClass]);
 
-  const classLevels = [
+  // 🔹 Extract unique classes
+  const uniqueClasses = [
     ...new Set(students.map((s) => s.classLevel || "Unassigned")),
   ];
+
+  // 🔹 Define a natural ordering function
+  const getOrderValue = (level) => {
+    if (!level) return 999;
+
+    const lower = level.toLowerCase();
+
+    // Handle PP (pre-primary)
+    if (lower.startsWith("pp")) {
+      const num = parseInt(lower.replace("pp", "").trim());
+      return num || 0; // PP1 → 1, PP2 → 2
+    }
+
+    // Handle Grade or Class with a number
+    const match = lower.match(/\d+/);
+    if (match) return 100 + parseInt(match[0]); // Grade 1 → 101, Grade 2 → 102, etc.
+
+    // Handle Nursery, Baby, or anything else
+    if (lower.includes("baby")) return 0;
+    if (lower.includes("nursery")) return 0;
+
+    // Fallback for unrecognized levels
+    return 999;
+  };
+
+  // 🔹 Sort dynamically
+  const classLevels = uniqueClasses.sort(
+    (a, b) => getOrderValue(a) - getOrderValue(b)
+  );
+
   const filteredStudents = students.filter(
     (s) => selectedClass && s.classLevel === selectedClass
   );
@@ -115,7 +151,9 @@ const ReportCardsPage = () => {
   }, [studentAverages]);
 
   const top3 = useMemo(() => {
-    return [...studentAverages].sort((a, b) => b.average - a.average).slice(0, 3);
+    return [...studentAverages]
+      .sort((a, b) => b.average - a.average)
+      .slice(0, 3);
   }, [studentAverages]);
 
   const subjectPerformance = useMemo(() => {
@@ -141,25 +179,24 @@ const ReportCardsPage = () => {
     });
   }, [subjects, filteredStudents, results]);
 
- const handleDownload = async (studentId, positionText) => {
-  try {
-    const res = await api.post(
-      `/reports/student/${examId}/${studentId}`,
-      { positionText }, // 👈 send in body
-      { responseType: "blob" }
-    );
-    const url = window.URL.createObjectURL(new Blob([res.data]));
-    const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute("download", `report-card-${studentId}.pdf`);
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-  } catch (err) {
-    console.error("Download failed", err);
-  }
-};
-
+  const handleDownload = async (studentId, positionText) => {
+    try {
+      const res = await api.post(
+        `/reports/student/${examId}/${studentId}`,
+        { positionText }, // 👈 send in body
+        { responseType: "blob" }
+      );
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `report-card-${studentId}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (err) {
+      console.error("Download failed", err);
+    }
+  };
 
   const handlePrintAll = async () => {
     if (!examId || !selectedClass) return;
@@ -187,58 +224,72 @@ const ReportCardsPage = () => {
     <div className="p-6 space-y-6">
       <h1 className="text-2xl font-bold">Report Cards</h1>
 
-      {/* Academic Year */}
-      <input
-        type="text"
-        placeholder="Academic Year (e.g. 2025/2026)"
-        value={academicYear}
-        onChange={(e) => {
-          setAcademicYear(e.target.value);
-          setExamId("");
-          setSelectedClass("");
-          setResults({});
-        }}
-        className="p-2 w-full rounded bg-gray-800 text-white"
-      />
+      {/* 🔹 Filters */}
+      <div className="bg-gray-900 p-4 rounded-lg shadow-md grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+        {/* Academic Year */}
+        <div className="flex flex-col">
+          <label className="text-sm text-gray-300 mb-1">Academic Year</label>
+          <input
+            type="text"
+            value={academicYear}
+            onChange={(e) => {
+              setAcademicYear(e.target.value);
+              setExamId("");
+              setSelectedClass("");
+              setResults({});
+            }}
+            className="p-2 rounded bg-gray-800 text-white focus:ring-2 focus:ring-blue-600 outline-none transition"
+            placeholder="e.g. 2025/2026"
+          />
+        </div>
 
-      {/* Select Exam */}
-      {academicYear && (
-        <select
-          value={examId}
-          onChange={(e) => {
-            setExamId(e.target.value);
-            setSelectedClass("");
-            setResults({});
-          }}
-          className="p-2 w-full rounded bg-gray-800 text-white"
-        >
-          <option value="">Select Exam</option>
-          {exams.map((e) => (
-            <option key={e._id} value={e._id}>
-              {e.name} - {e.term}
+        {/* Exam Selector */}
+        <div className="flex flex-col">
+          <label className="text-sm text-gray-300 mb-1">Exam</label>
+          <select
+            value={examId}
+            onChange={(e) => {
+              setExamId(e.target.value);
+              setSelectedClass("");
+              setResults({});
+            }}
+            className="p-2 rounded bg-gray-800 text-white focus:ring-2 focus:ring-blue-600 outline-none transition"
+            disabled={!academicYear || exams.length === 0}
+          >
+            <option value="">
+              {exams.length ? "Select Exam" : "No exams available"}
             </option>
-          ))}
-        </select>
-      )}
+            {exams.map((e) => (
+              <option key={e._id} value={e._id}>
+                {e.name} — {e.term}
+              </option>
+            ))}
+          </select>
+        </div>
 
-      {/* Select Class */}
-      {examId && (
-        <select
-          value={selectedClass}
-          onChange={(e) => {
-            setSelectedClass(e.target.value);
-            setResults({});
-          }}
-          className="p-2 w-full rounded bg-gray-800 text-white"
-        >
-          <option value="">Select Class</option>
-          {classLevels.map((level) => (
-            <option key={level} value={level}>
-              {level}
+        {/* Class Selector */}
+        <div className="flex flex-col">
+          <label className="text-sm text-gray-300 mb-1">Class</label>
+          <select
+            value={selectedClass}
+            onChange={(e) => {
+              setSelectedClass(e.target.value);
+              setResults({});
+            }}
+            className="p-2 rounded bg-gray-800 text-white focus:ring-2 focus:ring-blue-600 outline-none transition"
+            disabled={!examId || classLevels.length === 0}
+          >
+            <option value="">
+              {classLevels.length ? "Select Class" : "No classes available"}
             </option>
-          ))}
-        </select>
-      )}
+            {classLevels.map((level) => (
+              <option key={level} value={level}>
+                {level}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
 
       {/* Table */}
       {examId && selectedClass && (
@@ -273,7 +324,9 @@ const ReportCardsPage = () => {
               <tbody>
                 {studentRanks.map((ranked) => {
                   const student = students.find((s) => s._id === ranked.id);
-                  const studentResult = results[student._id] || { subjects: [] };
+                  const studentResult = results[student._id] || {
+                    subjects: [],
+                  };
                   const subjectsArr = studentResult.subjects || [];
 
                   return (
@@ -283,14 +336,20 @@ const ReportCardsPage = () => {
                       </td>
                       {subjects.map((subj) => (
                         <td key={subj} className="p-2">
-                          {subjectsArr.find((s) => s.name === subj)?.score ?? "-"}
+                          {subjectsArr.find((s) => s.name === subj)?.score ??
+                            "-"}
                         </td>
                       ))}
                       <td className="p-2">{ranked.average.toFixed(1)}</td>
                       <td className="p-2">{ranked.position}</td>
                       <td className="p-2">
                         <button
-                          onClick={() => handleDownload(student._id, `${ranked.position} / ${studentRanks.length}`)}
+                          onClick={() =>
+                            handleDownload(
+                              student._id,
+                              `${ranked.position} / ${studentRanks.length}`
+                            )
+                          }
                           className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded"
                         >
                           Download
@@ -310,9 +369,13 @@ const ReportCardsPage = () => {
               <h3 className="text-lg font-semibold mb-2">Top 3 Students</h3>
               <ResponsiveContainer width="100%" height={600}>
                 <BarChart key={selectedClass} data={top3}>
-                  <XAxis dataKey="name"  height={100}  interval={0}
+                  <XAxis
+                    dataKey="name"
+                    height={100}
+                    interval={0}
                     angle={-35}
-                    textAnchor="end"/>
+                    textAnchor="end"
+                  />
                   <YAxis />
                   <Tooltip />
                   <Legend />

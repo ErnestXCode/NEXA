@@ -137,7 +137,36 @@ const RecordResultsPage = () => {
     }
   };
 
-  const classLevels = [...new Set(students.map((s) => s.classLevel || "Unassigned"))];
+  // 🔹 Extract unique classes
+const uniqueClasses = [...new Set(students.map((s) => s.classLevel || "Unassigned"))];
+
+// 🔹 Define a natural ordering function
+const getOrderValue = (level) => {
+  if (!level) return 999;
+
+  const lower = level.toLowerCase();
+
+  // Handle PP (pre-primary)
+  if (lower.startsWith("pp")) {
+    const num = parseInt(lower.replace("pp", "").trim());
+    return num || 0; // PP1 → 1, PP2 → 2
+  }
+
+  // Handle Grade or Class with a number
+  const match = lower.match(/\d+/);
+  if (match) return 100 + parseInt(match[0]); // Grade 1 → 101, Grade 2 → 102, etc.
+
+  // Handle Nursery, Baby, or anything else
+  if (lower.includes("baby")) return 0;
+  if (lower.includes("nursery")) return 0;
+
+  // Fallback for unrecognized levels
+  return 999;
+};
+
+// 🔹 Sort dynamically
+const classLevels = uniqueClasses.sort((a, b) => getOrderValue(a) - getOrderValue(b));
+
   const filteredStudents = students.filter(
     (s) => selectedClass && s.classLevel === selectedClass
   );
@@ -149,82 +178,96 @@ const RecordResultsPage = () => {
     <div className="p-6 space-y-6">
       <h1 className="text-2xl font-bold">Record Results</h1>
 
-      {/* Step 0: Academic Year */}
-      <input
-        type="text"
-        placeholder="Academic Year (e.g. 2025/2026)"
-        value={academicYear}
-        onChange={(e) => isEditableYear && setAcademicYear(e.target.value)}
-        className={`p-2 w-full rounded bg-gray-800 text-white ${
-          !isEditableYear ? "opacity-50 cursor-not-allowed" : ""
-        }`}
-        disabled={!isEditableYear}
-      />
+   {/* 🔹 Filters Section */}
+<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+  {/* Academic Year */}
+  <div className="flex flex-col">
+    <label className="mb-1 text-sm text-gray-400">Academic Year</label>
+    <input
+      type="text"
+      placeholder="Academic Year (e.g. 2025/2026)"
+      value={academicYear}
+      onChange={(e) => isEditableYear && setAcademicYear(e.target.value)}
+      className={`p-2 rounded bg-gray-800 text-white border border-gray-700 focus:ring-2 focus:ring-blue-500 focus:outline-none transition ${
+        !isEditableYear ? "opacity-50 cursor-not-allowed" : ""
+      }`}
+      disabled={!isEditableYear}
+    />
+  </div>
 
-      {/* Step 1: Select Exam */}
-     {/* Step 1: Select Exam */}
-{academicYear && (
-  exams.length === 0 ? (
-    <div className="p-3 text-center text-gray-400 bg-gray-800 rounded">
-      No exams yet for {academicYear}
-    </div>
-  ) : (
-    <select
-      value={examId}
-      onChange={(e) => {
-        setExamId(e.target.value);
-        setSelectedClass("");
-        setSelectedSubject("");
-        setResults({});
-      }}
-      className="w-full p-2 text-white bg-gray-800 rounded"
-    >
-      <option value="">Select Exam</option>
-      {exams.map((e) => (
-        <option key={e._id} value={e._id}>
-          {e.name} - {e.term} - {e.academicYear}
-        </option>
-      ))}
-    </select>
-  )
-)}
-
-
-      {/* Step 2: Select Class */}
-      {examId && (
+  {/* Select Exam */}
+  <div className="flex flex-col">
+    <label className="mb-1 text-sm text-gray-400">Exam</label>
+    {academicYear && (
+      exams.length === 0 ? (
+        <div className="p-2 text-center text-gray-400 bg-gray-800 rounded border border-gray-700">
+          No exams yet for {academicYear}
+        </div>
+      ) : (
         <select
-          value={selectedClass}
+          value={examId}
           onChange={(e) => {
-            setSelectedClass(e.target.value);
+            setExamId(e.target.value);
+            setSelectedClass("");
             setSelectedSubject("");
             setResults({});
           }}
-          className="w-full p-2 text-white bg-gray-800 rounded"
+          className="p-2 rounded bg-gray-800 text-white border border-gray-700 focus:ring-2 focus:ring-blue-500 focus:outline-none transition"
         >
-          <option value="">Select Class</option>
-          {classLevels.map((level) => (
-            <option key={level} value={level}>
-              {level}
+          <option value="">Select Exam</option>
+          {exams.map((e) => (
+            <option key={e._id} value={e._id}>
+              {e.name} - {e.term} - {e.academicYear}
             </option>
           ))}
         </select>
-      )}
+      )
+    )}
+  </div>
 
-      {/* Step 3: Select Subject */}
-      {examId && selectedClass && (
-        <select
-          value={selectedSubject}
-          onChange={(e) => setSelectedSubject(e.target.value)}
-          className="w-full p-2 text-white bg-gray-800 rounded"
-        >
-          <option value="">All Subjects (Admin Mode)</option>
-          {(subjectsByClass[selectedClass] || []).map((subj) => (
-            <option key={subj} value={subj}>
-              {subj}
-            </option>
-          ))}
-        </select>
-      )}
+  {/* Select Class */}
+  {examId && (
+    <div className="flex flex-col">
+      <label className="mb-1 text-sm text-gray-400">Class</label>
+      <select
+        value={selectedClass}
+        onChange={(e) => {
+          setSelectedClass(e.target.value);
+          setSelectedSubject("");
+          setResults({});
+        }}
+        className="p-2 rounded bg-gray-800 text-white border border-gray-700 focus:ring-2 focus:ring-blue-500 focus:outline-none transition"
+      >
+        <option value="">Select Class</option>
+        {classLevels.map((level) => (
+          <option key={level} value={level}>
+            {level}
+          </option>
+        ))}
+      </select>
+    </div>
+  )}
+
+  {/* Select Subject */}
+  {examId && selectedClass && (
+    <div className="flex flex-col">
+      <label className="mb-1 text-sm text-gray-400">Subject</label>
+      <select
+        value={selectedSubject}
+        onChange={(e) => setSelectedSubject(e.target.value)}
+        className="p-2 rounded bg-gray-800 text-white border border-gray-700 focus:ring-2 focus:ring-blue-500 focus:outline-none transition"
+      >
+        <option value="">All Subjects (Admin Mode)</option>
+        {(subjectsByClass[selectedClass] || []).map((subj) => (
+          <option key={subj} value={subj}>
+            {subj}
+          </option>
+        ))}
+      </select>
+    </div>
+  )}
+</div>
+
 
       {/* Step 4: Results Table */}
       {examId && selectedClass && (

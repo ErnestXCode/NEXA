@@ -74,40 +74,36 @@ const FeesPage = ({ schoolId }) => {
   const [debtorLimit] = useState(10); // default page size
 
   const [debtorFilterClass, setDebtorFilterClass] = useState("All");
-const [debtorSearch, setDebtorSearch] = useState("");
-const [debtorMinOutstanding, setDebtorMinOutstanding] = useState("");
-const [debtorMaxOutstanding, setDebtorMaxOutstanding] = useState("");
-
+  const [debtorSearch, setDebtorSearch] = useState("");
+  const [debtorMinOutstanding, setDebtorMinOutstanding] = useState("");
+  const [debtorMaxOutstanding, setDebtorMaxOutstanding] = useState("");
 
   const { data: debtors, isLoading: loadingDebtors } = useQuery({
-  queryKey: [
-    "debtors",
-    schoolId,
-    academicYear,
-    debtorPage,
-    debtorLimit,
-    debtorFilterClass,
-    debtorSearch,
-    debtorMinOutstanding,
-    debtorMaxOutstanding,
-  ],
-  queryFn: () =>
-    fetcher(
-      `/fees/schools/${schoolId}/debtors?academicYear=${academicYear}&page=${debtorPage}&limit=${debtorLimit}${
-        debtorFilterClass !== "All"
-          ? `&classLevel=${encodeURIComponent(debtorFilterClass)}`
-          : ""
-      }${
-        debtorSearch ? `&search=${encodeURIComponent(debtorSearch)}` : ""
-      }${
-        debtorMinOutstanding ? `&minOutstanding=${debtorMinOutstanding}` : ""
-      }${
-        debtorMaxOutstanding ? `&maxOutstanding=${debtorMaxOutstanding}` : ""
-      }`
-    ),
-  keepPreviousData: true,
-});
-
+    queryKey: [
+      "debtors",
+      schoolId,
+      academicYear,
+      debtorPage,
+      debtorLimit,
+      debtorFilterClass,
+      debtorSearch,
+      debtorMinOutstanding,
+      debtorMaxOutstanding,
+    ],
+    queryFn: () =>
+      fetcher(
+        `/fees/schools/${schoolId}/debtors?academicYear=${academicYear}&page=${debtorPage}&limit=${debtorLimit}${
+          debtorFilterClass !== "All"
+            ? `&classLevel=${encodeURIComponent(debtorFilterClass)}`
+            : ""
+        }${debtorSearch ? `&search=${encodeURIComponent(debtorSearch)}` : ""}${
+          debtorMinOutstanding ? `&minOutstanding=${debtorMinOutstanding}` : ""
+        }${
+          debtorMaxOutstanding ? `&maxOutstanding=${debtorMaxOutstanding}` : ""
+        }`
+      ),
+    keepPreviousData: true,
+  });
 
   const { data: feeRules, isLoading: loadingRules } = useQuery({
     queryKey: ["feeRules", schoolId],
@@ -183,7 +179,7 @@ const [debtorMaxOutstanding, setDebtorMaxOutstanding] = useState("");
     }
   };
 
-  console.log(classSummary)
+  console.log(classSummary);
 
   /* ---------------- RENDER ---------------- */
   return (
@@ -356,8 +352,6 @@ const [debtorMaxOutstanding, setDebtorMaxOutstanding] = useState("");
                 </tr>
               </thead>
               <tbody>
-   
-
                 {feeRules?.map((r) => (
                   <tr key={r._id} className="text-center hover:bg-gray-800/40">
                     <td className="border border-gray-700 p-2">
@@ -492,77 +486,81 @@ const [debtorMaxOutstanding, setDebtorMaxOutstanding] = useState("");
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Class Fees Chart */}
+        {/* Class Fees Chart */}
+        {/* Class Fees Chart */}
+        <ChartCard title="🏫 Class Fees Summary (Chart)">
+          {loadingClass ? (
+            <p className="text-gray-400">Loading class summary...</p>
+          ) : classSummary && Object.keys(classSummary).length > 0 ? (
+            <div className="w-full h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={Object.entries(classSummary)
+                    .sort(([aClass], [bClass]) => {
+                      // 1️⃣ PP classes first
+                      const ppRegex = /^PP(\d+)/i;
+                      const gradeRegex = /(\d+)/;
 
-  {/* Class Fees Chart */}
-{/* Class Fees Chart */}
-{/* Class Fees Chart */}
-<ChartCard title="🏫 Class Fees Summary (Chart)">
-  {loadingClass ? (
-    <p className="text-gray-400">Loading class summary...</p>
-  ) : classSummary && Object.keys(classSummary).length > 0 ? (
-    <div className="w-full h-64">
-      <ResponsiveContainer width="100%" height="100%">
-        <BarChart
-          data={Object.entries(classSummary)
-            .sort(([aClass], [bClass]) => {
-              // 1️⃣ PP classes first
-              const ppRegex = /^PP(\d+)/i;
-              const gradeRegex = /(\d+)/;
+                      const aPP = aClass.match(ppRegex);
+                      const bPP = bClass.match(ppRegex);
 
-              const aPP = aClass.match(ppRegex);
-              const bPP = bClass.match(ppRegex);
+                      if (aPP && bPP)
+                        return parseInt(aPP[1]) - parseInt(bPP[1]);
+                      if (aPP) return -1;
+                      if (bPP) return 1;
 
-              if (aPP && bPP) return parseInt(aPP[1]) - parseInt(bPP[1]);
-              if (aPP) return -1;
-              if (bPP) return 1;
+                      // 2️⃣ Numeric grades next
+                      const aNum = aClass.match(gradeRegex);
+                      const bNum = bClass.match(gradeRegex);
 
-              // 2️⃣ Numeric grades next
-              const aNum = aClass.match(gradeRegex);
-              const bNum = bClass.match(gradeRegex);
+                      if (aNum && bNum)
+                        return parseInt(aNum[1]) - parseInt(bNum[1]);
+                      if (aNum) return -1;
+                      if (bNum) return 1;
 
-              if (aNum && bNum) return parseInt(aNum[1]) - parseInt(bNum[1]);
-              if (aNum) return -1;
-              if (bNum) return 1;
+                      // 3️⃣ Fallback: alphabetical
+                      return aClass.localeCompare(bClass);
+                    })
+                    .map(([cls, terms]) => {
+                      const totalPaid = Object.values(terms || {}).reduce(
+                        (sum, t) => sum + (t.paid || 0),
+                        0
+                      );
+                      const totalOutstanding = Object.values(
+                        terms || {}
+                      ).reduce((sum, t) => sum + (t.outstanding || 0), 0);
+                      return {
+                        class: cls,
+                        Paid: totalPaid,
+                        Outstanding: totalOutstanding,
+                      };
+                    })}
+                  margin={{ top: 5, right: 20, left: 10, bottom: 50 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                  <XAxis
+                    dataKey="class"
+                    stroke="#9ca3af"
+                    interval={0}
+                    angle={-30}
+                    textAnchor="end"
+                    tick={{ fontSize: 12 }}
+                  />
+                  <YAxis stroke="#9ca3af" />
+                  <Tooltip formatter={(v) => `KES ${v.toLocaleString()}`} />
+                  <Legend />
+                  <Bar dataKey="Paid" fill="#4ade80" />
+                  <Bar dataKey="Outstanding" fill="#f87171" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          ) : (
+            <p className="text-gray-400">No class summary data available.</p>
+          )}
+        </ChartCard>
 
-              // 3️⃣ Fallback: alphabetical
-              return aClass.localeCompare(bClass);
-            })
-            .map(([cls, terms]) => {
-              const totalPaid = Object.values(terms || {}).reduce(
-                (sum, t) => sum + (t.paid || 0),
-                0
-              );
-              const totalOutstanding = Object.values(terms || {}).reduce(
-                (sum, t) => sum + (t.outstanding || 0),
-                0
-              );
-              return { class: cls, Paid: totalPaid, Outstanding: totalOutstanding };
-            })}
-          margin={{ top: 5, right: 20, left: 10, bottom: 50 }}
-        >
-          <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-          <XAxis
-            dataKey="class"
-            stroke="#9ca3af"
-            interval={0}
-            angle={-30}
-            textAnchor="end"
-            tick={{ fontSize: 12 }}
-          />
-          <YAxis stroke="#9ca3af" />
-          <Tooltip formatter={(v) => `KES ${v.toLocaleString()}`} />
-          <Legend />
-          <Bar dataKey="Paid" fill="#4ade80" />
-          <Bar dataKey="Outstanding" fill="#f87171" />
-        </BarChart>
-      </ResponsiveContainer>
-    </div>
-  ) : (
-    <p className="text-gray-400">No class summary data available.</p>
-  )}
-</ChartCard>
-
-  {/* Extra chart - term comparison */}
+        {/* Extra chart - term comparison */}
         <ChartCard title="📈 Term Comparison">
           {loadingComparison ? (
             <p className="text-gray-400">Loading...</p>
@@ -582,303 +580,319 @@ const [debtorMaxOutstanding, setDebtorMaxOutstanding] = useState("");
             </ResponsiveContainer>
           )}
         </ChartCard>
-
-
-
-       
-      
       </div>
-{/* Class Fees Table */}
-{/* Class Fees Table */}
-{/* Class Fees Table */}
-<ChartCard title="🏫 Class Fees Summary">
-  {loadingClass ? (
-    <p className="text-gray-400 animate-pulse">Loading class summary...</p>
-  ) : classSummary && Object.keys(classSummary).length > 0 ? (
-    <div className="overflow-x-auto rounded-2xl border border-gray-700 shadow-md">
-      <table className="min-w-full border-collapse text-gray-200">
-        <thead>
-          <tr className="bg-gray-900/70 backdrop-blur-sm text-gray-300 text-sm uppercase tracking-wider">
-            <th className="p-3 text-left border-b border-gray-700">Class</th>
-            {["Term 1", "Term 2", "Term 3"].map((term, i) => (
-              <th
-                key={term}
-                className={`p-3 text-center border-b border-gray-700 ${
-                  i === 0
-                    ? "text-blue-400"
-                    : i === 1
-                    ? "text-amber-400"
-                    : "text-emerald-400"
-                }`}
-              >
-                {term}
-                <div className="text-xs text-gray-500 font-normal">
-                  Paid / Outstanding
-                </div>
-              </th>
-            ))}
-          </tr>
-        </thead>
-
-        <tbody className="divide-y divide-gray-800">
-          {Object.keys(classSummary)
-            .sort((a, b) => {
-              // Sort PP then Grades
-              if (a.startsWith("PP") && b.startsWith("PP")) {
-                return parseInt(a.replace(/\D/g, ""), 10) - parseInt(b.replace(/\D/g, ""), 10);
-              }
-              if (a.startsWith("PP")) return -1;
-              if (b.startsWith("PP")) return 1;
-
-              const numA = parseInt(a.replace(/\D/g, ""), 10);
-              const numB = parseInt(b.replace(/\D/g, ""), 10);
-              if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
-
-              return a.localeCompare(b);
-            })
-            .map((cls) => (
-              <tr
-                key={cls}
-                className="hover:bg-gray-800/60 transition-colors duration-200"
-              >
-                <td className="p-3 font-semibold text-gray-100 border-r border-gray-800">
-                  {cls}
-                </td>
-
-                {["Term 1", "Term 2", "Term 3"].map((term, i) => {
-                  const stats = classSummary[cls][term] || { paid: 0, outstanding: 0 };
-                  const color =
-                    i === 0
-                      ? "text-blue-400"
-                      : i === 1
-                      ? "text-amber-400"
-                      : "text-emerald-400";
-                  return (
-                    <td key={term} className="p-3 text-center border-r border-gray-800">
-                      <div className={`font-medium ${color}`}>
-                        {stats.paid ? `KES ${stats.paid.toLocaleString()}` : "KES 0"}
-                      </div>
-                      <div className="text-sm text-gray-400">
-                        {stats.outstanding
-                          ? `KES ${stats.outstanding.toLocaleString()}`
-                          : "KES 0"}
-                      </div>
-                    </td>
-                  );
-                })}
-              </tr>
-            ))}
-        </tbody>
-      </table>
-    </div>
-  ) : (
-    <p className="text-gray-400">No class summary data available.</p>
-  )}
-</ChartCard>
-
-
-
-      {/* Debtors */}
-      {/* Debtors */}
-     {/* 🚨 Debtors Section */}
-<section className="bg-gray-900 rounded-2xl shadow border border-gray-800 p-6 overflow-hidden">
-  <div className="flex justify-between items-center mb-4 border-b border-gray-800 pb-2">
-    <h2 className="text-xl font-semibold flex items-center gap-2">
-      🚨 Debtors List
-    </h2>
-    <span className="text-sm text-gray-400">
-      {debtors?.totalDebtors
-        ? `${debtors.totalDebtors} total debtors`
-        : "—"}
-    </span>
-  </div>
-
-  {/* 🔍 Debtors Filters */}
-<div className="bg-gray-800/60 p-4 rounded-xl mb-4 border border-gray-700">
-  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-    {/* Class Filter */}
-    <div>
-      <label className="block text-gray-400 text-sm mb-1">Class</label>
-      <select
-        value={debtorFilterClass}
-        onChange={(e) => {
-          setDebtorFilterClass(e.target.value);
-          setDebtorPage(1);
-        }}
-        className="w-full bg-gray-900 border border-gray-700 text-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-      >
-        <option value="All">All Classes</option>
-        {availableClasses.map((cls) => (
-          <option key={cls} value={cls}>
-            {cls}
-          </option>
-        ))}
-      </select>
-    </div>
-
-    {/* Search Filter */}
-    <div>
-      <label className="block text-gray-400 text-sm mb-1">Search by Name</label>
-      <input
-        type="text"
-        value={debtorSearch}
-        onChange={(e) => {
-          setDebtorSearch(e.target.value);
-          setDebtorPage(1);
-        }}
-        placeholder="Enter student name..."
-        className="w-full bg-gray-900 border border-gray-700 text-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-      />
-    </div>
-
-    {/* Min Outstanding */}
-    <div>
-      <label className="block text-gray-400 text-sm mb-1">Min Outstanding (KES)</label>
-      <input
-        type="number"
-        value={debtorMinOutstanding}
-        onChange={(e) => {
-          setDebtorMinOutstanding(e.target.value);
-          setDebtorPage(1);
-        }}
-        placeholder="e.g. 5000"
-        className="w-full bg-gray-900 border border-gray-700 text-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-      />
-    </div>
-
-    {/* Max Outstanding */}
-    <div>
-      <label className="block text-gray-400 text-sm mb-1">Max Outstanding (KES)</label>
-      <input
-        type="number"
-        value={debtorMaxOutstanding}
-        onChange={(e) => {
-          setDebtorMaxOutstanding(e.target.value);
-          setDebtorPage(1);
-        }}
-        placeholder="e.g. 20000"
-        className="w-full bg-gray-900 border border-gray-700 text-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-      />
-    </div>
-  </div>
-
-  {/* Reset Filters */}
-  <div className="mt-4 text-right">
-    <button
-      onClick={() => {
-        setDebtorFilterClass("All");
-        setDebtorSearch("");
-        setDebtorMinOutstanding("");
-        setDebtorMaxOutstanding("");
-        setDebtorPage(1);
-      }}
-      className="bg-gray-700 hover:bg-gray-600 text-gray-100 px-4 py-2 rounded-lg transition"
-    >
-      Reset Filters
-    </button>
-  </div>
-</div>
-
-
-  {loadingDebtors ? (
-    <p className="text-gray-400 animate-pulse">Loading debtors...</p>
-  ) : debtors?.totalDebtors === 0 ? (
-    <p className="text-green-400">🎉 All students are cleared!</p>
-  ) : (
-    <>
-      <div className="overflow-x-auto rounded-xl border border-gray-800">
-        <table className="min-w-full border-collapse text-gray-200">
-          <thead className="bg-gray-800/60 text-gray-300 text-sm uppercase tracking-wide">
-            <tr>
-              <th className="p-3 text-left border-b border-gray-700">Student</th>
-              <th className="p-3 text-left border-b border-gray-700">Class</th>
-              <th className="p-3 text-right border-b border-gray-700">
-                Total Outstanding
-              </th>
-              <th className="p-3 text-center border-b border-gray-700">
-                Term Breakdown
-              </th>
-            </tr>
-          </thead>
-
-          <tbody className="divide-y divide-gray-800">
-            {debtors.debtors.map((d, idx) => (
-              <tr
-                key={d.studentId}
-                className="hover:bg-gray-800/50 transition duration-150"
-              >
-                {/* Name */}
-                <td className="p-3 font-semibold text-gray-100">
-                  {d.name}
-                </td>
-
-                {/* Class */}
-                <td className="p-3 text-gray-400">{d.classLevel}</td>
-
-                {/* Total Outstanding */}
-                <td className="p-3 text-right font-bold text-red-400">
-                  KES {d.totalOutstanding.toLocaleString()}
-                </td>
-
-                {/* Term Breakdown */}
-                <td className="p-3 text-center">
-                  <div className="flex flex-wrap justify-center gap-2">
-                    {d.terms.map((t, i) => {
-                      const termColor =
+      {/* Class Fees Table */}
+      {/* Class Fees Table */}
+      {/* Class Fees Table */}
+      <ChartCard title="🏫 Class Fees Summary">
+        {loadingClass ? (
+          <p className="text-gray-400 animate-pulse">
+            Loading class summary...
+          </p>
+        ) : classSummary && Object.keys(classSummary).length > 0 ? (
+          <div className="overflow-x-auto rounded-2xl border border-gray-700 shadow-md">
+            <table className="min-w-full border-collapse text-gray-200">
+              <thead>
+                <tr className="bg-gray-900/70 backdrop-blur-sm text-gray-300 text-sm uppercase tracking-wider">
+                  <th className="p-3 text-left border-b border-gray-700">
+                    Class
+                  </th>
+                  {["Term 1", "Term 2", "Term 3"].map((term, i) => (
+                    <th
+                      key={term}
+                      className={`p-3 text-center border-b border-gray-700 ${
                         i === 0
-                          ? "bg-blue-900/40 text-blue-300 border border-blue-800"
+                          ? "text-blue-400"
                           : i === 1
-                          ? "bg-amber-900/40 text-amber-300 border border-amber-800"
-                          : "bg-emerald-900/40 text-emerald-300 border border-emerald-800";
+                          ? "text-amber-400"
+                          : "text-emerald-400"
+                      }`}
+                    >
+                      {term}
+                      <div className="text-xs text-gray-500 font-normal">
+                        Paid / Outstanding
+                      </div>
+                    </th>
+                  ))}
+                </tr>
+              </thead>
 
+              <tbody className="divide-y divide-gray-800">
+                {Object.keys(classSummary)
+                  .sort((a, b) => {
+                    // Sort PP then Grades
+                    if (a.startsWith("PP") && b.startsWith("PP")) {
                       return (
-                        <span
-                          key={t.term}
-                          className={`text-xs font-medium px-3 py-1 rounded-full ${termColor}`}
-                        >
-                          {t.term}:{" "}
-                          <span className="font-semibold">
-                            KES {t.outstanding.toLocaleString()}
-                          </span>
-                        </span>
+                        parseInt(a.replace(/\D/g, ""), 10) -
+                        parseInt(b.replace(/\D/g, ""), 10)
                       );
-                    })}
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+                    }
+                    if (a.startsWith("PP")) return -1;
+                    if (b.startsWith("PP")) return 1;
 
-      {/* Pagination */}
-      <div className="flex justify-between items-center mt-5 text-sm text-gray-300">
-        <span>
-          Page {debtors.currentPage} of {debtors.totalPages}
-        </span>
-        <div className="space-x-2">
-          <button
-            disabled={debtorPage === 1}
-            onClick={() => setDebtorPage((p) => Math.max(p - 1, 1))}
-            className="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 rounded disabled:opacity-40"
-          >
-            ⬅ Prev
-          </button>
-          <button
-            disabled={debtorPage === debtors.totalPages}
-            onClick={() =>
-              setDebtorPage((p) => Math.min(p + 1, debtors.totalPages))
-            }
-            className="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 rounded disabled:opacity-40"
-          >
-            Next ➡
-          </button>
+                    const numA = parseInt(a.replace(/\D/g, ""), 10);
+                    const numB = parseInt(b.replace(/\D/g, ""), 10);
+                    if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+
+                    return a.localeCompare(b);
+                  })
+                  .map((cls) => (
+                    <tr
+                      key={cls}
+                      className="hover:bg-gray-800/60 transition-colors duration-200"
+                    >
+                      <td className="p-3 font-semibold text-gray-100 border-r border-gray-800">
+                        {cls}
+                      </td>
+
+                      {["Term 1", "Term 2", "Term 3"].map((term, i) => {
+                        const stats = classSummary[cls][term] || {
+                          paid: 0,
+                          outstanding: 0,
+                        };
+                        const color =
+                          i === 0
+                            ? "text-blue-400"
+                            : i === 1
+                            ? "text-amber-400"
+                            : "text-emerald-400";
+                        return (
+                          <td
+                            key={term}
+                            className="p-3 text-center border-r border-gray-800"
+                          >
+                            <div className={`font-medium ${color}`}>
+                              {stats.paid
+                                ? `KES ${stats.paid.toLocaleString()}`
+                                : "KES 0"}
+                            </div>
+                            <div className="text-sm text-gray-400">
+                              {stats.outstanding
+                                ? `KES ${stats.outstanding.toLocaleString()}`
+                                : "KES 0"}
+                            </div>
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p className="text-gray-400">No class summary data available.</p>
+        )}
+      </ChartCard>
+
+      {/* Debtors */}
+      {/* Debtors */}
+      {/* 🚨 Debtors Section */}
+      <section className="bg-gray-900 rounded-2xl shadow border border-gray-800 p-6 overflow-hidden">
+        <div className="flex justify-between items-center mb-4 border-b border-gray-800 pb-2">
+          <h2 className="text-xl font-semibold flex items-center gap-2">
+            🚨 Debtors List
+          </h2>
+          <span className="text-sm text-gray-400">
+            {debtors?.totalDebtors
+              ? `${debtors.totalDebtors} total debtors`
+              : "—"}
+          </span>
         </div>
-      </div>
-    </>
-  )}
-</section>
 
+        {/* 🔍 Debtors Filters */}
+        <div className="bg-gray-800/60 p-4 rounded-xl mb-4 border border-gray-700">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Class Filter */}
+            <div>
+              <label className="block text-gray-400 text-sm mb-1">Class</label>
+              <select
+                value={debtorFilterClass}
+                onChange={(e) => {
+                  setDebtorFilterClass(e.target.value);
+                  setDebtorPage(1);
+                }}
+                className="w-full bg-gray-900 border border-gray-700 text-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="All">All Classes</option>
+                {availableClasses.map((cls) => (
+                  <option key={cls} value={cls}>
+                    {cls}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Search Filter */}
+            <div>
+              <label className="block text-gray-400 text-sm mb-1">
+                Search by Name
+              </label>
+              <input
+                type="text"
+                value={debtorSearch}
+                onChange={(e) => {
+                  setDebtorSearch(e.target.value);
+                  setDebtorPage(1);
+                }}
+                placeholder="Enter student name..."
+                className="w-full bg-gray-900 border border-gray-700 text-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            {/* Min Outstanding */}
+            <div>
+              <label className="block text-gray-400 text-sm mb-1">
+                Min Outstanding (KES)
+              </label>
+              <input
+                type="number"
+                value={debtorMinOutstanding}
+                onChange={(e) => {
+                  setDebtorMinOutstanding(e.target.value);
+                  setDebtorPage(1);
+                }}
+                placeholder="e.g. 5000"
+                className="w-full bg-gray-900 border border-gray-700 text-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            {/* Max Outstanding */}
+            <div>
+              <label className="block text-gray-400 text-sm mb-1">
+                Max Outstanding (KES)
+              </label>
+              <input
+                type="number"
+                value={debtorMaxOutstanding}
+                onChange={(e) => {
+                  setDebtorMaxOutstanding(e.target.value);
+                  setDebtorPage(1);
+                }}
+                placeholder="e.g. 20000"
+                className="w-full bg-gray-900 border border-gray-700 text-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+
+          {/* Reset Filters */}
+          <div className="mt-4 text-right">
+            <button
+              onClick={() => {
+                setDebtorFilterClass("All");
+                setDebtorSearch("");
+                setDebtorMinOutstanding("");
+                setDebtorMaxOutstanding("");
+                setDebtorPage(1);
+              }}
+              className="bg-gray-700 hover:bg-gray-600 text-gray-100 px-4 py-2 rounded-lg transition"
+            >
+              Reset Filters
+            </button>
+          </div>
+        </div>
+
+        {loadingDebtors ? (
+          <p className="text-gray-400 animate-pulse">Loading debtors...</p>
+        ) : debtors?.totalDebtors === 0 ? (
+          <p className="text-green-400">🎉 All students are cleared!</p>
+        ) : (
+          <>
+            <div className="overflow-x-auto rounded-xl border border-gray-800">
+              <table className="min-w-full border-collapse text-gray-200">
+                <thead className="bg-gray-800/60 text-gray-300 text-sm uppercase tracking-wide">
+                  <tr>
+                    <th className="p-3 text-left border-b border-gray-700">
+                      Student
+                    </th>
+                    <th className="p-3 text-left border-b border-gray-700">
+                      Class
+                    </th>
+                    <th className="p-3 text-right border-b border-gray-700">
+                      Total Outstanding
+                    </th>
+                    <th className="p-3 text-center border-b border-gray-700">
+                      Term Breakdown
+                    </th>
+                  </tr>
+                </thead>
+
+                <tbody className="divide-y divide-gray-800">
+                  {debtors.debtors.map((d, idx) => (
+                    <tr
+                      key={d.studentId}
+                      className="hover:bg-gray-800/50 transition duration-150"
+                    >
+                      {/* Name */}
+                      <td className="p-3 font-semibold text-gray-100">
+                        {d.name}
+                      </td>
+
+                      {/* Class */}
+                      <td className="p-3 text-gray-400">{d.classLevel}</td>
+
+                      {/* Total Outstanding */}
+                      <td className="p-3 text-right font-bold text-red-400">
+                        KES {d.totalOutstanding.toLocaleString()}
+                      </td>
+
+                      {/* Term Breakdown */}
+                      <td className="p-3 text-center">
+                        <div className="flex flex-wrap justify-center gap-2">
+                          {d.terms.map((t, i) => {
+                            const termColor =
+                              i === 0
+                                ? "bg-blue-900/40 text-blue-300 border border-blue-800"
+                                : i === 1
+                                ? "bg-amber-900/40 text-amber-300 border border-amber-800"
+                                : "bg-emerald-900/40 text-emerald-300 border border-emerald-800";
+
+                            return (
+                              <span
+                                key={t.term}
+                                className={`text-xs font-medium px-3 py-1 rounded-full ${termColor}`}
+                              >
+                                {t.term}:{" "}
+                                <span className="font-semibold">
+                                  KES {t.outstanding.toLocaleString()}
+                                </span>
+                              </span>
+                            );
+                          })}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination */}
+            <div className="flex justify-between items-center mt-5 text-sm text-gray-300">
+              <span>
+                Page {debtors.currentPage} of {debtors.totalPages}
+              </span>
+              <div className="space-x-2">
+                <button
+                  disabled={debtorPage === 1}
+                  onClick={() => setDebtorPage((p) => Math.max(p - 1, 1))}
+                  className="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 rounded disabled:opacity-40"
+                >
+                  ⬅ Prev
+                </button>
+                <button
+                  disabled={debtorPage === debtors.totalPages}
+                  onClick={() =>
+                    setDebtorPage((p) => Math.min(p + 1, debtors.totalPages))
+                  }
+                  className="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 rounded disabled:opacity-40"
+                >
+                  Next ➡
+                </button>
+              </div>
+            </div>
+          </>
+        )}
+      </section>
     </div>
   );
 };

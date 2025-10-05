@@ -30,7 +30,6 @@ const AllParents = () => {
     queryFn: fetchParents,
   });
 
-
   const mutation = useMutation({
     mutationFn: deleteParent,
     onMutate: async (id) => {
@@ -94,113 +93,139 @@ const AllParents = () => {
 
   return (
     <main className="p-6 bg-gray-950 overflow-y-hidden relative">
-  <h1 className="text-2xl font-bold mb-4 text-white">All Parents</h1>
+      <h1 className="text-2xl font-bold mb-4 text-white">All Parents</h1>
 
-  {/* Search input */}
-  <div className="mb-4">
-    <input
-      type="text"
-      placeholder="Search by parent or child name..."
-      value={searchTerm}
-      onChange={(e) => setSearchTerm(e.target.value)}
-      className="w-full p-2 rounded bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-    />
-  </div>
+      {/* Search input */}
+      <div className="mb-4">
+        <input
+          type="text"
+          placeholder="Search by parent or child name..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full p-2 rounded bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+      </div>
 
-  {!isLoading && !isError && (
-    <div className="w-full bg-gray-900 rounded-lg overflow-hidden">
-      {/* Table header */}
-      <table className="w-full text-sm table-fixed">
-        <thead className="bg-gray-800 sticky top-0 z-10">
-          <tr>
-            <th className="p-2 text-left text-white">Name</th>
-            <th className="p-2 text-left text-white">Email</th>
-            <th className="p-2 text-left text-white">Phone</th>
-            <th className="p-2 text-left text-white">Children</th>
-            <th className="p-2 text-left text-white">Actions</th>
-          </tr>
-        </thead>
-      </table>
-
-      {/* Scrollable table body */}
-      <div className="max-h-[500px] overflow-y-auto">
-        <table className="w-full text-sm table-fixed">
-          <tbody>
-            {filteredParents.length > 0 ? (
-              filteredParents.map((p, i) => (
-                <tr
-                  key={p._id || i}
-                  className={`${i % 2 === 0 ? "bg-gray-950" : "bg-gray-900"} hover:bg-gray-850 transition`}
-                >
-                  <td className="p-2 text-white">{p.name}</td>
-                  <td className="p-2 text-white">{p.email}</td>
-                  <td className="p-2 text-white">{p.phoneNumber}</td>
-                  <td className="p-2 text-white">
-                    {p.children && p.children.length > 0
-                      ? p.children.map((c) => `${c.firstName} ${c.lastName}`).join(", ")
-                      : "-"}
-                  </td>
-                  <td className="p-2 flex gap-2">
-                    <button
-                      onClick={() => handleEdit(p._id)}
-                      className="px-3 py-1 rounded border border-gray-700 text-gray-200 hover:bg-gray-800 transition"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => confirmDelete(p)}
-                      className="px-3 py-1 rounded border border-gray-700 text-gray-200 hover:bg-gray-800 transition"
-                    >
-                      Delete
-                    </button>
-                  </td>
-                </tr>
-              ))
-            ) : (
+      {!isLoading && !isError && (
+        <div className="w-full bg-gray-900 rounded-lg overflow-hidden">
+          {/* Table header */}
+          <table className="w-full text-sm table-fixed">
+            <thead className="bg-gray-800 sticky top-0 z-10">
               <tr>
-                <td colSpan="5" className="text-center p-4 text-gray-400">
-                  No parents found.
-                </td>
+                <th className="p-2 text-left text-white">Name</th>
+                <th className="p-2 text-left text-white">Email</th>
+                <th className="p-2 text-left text-white">Phone</th>
+                <th className="p-2 text-left text-white">Children</th>
+                <th className="p-2 text-left text-white">Actions</th>
               </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  )}
+            </thead>
+          </table>
 
-  {isLoading && <p className="text-gray-400">Loading parents...</p>}
-  {isError && <p className="text-red-500">❌ Failed to fetch parents</p>}
+          {/* Scrollable table body */}
+          <div className="max-h-[500px] overflow-y-auto">
+            <table className="w-full text-sm table-fixed">
+              <tbody>
+                {filteredParents.length > 0 ? (
+                  filteredParents.map((p, i) => (
+                    <tr
+                      key={p._id || i}
+                      className={`${
+                        i % 2 === 0 ? "bg-gray-950" : "bg-gray-900"
+                      } hover:bg-gray-850 transition`}
+                    >
+                      <td className="p-2 text-white">{p.name}</td>
+                      <td className="p-2 text-white">
+                        {p.email ? (
+                          <a
+                            href={`mailto:${p.email}`}
+                            className="text-blue-400 hover:underline hover:text-blue-300"
+                          >
+                            {p.email}
+                          </a>
+                        ) : (
+                          "-"
+                        )}
+                      </td>
 
-  {/* Delete Modal */}
-  {showModal && parentToDelete && (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-      <div className="bg-gray-900 rounded-lg p-6 w-80">
-        <h2 className="text-lg font-bold text-white mb-4">Delete Parent</h2>
-        <p className="text-gray-300 mb-6">
-          Are you sure you want to delete{" "}
-          <span className="font-semibold">{parentToDelete.name}</span>?
-        </p>
-        <div className="flex justify-end gap-2">
-          <button
-            onClick={handleCancel}
-            className="px-4 py-2 rounded bg-gray-700 text-gray-200 hover:bg-gray-600 transition"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleDelete}
-            disabled={mutation.isLoading}
-            className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-500 transition"
-          >
-            {mutation.isLoading ? "Deleting..." : "Delete"}
-          </button>
+                      <td className="p-2 text-white">
+                        {p.phoneNumber ? (
+                          <a
+                            href={`tel:${p.phoneNumber}`}
+                            className="text-blue-400 hover:underline hover:text-blue-300"
+                          >
+                            {p.phoneNumber}
+                          </a>
+                        ) : (
+                          "-"
+                        )}
+                      </td>
+                      <td className="p-2 text-white">
+                        {p.children && p.children.length > 0
+                          ? p.children
+                              .map((c) => `${c.firstName} ${c.lastName}`)
+                              .join(", ")
+                          : "-"}
+                      </td>
+                      <td className="p-2 flex gap-2">
+                        <button
+                          onClick={() => handleEdit(p._id)}
+                          className="px-3 py-1 rounded border border-gray-700 text-gray-200 hover:bg-gray-800 transition"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => confirmDelete(p)}
+                          className="px-3 py-1 rounded border border-gray-700 text-gray-200 hover:bg-gray-800 transition"
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="5" className="text-center p-4 text-gray-400">
+                      No parents found.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
-    </div>
-  )}
-</main>
+      )}
 
+      {isLoading && <p className="text-gray-400">Loading parents...</p>}
+      {isError && <p className="text-red-500">❌ Failed to fetch parents</p>}
+
+      {/* Delete Modal */}
+      {showModal && parentToDelete && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+          <div className="bg-gray-900 rounded-lg p-6 w-80">
+            <h2 className="text-lg font-bold text-white mb-4">Delete Parent</h2>
+            <p className="text-gray-300 mb-6">
+              Are you sure you want to delete{" "}
+              <span className="font-semibold">{parentToDelete.name}</span>?
+            </p>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={handleCancel}
+                className="px-4 py-2 rounded bg-gray-700 text-gray-200 hover:bg-gray-600 transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={mutation.isLoading}
+                className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-500 transition"
+              >
+                {mutation.isLoading ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </main>
   );
 };
 

@@ -183,7 +183,9 @@ const recordResult = async (req, res) => {
 const getResultsAudit = async (req, res) => {
   try {
     const { examId, classLevel, academicYear, term } = req.query;
-    const filter = {};
+    const filter = {
+      school: req.user.school
+    };
     if (classLevel) filter.classLevel = classLevel;
     if (academicYear) filter["examResults.academicYear"] = academicYear;
     if (term) filter["examResults.term"] = term;

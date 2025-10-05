@@ -136,8 +136,31 @@ const AllBursars = () => {
                 } hover:bg-gray-850 transition`}
               >
                 <td className="p-2 text-white">{b.name}</td>
-                <td className="p-2 text-white">{b.email}</td>
-                <td className="p-2 text-white">{b.phoneNumber}</td>
+                <td className="p-2 text-white">
+                        {b.email ? (
+                          <a
+                            href={`mailto:${b.email}`}
+                            className="text-blue-400 hover:underline hover:text-blue-300"
+                          >
+                            {b.email}
+                          </a>
+                        ) : (
+                          "-"
+                        )}
+                      </td>
+
+                      <td className="p-2 text-white">
+                        {b.phoneNumber ? (
+                          <a
+                            href={`tel:${b.phoneNumber}`}
+                            className="text-blue-400 hover:underline hover:text-blue-300"
+                          >
+                            {b.phoneNumber}
+                          </a>
+                        ) : (
+                          "-"
+                        )}
+                      </td>
                 <td className="p-2 flex gap-2">
                   <button
                     onClick={() => handleEdit(b._id)}

@@ -152,8 +152,31 @@ const AllStudents = () => {
                 <td className="p-2 text-white">{formatDate(s.dateOfBirth)}</td>
                 <td className="p-2 text-white">{s.classLevel}</td>
                 <td className="p-2 text-white">{s.guardian?.name}</td>
-                <td className="p-2 text-white">{s.guardian?.email}</td>
-                <td className="p-2 text-white">{s.guardian?.phoneNumber}</td>
+               <td className="p-2 text-white">
+                        {s.guardian?.email ? (
+                          <a
+                            href={`mailto:${s.guardian?.email}`}
+                            className="text-blue-400 hover:underline hover:text-blue-300"
+                          >
+                            {s.guardian?.email}
+                          </a>
+                        ) : (
+                          "-"
+                        )}
+                      </td>
+
+                      <td className="p-2 text-white text-center">
+                        {s.guardian?.phoneNumber ? (
+                          <a
+                            href={`tel:${s.guardian?.phoneNumber}`}
+                            className="text-blue-400 hover:underline hover:text-blue-300"
+                          >
+                            {s.guardian?.phoneNumber}
+                          </a>
+                        ) : (
+                          "-"
+                        )}
+                      </td>
                 <td className="p-2 flex gap-2">
                   <button onClick={() => handleEdit(s._id)} className="px-3 py-1 rounded border border-gray-700 text-gray-200 hover:bg-gray-800 transition">
                     Edit
