@@ -1,0 +1,20 @@
+{
+  "ci": {
+    "collect": {
+      "url": [
+        "https://nexa-two-swart.vercel.app/features",
+        "https://nexa-two-swart.vercel.app/pricing",
+        "https://nexa-two-swart.vercel.app/contact",
+        "https://nexa-two-swart.vercel.app/login",
+        "https://nexa-two-swart.vercel.app/register"
+
+       
+      ],
+      "numberOfRuns": 1
+    },
+    "upload": {
+      "target": "filesystem",
+      "outputDir": "./lhci-reports"
+    }
+  }
+}

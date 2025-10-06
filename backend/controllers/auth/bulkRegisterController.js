@@ -11,7 +11,7 @@ const handleBulkRegister = async (req, res) => {
     return res.status(400).json({ msg: "No personnel data provided" });
   }
 
-  const createdUsers = [];
+  
 
   for (const p of personnel) {
     const { name, email, role, password, phoneNumber } = p;
@@ -52,7 +52,7 @@ const handleBulkRegister = async (req, res) => {
     });
     await log.save();
 
-    createdUsers.push({ name, email, role });
+    
   }
 
   res.status(201).json({

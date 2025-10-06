@@ -6,7 +6,26 @@ download templates for adding people
 
 deleting paypal.acc
 
+
+show only first name o logo 
+
 notification system
+
+have cache for students in class teacher for attendance, 
+
+remove choose dates option for live production 
+
+show loading students when loading for attendance
+
+show no data available if no data in any page , also show if connection is not there and have a button to reload 
+
+make sure attendance view is okay when lots of classes are marked
+
+log filter might be slow, and attendance log filters need alot of work
+
+make activities do more 
+
+maybe push subscription to backend is sending no actual accesstoken or sumn---------
 
  you see how the three files look where parents have children whose names are in students and onboarding also has those students in students.xlsx.......i want you to see how they are and give me 3 similar files, one for students, one for parents and one for onboarding -- with same headers but different parents , different emails, different names , different children etc-----i empahsize you see how the students in students.xlsx are being used in onboarding.xlsx and parents.xlsx in children section,,,see how they use only first name and last name in some parts and some parts they use all names including middlename,,,, dont screw this up, i wont be able to upload these for reference again,,,,,the ones i have uploaded is data for one fake school, now create for another fake school---remember they should have different emails and phonenumbers and names and details as the mongodb is the same----also another thing that really matters is that the three xlsx files you give me actually are conected like the ones i gave you
 

@@ -56,6 +56,8 @@ const FeeHistoryWrapper = () => {
 const HomeRedirect = () => {
   const { accessToken } = useSelector((state) => state.auth);
 
+  console.log('accessToken', accessToken)
+
   // Wait until PersistLogin has finished loading
   if (accessToken === undefined)
     return <p className="p-6 text-gray-400">Loading...</p>; // or a spinner

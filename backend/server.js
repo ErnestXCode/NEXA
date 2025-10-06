@@ -3,6 +3,8 @@ dotenv.config();
 
 const express = require("express");
 const cookieParser = require("cookie-parser");
+const compression = require('compression');
+
 const cors = require("cors");
 const connectDB = require("./config/connectDB");
 const http = require("http");
@@ -63,6 +65,8 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 app.use(cookieParser());
+app.use(compression());
+
 
 // app.use((req, res, next) => {
 //   if (!req.body && !req.query && !req.params) return next();
