@@ -40,8 +40,6 @@ exports.recordTransaction = async (req, res) => {
       handledBy: userId,
     });
 
-    console.log(txn);
-
     res.status(201).json({ message: "Transaction recorded", txn });
   } catch (err) {
     console.error("recordTransaction error:", err);
@@ -161,25 +159,90 @@ exports.getStudentTransactions = async (req, res) => {
 /* -------------------------------
    🏫 Whole-School Term Summary
 --------------------------------*/
+// exports.getSchoolTermSummary = async (req, res) => {
+//   try {
+//     const schoolId = req.user.school;
+//     const { academicYear, term } = req.query;
+
+//     const students = await Student.find({ school: schoolId });
+
+//     let totalExpected = 0;
+//     let totalPaid = 0;
+
+//     for (const student of students) {
+//       const expected = await student.getExpectedFee(academicYear, term);
+
+//       const txns = await FeeTransaction.find({
+//         student: student._id,
+//         academicYear,
+//         term,
+//       });
+//       const paid = txns.reduce((sum, t) => sum + t.amount, 0);
+
+//       totalExpected += expected;
+//       totalPaid += paid;
+//     }
+
+//     res.json({
+//       schoolId,
+//       academicYear,
+//       term,
+//       expected: totalExpected,
+//       paid: totalPaid,
+//       outstanding: totalExpected - totalPaid,
+//     });
+//   } catch (err) {
+//     console.error("getSchoolTermSummary error:", err);
+//     res.status(500).json({ message: "Server error" });
+//   }
+// };
 exports.getSchoolTermSummary = async (req, res) => {
   try {
     const schoolId = req.user.school;
     const { academicYear, term } = req.query;
 
+    // keep Mongoose documents (no .lean()) so instance methods like getExpectedFee work
     const students = await Student.find({ school: schoolId });
 
     let totalExpected = 0;
     let totalPaid = 0;
 
-    for (const student of students) {
-      const expected = await student.getExpectedFee(academicYear, term);
-
-      const txns = await FeeTransaction.find({
-        student: student._id,
+    if (!students.length) {
+      return res.json({
+        schoolId,
         academicYear,
         term,
+        expected: 0,
+        paid: 0,
+        outstanding: 0,
       });
-      const paid = txns.reduce((sum, t) => sum + t.amount, 0);
+    }
+
+    const studentIds = students.map((s) => s._id);
+
+    // fetch all transactions for those students in one query
+    const transactions = await FeeTransaction.find({
+      student: { $in: studentIds },
+      academicYear,
+      term,
+    }).lean();
+
+    // group totals by student id for O(1) lookup
+    const txnMap = new Map();
+    for (const t of transactions) {
+      const sid = t.student.toString();
+      txnMap.set(sid, (txnMap.get(sid) || 0) + (t.amount || 0));
+    }
+
+    // compute expected fees in parallel (preserves instance method)
+    const expectedResults = await Promise.all(
+      students.map((s) => s.getExpectedFee(academicYear, term))
+    );
+
+    for (let i = 0; i < students.length; i++) {
+      const sid = students[i]._id.toString();
+      const expected = expectedResults[i] || 0;
+      const paid = txnMap.get(sid) || 0;
 
       totalExpected += expected;
       totalPaid += paid;
@@ -207,23 +270,51 @@ exports.getClassTermSummary = async (req, res) => {
     const schoolId = req.user.school;
     const { academicYear, term, className } = req.query;
 
+    // Keep Mongoose docs to retain instance methods like getExpectedFee()
     const students = await Student.find({
       school: schoolId,
       classLevel: className,
     });
 
+    if (!students.length) {
+      return res.json({
+        className,
+        academicYear,
+        term,
+        expected: 0,
+        paid: 0,
+        outstanding: 0,
+      });
+    }
+
+    const studentIds = students.map((s) => s._id);
+
+    // Fetch all relevant transactions in one query
+    const transactions = await FeeTransaction.find({
+      student: { $in: studentIds },
+      academicYear,
+      term,
+    }).lean();
+
+    // Group transactions by student for O(1) lookup
+    const txnMap = new Map();
+    for (const t of transactions) {
+      const sid = t.student.toString();
+      txnMap.set(sid, (txnMap.get(sid) || 0) + (t.amount || 0));
+    }
+
+    // Compute expected fees in parallel
+    const expectedResults = await Promise.all(
+      students.map((s) => s.getExpectedFee(academicYear, term))
+    );
+
     let expectedTotal = 0;
     let paidTotal = 0;
 
-    for (const student of students) {
-      const expected = await student.getExpectedFee(academicYear, term);
-
-      const txns = await FeeTransaction.find({
-        student: student._id,
-        academicYear,
-        term,
-      });
-      const paid = txns.reduce((sum, t) => sum + t.amount, 0);
+    for (let i = 0; i < students.length; i++) {
+      const sid = students[i]._id.toString();
+      const expected = expectedResults[i] || 0;
+      const paid = txnMap.get(sid) || 0;
 
       expectedTotal += expected;
       paidTotal += paid;
@@ -249,29 +340,50 @@ exports.getClassTermSummary = async (req, res) => {
 exports.getSchoolSummary = async (req, res) => {
   try {
     const schoolId = req.user.school;
-
     const { academicYear } = req.query;
 
+    // keep Mongoose docs for instance methods
     const students = await Student.find({ school: schoolId });
 
-    let totalExpected = 0;
-    let totalPaid = 0;
-
-    for (const student of students) {
-      const expected =
-        (await student.getExpectedFee(academicYear, "Term 1")) +
-        (await student.getExpectedFee(academicYear, "Term 2")) +
-        (await student.getExpectedFee(academicYear, "Term 3"));
-
-      const balances = await student.computeBalances(academicYear);
-
-      const paid =
-        expected -
-        Object.values(balances).reduce((a, b) => a + (b.amount || b), 0);
-
-      totalExpected += expected;
-      totalPaid += paid;
+    if (!students.length) {
+      return res.json({
+        schoolId,
+        academicYear,
+        expected: 0,
+        paid: 0,
+        outstanding: 0,
+      });
     }
+
+    const terms = ["Term 1", "Term 2", "Term 3"];
+
+    // Run all expected fees and balances in parallel for each student
+    const results = await Promise.all(
+      students.map(async (student) => {
+        // Run 3 term expected fees in parallel
+        const expectedFees = await Promise.all(
+          terms.map((term) => student.getExpectedFee(academicYear, term))
+        );
+
+        const expected = expectedFees.reduce((sum, v) => sum + (v || 0), 0);
+
+        // Compute balances once
+        const balances = await student.computeBalances(academicYear);
+
+        const totalBalance = Object.values(balances).reduce(
+          (a, b) => a + (b.amount || b || 0),
+          0
+        );
+
+        const paid = expected - totalBalance;
+
+        return { expected, paid };
+      })
+    );
+
+    // Aggregate totals
+    const totalExpected = results.reduce((sum, r) => sum + r.expected, 0);
+    const totalPaid = results.reduce((sum, r) => sum + r.paid, 0);
 
     res.json({
       schoolId,
@@ -299,34 +411,60 @@ exports.getSchoolTermComparison = async (req, res) => {
     const school = await School.findById(schoolId);
     if (!school) return res.status(404).json({ msg: "School not found" });
 
+    // Keep mongoose documents for instance methods
     const students = await Student.find({ school: schoolId });
 
-    const transactions = await FeeTransaction.find({
-      student: { $in: students.map((s) => s._id) },
-      academicYear,
-    });
-
-    const comparison = [];
-
-    for (const term of terms) {
-      // expected = sum of each student's expected fee
-      const expectedList = await Promise.all(
-        students.map((s) => s.getExpectedFee(academicYear, term))
+    if (!students.length) {
+      return res.json(
+        terms.map((term) => ({
+          term,
+          expected: 0,
+          paid: 0,
+          outstanding: 0,
+        }))
       );
-      const expected = expectedList.reduce((sum, e) => sum + e, 0);
+    }
 
-      // paid = sum of all transactions for that term
-      const paid = transactions
-        .filter((t) => t.term === term)
-        .reduce((sum, t) => sum + t.amount, 0);
+    const studentIds = students.map((s) => s._id);
 
-      comparison.push({
+    // Fetch all term transactions in one query (no N+1)
+    const transactions = await FeeTransaction.find({
+      student: { $in: studentIds },
+      academicYear,
+    }).lean();
+
+    // Pre-group transaction totals by term for O(1) lookup later
+    const termPaidMap = new Map();
+    for (const txn of transactions) {
+      const key = txn.term;
+      termPaidMap.set(key, (termPaidMap.get(key) || 0) + (txn.amount || 0));
+    }
+
+    // Compute expected fees for all terms in parallel
+    const expectedResults = {};
+    await Promise.all(
+      terms.map(async (term) => {
+        const expectedList = await Promise.all(
+          students.map((s) => s.getExpectedFee(academicYear, term))
+        );
+        expectedResults[term] = expectedList.reduce(
+          (sum, e) => sum + (e || 0),
+          0
+        );
+      })
+    );
+
+    // Build final comparison array
+    const comparison = terms.map((term) => {
+      const expected = expectedResults[term] || 0;
+      const paid = termPaidMap.get(term) || 0;
+      return {
         term,
         expected,
         paid,
         outstanding: expected - paid,
-      });
-    }
+      };
+    });
 
     res.json(comparison);
   } catch (err) {
@@ -338,32 +476,97 @@ exports.getSchoolTermComparison = async (req, res) => {
 /* -------------------------------
    📚 Class-Level Breakdown
 --------------------------------*/
+// exports.getClassSummary = async (req, res) => {
+//   try {
+
+//     const schoolId = req.user.school;
+//     const { academicYear } = req.query;
+
+//     const students = await Student.find({ school: schoolId });
+
+//     const summary = {};
+
+//     const terms = ["Term 1", "Term 2", "Term 3"];
+
+//     for (const student of students) {
+//       const classLevel = student.classLevel;
+
+//       if (!summary[classLevel]) {
+//         summary[classLevel] = {};
+//         terms.forEach((term) => {
+//           summary[classLevel][term] = { expected: 0, paid: 0, outstanding: 0 };
+//         });
+//       }
+
+//       const balances = await student.computeBalances(academicYear);
+
+//       for (const term of terms) {
+//         const expected = await student.getExpectedFee(academicYear, term);
+//         const termBalance = balances[term] || 0;
+//         const paid = expected - termBalance;
+
+//         summary[classLevel][term].expected += expected;
+//         summary[classLevel][term].paid += paid;
+//         summary[classLevel][term].outstanding += termBalance;
+//       }
+//     }
+
+//     res.json(summary);
+//   } catch (err) {
+//     console.error("getClassSummary error:", err);
+//     res.status(500).json({ message: "Server error" });
+//   }
+// };
 exports.getClassSummary = async (req, res) => {
   try {
-    console.log("hit this guy");
     const schoolId = req.user.school;
     const { academicYear } = req.query;
 
+    // keep mongoose documents so instance methods work
     const students = await Student.find({ school: schoolId });
 
     const summary = {};
-
     const terms = ["Term 1", "Term 2", "Term 3"];
 
-    for (const student of students) {
-      const classLevel = student.classLevel;
+    if (!students.length) {
+      return res.json(summary);
+    }
+
+    // compute balances and expected fees in parallel for all students
+    const balancePromises = students.map((s) =>
+      s.computeBalances(academicYear)
+    );
+    const balanceResults = await Promise.all(balancePromises);
+
+    // For each term, compute all expected fees in parallel too
+    const expectedFeePromises = {};
+    for (const term of terms) {
+      expectedFeePromises[term] = Promise.all(
+        students.map((s) => s.getExpectedFee(academicYear, term))
+      );
+    }
+
+    const expectedFeeResults = {};
+    for (const term of terms) {
+      expectedFeeResults[term] = await expectedFeePromises[term];
+    }
+
+    // combine results
+    for (let i = 0; i < students.length; i++) {
+      const student = students[i];
+      const classLevel = student.classLevel || "Unknown";
 
       if (!summary[classLevel]) {
         summary[classLevel] = {};
-        terms.forEach((term) => {
+        for (const term of terms) {
           summary[classLevel][term] = { expected: 0, paid: 0, outstanding: 0 };
-        });
+        }
       }
 
-      const balances = await student.computeBalances(academicYear);
+      const balances = balanceResults[i] || {};
 
       for (const term of terms) {
-        const expected = await student.getExpectedFee(academicYear, term);
+        const expected = expectedFeeResults[term][i] || 0;
         const termBalance = balances[term] || 0;
         const paid = expected - termBalance;
 
@@ -372,8 +575,6 @@ exports.getClassSummary = async (req, res) => {
         summary[classLevel][term].outstanding += termBalance;
       }
     }
-
-    console.log("summary", summary);
 
     res.json(summary);
   } catch (err) {
@@ -389,6 +590,7 @@ exports.getClassSummary = async (req, res) => {
    🚨 Debtors List (with Pagination)
 --------------------------------*/
 // ✅ Enhanced Debtors Controller with Filters
+
 exports.getDebtors = async (req, res) => {
   try {
     const schoolId = req.user.school;
@@ -439,7 +641,9 @@ exports.getDebtors = async (req, res) => {
           name: `${student.firstName} ${student.lastName}`,
           classLevel: student.classLevel,
           totalOutstanding,
-          terms: termBreakdown.filter((t) => t.outstanding > 0),
+          terms: Array.isArray(termBreakdown)
+            ? termBreakdown.filter((t) => t.outstanding > 0)
+            : [],
         });
       }
     }
@@ -469,7 +673,6 @@ exports.onboardStudents = async (req, res) => {
   try {
     const schoolId = req.user.school;
     const { students, academicYear, term, viaCSV } = req.body;
-    console.log(req.body);
 
     if (!students || !Array.isArray(students)) {
       return res.status(400).json({ message: "students[] is required" });

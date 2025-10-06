@@ -3,12 +3,13 @@ import api from "../../api/axios";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import * as XLSX from "xlsx";
 
+
+
 const AddFeePage = () => {
-  
   const [filteredStudents, setFilteredStudents] = useState([]);
   const currentYear = new Date().getFullYear();
   const defaultAcademicYear = `${currentYear}/${currentYear + 1}`;
-  
+
   const [form, setForm] = useState({
     studentId: "",
     studentName: "",
@@ -30,17 +31,28 @@ const AddFeePage = () => {
       studentId: "",
     },
   ]);
-  
+
   const [bulkYear, setBulkYear] = useState(defaultAcademicYear);
   const [bulkTerm, setBulkTerm] = useState("Term 1");
-  
+
   const feeTypes = ["payment", "adjustment"];
   const methods = ["cash", "mpesa", "card"];
   const terms = ["Term 1", "Term 2", "Term 3"];
-  
-  const queryClient = useQueryClient();
 
-  
+const queryClient = useQueryClient()
+
+  const refetchFinancialData = async () => {
+  await Promise.all([
+    queryClient.refetchQueries(["fees", "balances"]),
+    queryClient.refetchQueries(["schoolSummary"]),
+    queryClient.refetchQueries(["classSummary"]),
+    queryClient.refetchQueries(["schoolTermSummary"]),
+    queryClient.refetchQueries(["classTermSummary"]),
+    queryClient.refetchQueries(["debtors"]),
+  ]);
+};
+
+
   // ✅ Query: all students
   const { data: students = [] } = useQuery({
     queryKey: ["students"],
@@ -65,7 +77,7 @@ const AddFeePage = () => {
       const res = await api.post("/fees/transactions", newFee);
       return res.data;
     },
-    onSuccess: () => {
+    onSuccess:async  () => {
       alert("Payment recorded successfully");
       setForm({
         studentId: "",
@@ -77,13 +89,8 @@ const AddFeePage = () => {
         method: "cash",
         note: "",
       });
-      queryClient.refetchQueries(["fees", "balances"]);
-      queryClient.refetchQueries(["schoolSummary"]);
-      queryClient.refetchQueries(["classSummary"]);
-      queryClient.refetchQueries(["schoolTermSummary"]);
-      queryClient.refetchQueries(["classTermSummary"]);
-      queryClient.refetchQueries(["debtors"]);
 
+     await refetchFinancialData()
     },
     onError: (err) => {
       alert(err.response?.data?.message || "Error submitting payment");
@@ -107,12 +114,9 @@ const AddFeePage = () => {
       );
       return data;
     },
-    onSuccess: () => {
-      queryClient.refetchQueries(["schoolSummary"]);
-      queryClient.refetchQueries(["classSummary"]);
-      queryClient.refetchQueries(["schoolTermSummary"]);
-      queryClient.refetchQueries(["classTermSummary"]);
-      queryClient.refetchQueries(["debtors"]);
+    onSuccess: async () => {
+     await refetchFinancialData()
+      
     },
   });
 
@@ -121,15 +125,12 @@ const AddFeePage = () => {
     mutationFn: async ({ id, action }) => {
       await api.patch(`/fees/proofs/${id}/${action}`);
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       queryClient.refetchQueries(["proofs", "pending"]);
       queryClient.refetchQueries(["myProofs"]);
 
-      queryClient.refetchQueries(["schoolSummary"]);
-      queryClient.refetchQueries(["classSummary"]);
-      queryClient.refetchQueries(["schoolTermSummary"]);
-      queryClient.refetchQueries(["classTermSummary"]);
-      queryClient.refetchQueries(["debtors"]);
+           await refetchFinancialData()
+
     },
   });
 
@@ -160,18 +161,22 @@ const AddFeePage = () => {
   const [isCSVUpload, setIsCSVUpload] = useState(false);
 
   const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!form.studentId) return alert("Please select a valid student");
-    let amountToSend = Number(form.amount);
-    if (form.type === "payment") {
-      // always positive for payment
-      amountToSend = Math.abs(amountToSend);
+    try {
+      e.preventDefault();
+      if (!form.studentId) return alert("Please select a valid student");
+      let amountToSend = Number(form.amount);
+      if (form.type === "payment") {
+        // always positive for payment
+        amountToSend = Math.abs(amountToSend);
+      }
+      addFeeMutation.mutate({
+        ...form,
+        amount: amountToSend,
+        academicYear: form.academicYear,
+      });
+    } catch (error) {
+      console.log(error);
     }
-    addFeeMutation.mutate({
-      ...form,
-      amount: amountToSend,
-      academicYear: form.academicYear,
-    });
   };
 
   const handleProofAction = (id, action) => {

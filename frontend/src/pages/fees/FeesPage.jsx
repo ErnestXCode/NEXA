@@ -23,9 +23,10 @@ const fetcher = async (url) => {
   return res.data;
 };
 
-const FeesPage = ({ schoolId }) => {
+const FeesPage = () => {
   const queryClient = useQueryClient();
   const [academicYear, setAcademicYear] = useState("2025/2026");
+
 
   // local state for new fee rule form
   const [newRule, setNewRule] = useState({
@@ -38,9 +39,9 @@ const FeesPage = ({ schoolId }) => {
 
   /* ---------------- QUERIES ---------------- */
   const { data: schoolSummary, isLoading: loadingSummary } = useQuery({
-    queryKey: ["schoolSummary", schoolId, academicYear],
+    queryKey: ["schoolSummary", undefined, academicYear],
     queryFn: () =>
-      fetcher(`/fees/schools/${schoolId}/summary?academicYear=${academicYear}`),
+      fetcher(`/fees/schools/${undefined}/summary?academicYear=${academicYear}`),
   });
 
   const { data: schoolData } = useQuery({
@@ -51,21 +52,23 @@ const FeesPage = ({ schoolId }) => {
     },
   });
 
+
+
   const availableClasses = schoolData?.classLevels?.map((c) => c.name) || [];
 
   const { data: classSummary, isLoading: loadingClass } = useQuery({
-    queryKey: ["classSummary", schoolId, academicYear],
+    queryKey: ["classSummary", undefined, academicYear],
     queryFn: () =>
       fetcher(
-        `/fees/schools/${schoolId}/class-summary?academicYear=${academicYear}`
+        `/fees/schools/${undefined}/class-summary?academicYear=${academicYear}`
       ),
   });
 
   const { data: termComparison, isLoading: loadingComparison } = useQuery({
-    queryKey: ["schoolTermComparison", schoolId, academicYear],
+    queryKey: ["schoolTermComparison", undefined, academicYear],
     queryFn: () =>
       fetcher(
-        `/fees/schools/${schoolId}/term-comparison?academicYear=${academicYear}`
+        `/fees/schools/${undefined}/term-comparison?academicYear=${academicYear}`
       ),
   });
 
@@ -81,7 +84,7 @@ const FeesPage = ({ schoolId }) => {
   const { data: debtors, isLoading: loadingDebtors } = useQuery({
     queryKey: [
       "debtors",
-      schoolId,
+      undefined,
       academicYear,
       debtorPage,
       debtorLimit,
@@ -92,7 +95,7 @@ const FeesPage = ({ schoolId }) => {
     ],
     queryFn: () =>
       fetcher(
-        `/fees/schools/${schoolId}/debtors?academicYear=${academicYear}&page=${debtorPage}&limit=${debtorLimit}${
+        `/fees/schools/${undefined}/debtors?academicYear=${academicYear}&page=${debtorPage}&limit=${debtorLimit}${
           debtorFilterClass !== "All"
             ? `&classLevel=${encodeURIComponent(debtorFilterClass)}`
             : ""
@@ -106,7 +109,7 @@ const FeesPage = ({ schoolId }) => {
   });
 
   const { data: feeRules, isLoading: loadingRules } = useQuery({
-    queryKey: ["feeRules", schoolId],
+    queryKey: ["feeRules", undefined],
     queryFn: () => fetcher(`/schools/me`), // assuming GET /schools/:id returns feeRules
     select: (d) => d.feeRules || [],
   });
@@ -117,10 +120,10 @@ const FeesPage = ({ schoolId }) => {
 
   // term summary queries
   const { data: schoolTermSummary, isLoading: loadingSchoolTerm } = useQuery({
-    queryKey: ["schoolTermSummary", schoolId, academicYear, selectedTerm],
+    queryKey: ["schoolTermSummary", undefined, academicYear, selectedTerm],
     queryFn: () =>
       fetcher(
-        `/fees/schools/${schoolId}/term-summary?academicYear=${academicYear}&term=${encodeURIComponent(
+        `/fees/schools/${undefined}/term-summary?academicYear=${academicYear}&term=${encodeURIComponent(
           selectedTerm
         )}`
       ),
@@ -129,14 +132,14 @@ const FeesPage = ({ schoolId }) => {
   const { data: classTermSummary, isLoading: loadingClassTerm } = useQuery({
     queryKey: [
       "classTermSummary",
-      schoolId,
+      undefined,
       academicYear,
       selectedClass,
       selectedTerm,
     ],
     queryFn: () =>
       fetcher(
-        `/fees/schools/${schoolId}/class-term-summary?academicYear=${academicYear}&term=${encodeURIComponent(
+        `/fees/schools/${undefined}/class-term-summary?academicYear=${academicYear}&term=${encodeURIComponent(
           selectedTerm
         )}&className=${encodeURIComponent(selectedClass)}`
       ),
@@ -145,9 +148,9 @@ const FeesPage = ({ schoolId }) => {
   /* ---------------- MUTATION ---------------- */
   const updateRulesMutation = useMutation({
     mutationFn: async (rules) =>
-      api.post(`/fees/schools/${schoolId}/feerules`, { feeRules: rules }),
+      api.post(`/fees/schools/${undefined}/feerules`, { feeRules: rules }),
     onSuccess: () => {
-      queryClient.invalidateQueries(["feeRules", schoolId]);
+      queryClient.invalidateQueries(["feeRules", undefined]);
     },
   });
 
@@ -173,7 +176,7 @@ const FeesPage = ({ schoolId }) => {
   const handleDeleteRule = async (ruleId) => {
     try {
       await api.delete(`/fees/fee-rules/${ruleId}`);
-      queryClient.invalidateQueries(["feeRules", schoolId]);
+      queryClient.invalidateQueries(["feeRules", undefined]);
     } catch (err) {
       console.error("Failed to delete rule", err);
     }
