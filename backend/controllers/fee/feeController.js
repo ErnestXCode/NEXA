@@ -6,6 +6,7 @@ const School = require("../../models/School");
    💰 Record a Payment / Adjustment
 --------------------------------*/
 exports.recordTransaction = async (req, res) => {
+  console.time('recordTransaction')
   try {
     const { studentId, academicYear, term, amount, type, method, note } =
       req.body;
@@ -40,6 +41,8 @@ exports.recordTransaction = async (req, res) => {
       handledBy: userId,
     });
 
+    console.timeEnd('recordTransaction')
+
     res.status(201).json({ message: "Transaction recorded", txn });
   } catch (err) {
     console.error("recordTransaction error:", err);
@@ -51,16 +54,16 @@ exports.recordTransaction = async (req, res) => {
    📋 Get All Fee Transactions (Audit)
 --------------------------------*/
 exports.getAllTransactions = async (req, res) => {
+  console.time("getAllTransaction");
+
   try {
     const schoolId = req.user.school;
-    const { academicYear, term, classLevel } = req.query;
+    const { academicYear, term, classLevel, page = 1, limit = 20 } = req.query;
 
-    // Build filter
     const filter = { school: schoolId };
     if (academicYear) filter.academicYear = academicYear;
     if (term) filter.term = term;
 
-    // Optional: filter by class
     let studentFilter = {};
     if (classLevel) studentFilter.classLevel = classLevel;
 
@@ -68,12 +71,27 @@ exports.getAllTransactions = async (req, res) => {
 
     filter.student = { $in: students.map((s) => s._id) };
 
-    const transactions = await FeeTransaction.find(filter)
-      .populate("student", "firstName lastName classLevel")
-      .populate("handledBy", "name")
-      .sort({ createdAt: -1 });
+    const skip = (Number(page) - 1) * Number(limit);
 
-    res.json(transactions);
+    // Get paginated transactions
+    const [transactions, total] = await Promise.all([
+      FeeTransaction.find(filter)
+        .populate("student", "firstName lastName classLevel")
+        .populate("handledBy", "name")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(Number(limit)),
+      FeeTransaction.countDocuments(filter),
+    ]);
+
+    console.timeEnd("getAllTransaction");
+
+    res.json({
+      transactions,
+      total,
+      page: Number(page),
+      totalPages: Math.ceil(total / Number(limit)),
+    });
   } catch (err) {
     console.error("getAllTransactions error:", err);
     res.status(500).json({ message: "Server error" });
@@ -84,6 +102,8 @@ exports.getAllTransactions = async (req, res) => {
    📊 Get Balance for a Student
 --------------------------------*/
 exports.getStudentBalance = async (req, res) => {
+    console.time('getStudentBalance')
+
   try {
     const schoolId = req.user.school;
 
@@ -93,6 +113,8 @@ exports.getStudentBalance = async (req, res) => {
     if (!student) return res.status(404).json({ message: "Student not found" });
 
     const balances = await student.computeBalances(academicYear);
+
+    console.timeEnd('getStudentBalance')
 
     res.json({ studentId, academicYear, balances });
   } catch (err) {
@@ -197,6 +219,8 @@ exports.getStudentTransactions = async (req, res) => {
 //   }
 // };
 exports.getSchoolTermSummary = async (req, res) => {
+    console.time('schoolTermSummary')
+
   try {
     const schoolId = req.user.school;
     const { academicYear, term } = req.query;
@@ -248,6 +272,9 @@ exports.getSchoolTermSummary = async (req, res) => {
       totalPaid += paid;
     }
 
+    console.timeEnd('schoolTermSummary')
+
+
     res.json({
       schoolId,
       academicYear,
@@ -266,6 +293,8 @@ exports.getSchoolTermSummary = async (req, res) => {
    📚 Class-Level Term Summary
 --------------------------------*/
 exports.getClassTermSummary = async (req, res) => {
+    console.time('classTermSummary')
+
   try {
     const schoolId = req.user.school;
     const { academicYear, term, className } = req.query;
@@ -319,6 +348,7 @@ exports.getClassTermSummary = async (req, res) => {
       expectedTotal += expected;
       paidTotal += paid;
     }
+    console.timeEnd('classTermSummary')
 
     res.json({
       className,
@@ -338,14 +368,21 @@ exports.getClassTermSummary = async (req, res) => {
    🏫 Whole-School Summary
 --------------------------------*/
 exports.getSchoolSummary = async (req, res) => {
+  console.time("schoolSummary");
   try {
     const schoolId = req.user.school;
     const { academicYear } = req.query;
+    const terms = ["Term 1", "Term 2", "Term 3"];
 
-    // keep Mongoose docs for instance methods
-    const students = await Student.find({ school: schoolId });
+    // ✅ 1. Load everything in parallel — only 3 queries
+    const [students, school, transactions] = await Promise.all([
+      Student.find({ school: schoolId }).lean(),
+      School.findById(schoolId).lean(),
+      FeeTransaction.find({ school: schoolId, academicYear }).lean(),
+    ]);
 
     if (!students.length) {
+      console.timeEnd("schoolSummary");
       return res.json({
         schoolId,
         academicYear,
@@ -355,42 +392,64 @@ exports.getSchoolSummary = async (req, res) => {
       });
     }
 
-    const terms = ["Term 1", "Term 2", "Term 3"];
+    // ✅ 2. Prepare helper structures
+    const allClasses = school.classLevels.map((c) => c.name);
 
-    // Run all expected fees and balances in parallel for each student
-    const results = await Promise.all(
-      students.map(async (student) => {
-        // Run 3 term expected fees in parallel
-        const expectedFees = await Promise.all(
-          terms.map((term) => student.getExpectedFee(academicYear, term))
-        );
+    // Fee rules for the year
+    const feeRules = school.feeRules.filter((r) => r.academicYear === academicYear);
 
-        const expected = expectedFees.reduce((sum, v) => sum + (v || 0), 0);
+    // Precompute expected fee per class + term
+    const expectedMap = {};
+    for (const rule of feeRules) {
+      const fromIdx = allClasses.indexOf(rule.fromClass);
+      const toIdx = allClasses.indexOf(rule.toClass);
+      for (let i = fromIdx; i <= toIdx; i++) {
+        const className = allClasses[i];
+        if (!expectedMap[className]) expectedMap[className] = {};
+        expectedMap[className][rule.term] = rule.amount;
+      }
+    }
 
-        // Compute balances once
-        const balances = await student.computeBalances(academicYear);
+    // Group all payments by student + term
+    const txnMap = {};
+    for (const txn of transactions) {
+      const key = `${txn.student}_${txn.term}`;
+      txnMap[key] = (txnMap[key] || 0) + txn.amount;
+    }
 
-        const totalBalance = Object.values(balances).reduce(
-          (a, b) => a + (b.amount || b || 0),
-          0
-        );
+    // ✅ 3. Compute school-wide totals
+    let totalExpected = 0;
+    let totalPaid = 0;
+    let totalOutstanding = 0;
 
-        const paid = expected - totalBalance;
+    for (const student of students) {
+      let carryOver = 0;
+      for (const term of terms) {
+        const expected =
+          expectedMap[student.classLevel]?.[term] ||
+          school.feeExpectations.find(
+            (f) => f.academicYear === academicYear && f.term === term
+          )?.amount ||
+          0;
 
-        return { expected, paid };
-      })
-    );
+        const paid = txnMap[`${student._id}_${term}`] || 0;
+        const balance = Math.max(0, expected - (paid + carryOver));
+        carryOver = balance <= 0 ? Math.abs(balance) : 0;
 
-    // Aggregate totals
-    const totalExpected = results.reduce((sum, r) => sum + r.expected, 0);
-    const totalPaid = results.reduce((sum, r) => sum + r.paid, 0);
+        totalExpected += expected;
+        totalPaid += paid;
+        totalOutstanding += balance;
+      }
+    }
+
+    console.timeEnd("schoolSummary");
 
     res.json({
       schoolId,
       academicYear,
       expected: totalExpected,
       paid: totalPaid,
-      outstanding: totalExpected - totalPaid,
+      outstanding: totalOutstanding,
     });
   } catch (err) {
     console.error("getSchoolSummary error:", err);
@@ -402,60 +461,81 @@ exports.getSchoolSummary = async (req, res) => {
    📈 School Term Comparison
 --------------------------------*/
 exports.getSchoolTermComparison = async (req, res) => {
+  console.time('schoolTermComparison');
+
   try {
     const schoolId = req.user.school;
     const { academicYear } = req.query;
-
     const terms = ["Term 1", "Term 2", "Term 3"];
 
-    const school = await School.findById(schoolId);
+    const school = await School.findById(schoolId).lean();
     if (!school) return res.status(404).json({ msg: "School not found" });
 
-    // Keep mongoose documents for instance methods
-    const students = await Student.find({ school: schoolId });
+    // ✅ Fetch all students once
+    const students = await Student.find({ school: schoolId })
+      .select("classLevel")
+      .lean();
 
     if (!students.length) {
-      return res.json(
-        terms.map((term) => ({
-          term,
-          expected: 0,
-          paid: 0,
-          outstanding: 0,
-        }))
-      );
+      console.timeEnd('schoolTermComparison');
+      return res.json(terms.map(term => ({
+        term,
+        expected: 0,
+        paid: 0,
+        outstanding: 0
+      })));
     }
 
-    const studentIds = students.map((s) => s._id);
+    const studentIds = students.map(s => s._id);
 
-    // Fetch all term transactions in one query (no N+1)
+    // ✅ Fetch all term transactions in one query
     const transactions = await FeeTransaction.find({
       student: { $in: studentIds },
-      academicYear,
+      academicYear
     }).lean();
 
-    // Pre-group transaction totals by term for O(1) lookup later
+    // ✅ Pre-group transactions by term
     const termPaidMap = new Map();
     for (const txn of transactions) {
       const key = txn.term;
       termPaidMap.set(key, (termPaidMap.get(key) || 0) + (txn.amount || 0));
     }
 
-    // Compute expected fees for all terms in parallel
-    const expectedResults = {};
-    await Promise.all(
-      terms.map(async (term) => {
-        const expectedList = await Promise.all(
-          students.map((s) => s.getExpectedFee(academicYear, term))
-        );
-        expectedResults[term] = expectedList.reduce(
-          (sum, e) => sum + (e || 0),
-          0
-        );
-      })
-    );
+    // ✅ Preprocess classLevel index mapping once
+    const classNames = school.classLevels.map(c => c.name);
+    const classIndexMap = new Map(classNames.map((c, i) => [c, i]));
 
-    // Build final comparison array
-    const comparison = terms.map((term) => {
+    // ✅ Pre-group feeRules for quick lookup
+    const feeRules = school.feeRules.filter(r => r.academicYear === academicYear);
+
+    const expectedResults = {};
+    for (const term of terms) {
+      const rulesForTerm = feeRules.filter(r => r.term === term);
+      let totalExpected = 0;
+
+      for (const s of students) {
+        const studentIndex = classIndexMap.get(s.classLevel);
+        if (studentIndex === undefined) continue;
+
+        const rule = rulesForTerm.find(r => {
+          const fromIndex = classIndexMap.get(r.fromClass);
+          const toIndex = classIndexMap.get(r.toClass);
+          return (
+            fromIndex !== undefined &&
+            toIndex !== undefined &&
+            studentIndex >= fromIndex &&
+            studentIndex <= toIndex
+          );
+        });
+
+        totalExpected += rule ? rule.amount : 0;
+      }
+
+      expectedResults[term] = totalExpected;
+    }
+
+    // ✅ Construct final response
+    const comparison = terms.map(term => {
       const expected = expectedResults[term] || 0;
       const paid = termPaidMap.get(term) || 0;
       return {
@@ -466,12 +546,15 @@ exports.getSchoolTermComparison = async (req, res) => {
       };
     });
 
+    console.timeEnd('schoolTermComparison');
     res.json(comparison);
+
   } catch (err) {
     console.error("Error in getSchoolTermComparison", err);
     res.status(500).json({ msg: "Server error", error: err.message });
   }
 };
+
 
 /* -------------------------------
    📚 Class-Level Breakdown
@@ -518,44 +601,53 @@ exports.getSchoolTermComparison = async (req, res) => {
 //   }
 // };
 exports.getClassSummary = async (req, res) => {
+  console.time("classSummary");
   try {
     const schoolId = req.user.school;
     const { academicYear } = req.query;
-
-    // keep mongoose documents so instance methods work
-    const students = await Student.find({ school: schoolId });
-
-    const summary = {};
     const terms = ["Term 1", "Term 2", "Term 3"];
+    const summary = {};
+
+    // ✅ Load everything in 3 bulk queries
+    const [students, school, transactions] = await Promise.all([
+      Student.find({ school: schoolId }).lean(),
+      School.findById(schoolId).lean(),
+      FeeTransaction.find({ school: schoolId, academicYear }).lean(),
+    ]);
 
     if (!students.length) {
+      console.timeEnd("classSummary");
       return res.json(summary);
     }
 
-    // compute balances and expected fees in parallel for all students
-    const balancePromises = students.map((s) =>
-      s.computeBalances(academicYear)
-    );
-    const balanceResults = await Promise.all(balancePromises);
+    // 🔹 Map classLevels for quick rule lookup
+    const allClasses = school.classLevels.map(c => c.name);
 
-    // For each term, compute all expected fees in parallel too
-    const expectedFeePromises = {};
-    for (const term of terms) {
-      expectedFeePromises[term] = Promise.all(
-        students.map((s) => s.getExpectedFee(academicYear, term))
-      );
+    // 🔹 Group fee rules by term for faster access
+    const feeRules = school.feeRules.filter(r => r.academicYear === academicYear);
+
+    // 🔹 Group transactions by student+term
+    const txnMap = {};
+    for (const txn of transactions) {
+      const key = `${txn.student}_${txn.term}`;
+      txnMap[key] = (txnMap[key] || 0) + txn.amount;
     }
 
-    const expectedFeeResults = {};
-    for (const term of terms) {
-      expectedFeeResults[term] = await expectedFeePromises[term];
+    // 🔹 Precompute expected fee per classLevel+term
+    const expectedMap = {};
+    for (const rule of feeRules) {
+      const fromIdx = allClasses.indexOf(rule.fromClass);
+      const toIdx = allClasses.indexOf(rule.toClass);
+      for (let i = fromIdx; i <= toIdx; i++) {
+        const className = allClasses[i];
+        if (!expectedMap[className]) expectedMap[className] = {};
+        expectedMap[className][rule.term] = rule.amount;
+      }
     }
 
-    // combine results
-    for (let i = 0; i < students.length; i++) {
-      const student = students[i];
+    // 🔹 Compute summary by classLevel
+    for (const student of students) {
       const classLevel = student.classLevel || "Unknown";
-
       if (!summary[classLevel]) {
         summary[classLevel] = {};
         for (const term of terms) {
@@ -563,19 +655,25 @@ exports.getClassSummary = async (req, res) => {
         }
       }
 
-      const balances = balanceResults[i] || {};
+      let carryOver = 0;
 
       for (const term of terms) {
-        const expected = expectedFeeResults[term][i] || 0;
-        const termBalance = balances[term] || 0;
-        const paid = expected - termBalance;
+        const expected =
+          expectedMap[classLevel]?.[term] ||
+          school.feeExpectations.find(f => f.academicYear === academicYear && f.term === term)?.amount ||
+          0;
+
+        const paid = txnMap[`${student._id}_${term}`] || 0;
+        const balance = Math.max(0, expected - (paid + carryOver));
+        carryOver = balance <= 0 ? Math.abs(balance) : 0;
 
         summary[classLevel][term].expected += expected;
         summary[classLevel][term].paid += paid;
-        summary[classLevel][term].outstanding += termBalance;
+        summary[classLevel][term].outstanding += balance;
       }
     }
 
+    console.timeEnd("classSummary");
     res.json(summary);
   } catch (err) {
     console.error("getClassSummary error:", err);
@@ -592,11 +690,13 @@ exports.getClassSummary = async (req, res) => {
 // ✅ Enhanced Debtors Controller with Filters
 
 exports.getDebtors = async (req, res) => {
+  console.time("debtors");
+
   try {
     const schoolId = req.user.school;
     const {
       academicYear,
-      classLevel, // e.g. "Grade 1"
+      classLevel,
       minOutstanding = 0,
       maxOutstanding,
       search = "",
@@ -604,6 +704,7 @@ exports.getDebtors = async (req, res) => {
       limit = 10,
     } = req.query;
 
+    // 1️⃣ Fetch all students (lightweight query)
     const students = await Student.find({
       school: schoolId,
       ...(classLevel ? { classLevel } : {}),
@@ -615,17 +716,72 @@ exports.getDebtors = async (req, res) => {
             ],
           }
         : {}),
-    });
+    }).lean();
 
-    let debtors = [];
+    if (!students.length) {
+      console.timeEnd("debtors");
+      return res.json({
+        totalDebtors: 0,
+        totalPages: 0,
+        currentPage: 1,
+        pageSize: parseInt(limit),
+        debtors: [],
+      });
+    }
+
+    // 2️⃣ Fetch all FeeTransactions for the academicYear at once
+    const allTxns = await FeeTransaction.find({
+      school: schoolId,
+      academicYear,
+    }).lean();
+
+    // Group transactions by student + term
+    const txnsByStudent = {};
+    for (const t of allTxns) {
+      if (!txnsByStudent[t.student]) txnsByStudent[t.student] = {};
+      if (!txnsByStudent[t.student][t.term]) txnsByStudent[t.student][t.term] = 0;
+      txnsByStudent[t.student][t.term] += t.amount;
+    }
+
+    // 3️⃣ Fetch school once, build fee lookup
+    const school = await School.findById(schoolId).lean();
+    const allClasses = school.classLevels.map(c => c.name);
+    const feeLookup = {};
+
+    for (const rule of school.feeRules) {
+      if (rule.academicYear !== academicYear) continue;
+
+      const fromIndex = allClasses.indexOf(rule.fromClass);
+      const toIndex = allClasses.indexOf(rule.toClass);
+
+      for (let i = fromIndex; i <= toIndex; i++) {
+        feeLookup[`${allClasses[i]}-${rule.term}`] = rule.amount;
+      }
+    }
+
+    // 4️⃣ Compute balances in memory
+    const terms = ["Term 1", "Term 2", "Term 3"];
+    const debtors = [];
 
     for (const student of students) {
-      const balances = await student.computeBalances(academicYear);
+      let carryOver = 0;
+      const termBreakdown = [];
 
-      const termBreakdown = Object.entries(balances).map(([term, data]) => ({
-        term,
-        outstanding: data.amount || data,
-      }));
+      for (const term of terms) {
+        const expected = feeLookup[`${student.classLevel}-${term}`] || 0;
+        const paid = (txnsByStudent[student._id]?.[term]) || 0;
+
+        let balance = expected - (paid + carryOver);
+
+        if (balance <= 0) {
+          carryOver = Math.abs(balance);
+          balance = 0;
+        } else {
+          carryOver = 0;
+        }
+
+        termBreakdown.push({ term, outstanding: balance });
+      }
 
       const totalOutstanding = termBreakdown.reduce(
         (sum, t) => sum + t.outstanding,
@@ -641,21 +797,19 @@ exports.getDebtors = async (req, res) => {
           name: `${student.firstName} ${student.lastName}`,
           classLevel: student.classLevel,
           totalOutstanding,
-          terms: Array.isArray(termBreakdown)
-            ? termBreakdown.filter((t) => t.outstanding > 0)
-            : [],
+          terms: termBreakdown.filter(t => t.outstanding > 0),
         });
       }
     }
 
+    // 5️⃣ Sort & paginate
     debtors.sort((a, b) => b.totalOutstanding - a.totalOutstanding);
-
-    // Pagination
     const pageInt = parseInt(page, 10);
     const limitInt = parseInt(limit, 10);
     const startIndex = (pageInt - 1) * limitInt;
     const paginatedDebtors = debtors.slice(startIndex, startIndex + limitInt);
 
+    console.timeEnd("debtors");
     res.json({
       totalDebtors: debtors.length,
       totalPages: Math.ceil(debtors.length / limitInt),
@@ -669,7 +823,10 @@ exports.getDebtors = async (req, res) => {
   }
 };
 
+
+
 exports.onboardStudents = async (req, res) => {
+  console.time('onboarding')
   try {
     const schoolId = req.user.school;
     const { students, academicYear, term, viaCSV } = req.body;
@@ -680,58 +837,102 @@ exports.onboardStudents = async (req, res) => {
 
     const created = [];
     const unmatched = [];
+    const transactions = [];
 
-    for (const s of students) {
-      let student;
+    if (viaCSV) {
+      // 🔹 Build a unique key for each input student to allow O(1) matching
+      const key = (s) =>
+        `${(s.firstName || "").trim().toLowerCase()}-${(s.lastName || "")
+          .trim()
+          .toLowerCase()}-${(s.classLevel || "").trim().toLowerCase()}`;
 
-      if (viaCSV) {
-        // CSV upload: match by name + class
-        student = await Student.findOne({
-          firstName: s.firstName,
-          lastName: s.lastName,
-          classLevel: s.classLevel,
-          school: schoolId,
-        });
+      // 🔹 Build sets for lookup
+      const wantedKeys = new Set(students.map(key));
 
+      // 🔹 Fetch all relevant students in one query
+      const foundStudents = await Student.find({ school: schoolId })
+        .select("firstName lastName classLevel _id")
+        .lean();
+
+      // 🔹 Create a hash map for fast lookup
+      const foundMap = new Map();
+      for (const st of foundStudents) {
+        const k = key(st);
+        if (wantedKeys.has(k)) foundMap.set(k, st);
+      }
+
+      // 🔹 Build transactions array in memory
+      for (const s of students) {
+        const k = key(s);
+        const student = foundMap.get(k);
         if (!student) {
           unmatched.push(s);
-          continue; // skip unmatched rows
+          continue;
         }
-      } else {
-        // Manual onboarding: use existing ID
-        student = await Student.findById(s.studentId);
-        if (!student) continue;
-      }
 
-      // Record opening balance
-      if (s.openingBalance && s.openingBalance !== 0) {
-        await FeeTransaction.create({
-          student: student._id,
-          school: schoolId,
-          academicYear,
-          term: s.term || term,
-          amount: s.openingBalance,
-          type: "opening",
-          method: "system",
-          note: "Imported opening balance",
-          handledBy: req.user.userId,
-        });
-      }
+        if (s.openingBalance && s.openingBalance !== 0) {
+          transactions.push({
+            student: student._id,
+            school: schoolId,
+            academicYear,
+            term: s.term || term,
+            amount: s.openingBalance,
+            type: "opening",
+            method: "system",
+            note: "Imported opening balance",
+            handledBy: req.user.userId,
+          });
+        }
 
-      created.push(student);
+        created.push(student);
+      }
+    } else {
+      // 🔹 Manual onboarding
+      const studentIds = students.map((s) => s.studentId);
+      const foundStudents = await Student.find({
+        _id: { $in: studentIds },
+      })
+        .select("_id")
+        .lean();
+
+      const foundSet = new Set(foundStudents.map((s) => s._id.toString()));
+
+      for (const s of students) {
+        if (!foundSet.has(s.studentId)) continue;
+
+        if (s.openingBalance && s.openingBalance !== 0) {
+          transactions.push({
+            student: s.studentId,
+            school: schoolId,
+            academicYear,
+            term: s.term || term,
+            amount: s.openingBalance,
+            type: "opening",
+            method: "system",
+            note: "Imported opening balance",
+            handledBy: req.user.userId,
+          });
+        }
+
+        created.push({ _id: s.studentId });
+      }
     }
 
+    // 🔹 Perform a single bulk insert for all transactions
+    if (transactions.length > 0) {
+      await FeeTransaction.insertMany(transactions, { ordered: false });
+    }
+  console.timeEnd('onboarding')
+
     res.status(201).json({
-      message: "Students onboarded successfully",
-      count: created.length,
-      students: created,
-      unmatched: viaCSV ? unmatched : undefined,
+      message: "Students onboarded successfully"
     });
   } catch (err) {
     console.error("onboardStudents error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
+
 
 /* -------------------------------
    ❌ Delete a Fee Rule

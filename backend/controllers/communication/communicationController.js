@@ -29,11 +29,16 @@ const sendMessage = async (req, res) => {
       school: sender.school,
     });
 
+    console.log('new message', newMessage)
+
     // Populate sender for frontend
     const populatedMessage = await Message.findById(newMessage._id).populate(
       "sender",
       "name email role"
     );
+
+    console.log('pop message', populatedMessage)
+
 
     const senderDoc = await User.findById(sender.userId);
 
@@ -55,6 +60,9 @@ const sendMessage = async (req, res) => {
         school: sender.school,
       }).populate("user");
 
+    console.log('subscriptions', subscriptions)
+      
+
       const pushPayload = {
         title: `New message from [${senderDoc.role}] ${senderDoc.name}`,
         body,
@@ -70,6 +78,7 @@ const sendMessage = async (req, res) => {
 
       subscriptions.forEach((sub) => {
         // 🚫 Skip notifying the sender themself
+        console.log('sub', sub)
         if (sub.user._id.toString() === sender.userId.toString()) return;
 
         webpush

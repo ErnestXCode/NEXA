@@ -208,7 +208,7 @@ const FeesPage = () => {
         <div className="flex flex-col lg:flex-row gap-6 items-start">
           {/* Summary with bars */}
           <div className="flex-1 space-y-4">
-            <div className="bg-gray-800 rounded-lg p-4 shadow flex justify-between items-center">
+            <div className="bg-gray-950 rounded-lg p-4 shadow flex justify-between items-center">
               <div>
                 <p className="text-gray-400 text-sm">Expected</p>
                 <p className="text-xl font-bold text-blue-400">
@@ -228,7 +228,7 @@ const FeesPage = () => {
               </div>
             </div>
 
-            <div className="bg-gray-800 rounded-lg p-4 shadow flex justify-between items-center">
+            <div className="bg-gray-950 rounded-lg p-4 shadow flex justify-between items-center">
               <div>
                 <p className="text-gray-400 text-sm">Paid</p>
                 <p className="text-xl font-bold text-green-400">
@@ -248,7 +248,7 @@ const FeesPage = () => {
               </div>
             </div>
 
-            <div className="bg-gray-800 rounded-lg p-4 shadow flex justify-between items-center">
+            <div className="bg-gray-950 rounded-lg p-4 shadow flex justify-between items-center">
               <div>
                 <p className="text-gray-400 text-sm">Outstanding</p>
                 <p className="text-xl font-bold text-red-400">
@@ -270,7 +270,7 @@ const FeesPage = () => {
             </div>
 
             {/* Top Debtors */}
-            <div className="mt-4 bg-gray-800/50 p-3 rounded-lg">
+            <div className="mt-4 bg-gray-950/50 p-3 rounded-lg">
               <p className="text-sm text-gray-400 mb-2 font-semibold">
                 🚨 Top Debtors
               </p>
@@ -292,7 +292,7 @@ const FeesPage = () => {
           </div>
 
           {/* Pie Chart */}
-          <div className="w-full lg:w-1/3 h-64 flex flex-col items-center justify-center">
+          <div className="w-full lg:w-1/3 h-90 flex flex-col items-center justify-center">
             {schoolSummary && (
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
@@ -303,8 +303,8 @@ const FeesPage = () => {
                     ]}
                     cx="50%"
                     cy="50%"
-                    innerRadius={40}
-                    outerRadius={80}
+                    innerRadius={70}
+                    outerRadius={100}
                     dataKey="value"
                     labelLine={false}
                     label={({ name, percent }) =>
@@ -587,105 +587,123 @@ const FeesPage = () => {
       {/* Class Fees Table */}
       {/* Class Fees Table */}
       {/* Class Fees Table */}
-      <ChartCard title="🏫 Class Fees Summary">
-        {loadingClass ? (
-          <p className="text-gray-400 animate-pulse">
-            Loading class summary...
-          </p>
-        ) : classSummary && Object.keys(classSummary).length > 0 ? (
-          <div className="overflow-x-auto rounded-2xl border border-gray-700 shadow-md">
-            <table className="min-w-full border-collapse text-gray-200">
-              <thead>
-                <tr className="bg-gray-900/70 backdrop-blur-sm text-gray-300 text-sm uppercase tracking-wider">
-                  <th className="p-3 text-left border-b border-gray-700">
-                    Class
-                  </th>
-                  {["Term 1", "Term 2", "Term 3"].map((term, i) => (
-                    <th
+     <ChartCard title="🏫 Class Fees Summary">
+  {loadingClass ? (
+    <p className="text-gray-400 animate-pulse">Loading class summary...</p>
+  ) : classSummary && Object.keys(classSummary).length > 0 ? (
+    <div className="overflow-x-auto rounded-2xl border border-gray-800 shadow-md">
+      <table className="min-w-full border-collapse text-gray-200">
+        <thead>
+          <tr className="bg-gray-900/70 backdrop-blur-sm text-gray-300 text-sm uppercase tracking-wider">
+            <th className="p-3 text-left border-b border-gray-700">Class</th>
+            {["Term 1", "Term 2", "Term 3"].map((term, i) => (
+              <th
+                key={term}
+                className={`p-3 text-center border-b border-gray-700 ${
+                  i === 0
+                    ? "text-blue-400"
+                    : i === 1
+                    ? "text-amber-400"
+                    : "text-emerald-400"
+                }`}
+              >
+                {term}
+                <div className="text-xs text-gray-500 font-normal">
+                  Paid / Outstanding
+                </div>
+              </th>
+            ))}
+          </tr>
+        </thead>
+
+        <tbody className="divide-y divide-gray-800">
+          {Object.keys(classSummary)
+            .sort((a, b) => {
+              // Sort PP then Grades
+              if (a.startsWith("PP") && b.startsWith("PP")) {
+                return (
+                  parseInt(a.replace(/\D/g, ""), 10) -
+                  parseInt(b.replace(/\D/g, ""), 10)
+                );
+              }
+              if (a.startsWith("PP")) return -1;
+              if (b.startsWith("PP")) return 1;
+
+              const numA = parseInt(a.replace(/\D/g, ""), 10);
+              const numB = parseInt(b.replace(/\D/g, ""), 10);
+              if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+
+              return a.localeCompare(b);
+            })
+            .map((cls) => (
+              <tr
+                key={cls}
+                className="hover:bg-gray-800/50 transition-colors duration-200"
+              >
+                {/* Class name */}
+                <td className="p-3 font-semibold text-gray-100 border-r border-gray-800">
+                  {cls}
+                </td>
+
+                {/* Each Term */}
+                {["Term 1", "Term 2", "Term 3"].map((term, i) => {
+                  const stats = classSummary[cls][term] || {
+                    paid: 0,
+                    outstanding: 0,
+                  };
+
+                  // Themed colors
+                  const badgeColor =
+                    i === 0
+                      ? "bg-blue-900/40 text-blue-300 border border-blue-800"
+                      : i === 1
+                      ? "bg-amber-900/40 text-amber-300 border border-amber-800"
+                      : "bg-emerald-900/40 text-emerald-300 border border-emerald-800";
+
+                  return (
+                    <td
                       key={term}
-                      className={`p-3 text-center border-b border-gray-700 ${
-                        i === 0
-                          ? "text-blue-400"
-                          : i === 1
-                          ? "text-amber-400"
-                          : "text-emerald-400"
-                      }`}
+                      className="p-3 text-center border-r border-gray-800"
                     >
-                      {term}
-                      <div className="text-xs text-gray-500 font-normal">
-                        Paid / Outstanding
+                      <div className="flex flex-col items-center gap-2">
+                        <span
+                          className={`text-xs font-medium px-3 py-1 rounded-full ${badgeColor}`}
+                        >
+                           Paid:{" "}
+                          <span className="font-semibold text-gray-100">
+                            {stats.paid
+                              ? `KES ${stats.paid.toLocaleString()}`
+                              : "KES 0"}
+                          </span>
+                        </span>
+
+                        <span
+                          className={`text-xs font-medium px-3 py-1 rounded-full ${badgeColor.replace(
+                            "/40",
+                            "/20"
+                          )} opacity-90 text-gray-400`}
+                        >
+                           Outstanding:{" "}
+                          <span className="font-semibold text-gray-200">
+                            {stats.outstanding
+                              ? `KES ${stats.outstanding.toLocaleString()}`
+                              : "KES 0"}
+                          </span>
+                        </span>
                       </div>
-                    </th>
-                  ))}
-                </tr>
-              </thead>
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+        </tbody>
+      </table>
+    </div>
+  ) : (
+    <p className="text-gray-400">No class summary data available.</p>
+  )}
+</ChartCard>
 
-              <tbody className="divide-y divide-gray-800">
-                {Object.keys(classSummary)
-                  .sort((a, b) => {
-                    // Sort PP then Grades
-                    if (a.startsWith("PP") && b.startsWith("PP")) {
-                      return (
-                        parseInt(a.replace(/\D/g, ""), 10) -
-                        parseInt(b.replace(/\D/g, ""), 10)
-                      );
-                    }
-                    if (a.startsWith("PP")) return -1;
-                    if (b.startsWith("PP")) return 1;
-
-                    const numA = parseInt(a.replace(/\D/g, ""), 10);
-                    const numB = parseInt(b.replace(/\D/g, ""), 10);
-                    if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
-
-                    return a.localeCompare(b);
-                  })
-                  .map((cls) => (
-                    <tr
-                      key={cls}
-                      className="hover:bg-gray-800/60 transition-colors duration-200"
-                    >
-                      <td className="p-3 font-semibold text-gray-100 border-r border-gray-800">
-                        {cls}
-                      </td>
-
-                      {["Term 1", "Term 2", "Term 3"].map((term, i) => {
-                        const stats = classSummary[cls][term] || {
-                          paid: 0,
-                          outstanding: 0,
-                        };
-                        const color =
-                          i === 0
-                            ? "text-blue-400"
-                            : i === 1
-                            ? "text-amber-400"
-                            : "text-emerald-400";
-                        return (
-                          <td
-                            key={term}
-                            className="p-3 text-center border-r border-gray-800"
-                          >
-                            <div className={`font-medium ${color}`}>
-                              {stats.paid
-                                ? `KES ${stats.paid.toLocaleString()}`
-                                : "KES 0"}
-                            </div>
-                            <div className="text-sm text-gray-400">
-                              {stats.outstanding
-                                ? `KES ${stats.outstanding.toLocaleString()}`
-                                : "KES 0"}
-                            </div>
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <p className="text-gray-400">No class summary data available.</p>
-        )}
-      </ChartCard>
 
       {/* Debtors */}
       {/* Debtors */}

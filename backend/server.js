@@ -45,7 +45,7 @@ io.on("connection", (socket) => {
 // Export io for use in controllers
 app.set("io", io);
 
-const whiteList = [process.env.VITE_URL, "https://cron-job.org"];
+const whiteList = [process.env.VITE_URL, "https://cron-job.org", 'http://localhost:3000', 'http://localhost:4173'];
 const corsOptions = {
   origin: (origin, callback) => {
     if (whiteList.includes(origin) || !origin) callback(null, true);

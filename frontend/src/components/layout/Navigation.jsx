@@ -298,17 +298,17 @@ const Navigation = () => {
                     end
                     onClick={() => {
                       handleCloseSidenav();
-                      resetPending(); // reset badge when clicked
+                      // resetPending(); // reset badge when clicked
                     }}
                     to="/dashboard/fees/add"
                     className={navLinkClasses}
                   >
                     Record Payment
-                    {pendingCount > 0 && (
+                    {/* {pendingCount > 0 && (
                       <span className="absolute top-2 right-2 h-3 w-3 rounded-full bg-red-600 text-white text-xs font-bold flex items-center justify-center">
                         {pendingCount > 9 ? "9+" : pendingCount}
                       </span>
-                    )}
+                    )} */}
                   </NavLink>
 
                   <NavLink

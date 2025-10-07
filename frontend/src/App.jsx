@@ -26,12 +26,7 @@ import ExamsPage from "./pages/exams/ExamsPage";
 import RecordResultsPage from "./pages/exams/RecordResultsPage";
 import FeesPage from "./pages/fees/FeesPage";
 import AddFeePage from "./pages/fees/AddFeePage";
-import StudentFeesPage from "./pages/fees/StudentFeesPage";
-import SendFeeStatementPage from "./pages/fees/SendFeeStatementPage";
-import SetFeeExpectationPage from "./pages/fees/SetFeeExpectationPage";
 
-import { useParams } from "react-router-dom";
-import FeeHistory from "./pages/fees/FeeHistory";
 import AllSchools from "./pages/actions/AllSchools";
 import AllParents from "./pages/actions/AllParents";
 import SchoolEditPage from "./pages/actions/SchoolEditPage";
@@ -42,21 +37,16 @@ import Feedback from "./pages/feedback/Feedback";
 import InstallPrompt from "./install/InstallPrompt";
 import { useSelector } from "react-redux";
 import ReviewPage from "./pages/review/ReviewPage";
-import { useEffect } from "react";
 import Billing from "./pages/home/Billing";
 import AttendanceLogsPage from "./pages/attendance/AttendanceLogsPage";
 import ResultsAuditPage from "./pages/exams/ResultsAuditPage";
 import FeeAuditPage from "./pages/fees/FeeAuditPage";
 
-const FeeHistoryWrapper = () => {
-  const { studentId } = useParams();
-  return <FeeHistory studentId={studentId} />;
-};
 
 const HomeRedirect = () => {
   const { accessToken } = useSelector((state) => state.auth);
 
-  console.log('accessToken', accessToken)
+  console.log("accessToken", accessToken);
 
   // Wait until PersistLogin has finished loading
   if (accessToken === undefined)
@@ -74,7 +64,6 @@ function App() {
   //   window.addEventListener("focus", handleFocus);
   //   return () => window.removeEventListener("focus", handleFocus);
   // }, []);
-
 
   return (
     <div className="bg-gray-950 text-white min-h-screen">
@@ -103,26 +92,13 @@ function App() {
                 <Route path="fees" element={<FeesPage />} />
                 <Route path="fees/add" element={<AddFeePage />} />
                 <Route path="fees/logs" element={<FeeAuditPage />} />
-                <Route
-                  path="fees/student/:studentId"
-                  element={<StudentFeesPage />}
-                />
-                <Route
-                  path="fees/send-statement"
-                  element={<SendFeeStatementPage />}
-                />
-                <Route
-                  path="fees/set-expectation"
-                  element={<SetFeeExpectationPage />}
-                />
-                <Route
-                  path="fees/history/:studentId"
-                  element={<FeeHistoryWrapper />}
-                />
 
                 <Route path="attendance" element={<AttendanceDashboard />} />
                 <Route path="attendance/mark" element={<AttendancePage />} />
-                <Route path="attendance/logs" element={<AttendanceLogsPage />} />
+                <Route
+                  path="attendance/logs"
+                  element={<AttendanceLogsPage />}
+                />
 
                 <Route path="communication" element={<Communication />} />
                 <Route

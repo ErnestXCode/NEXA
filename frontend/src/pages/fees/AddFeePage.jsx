@@ -43,7 +43,6 @@ const queryClient = useQueryClient()
 
   const refetchFinancialData = async () => {
   await Promise.all([
-    queryClient.refetchQueries(["fees", "balances"]),
     queryClient.refetchQueries(["schoolSummary"]),
     queryClient.refetchQueries(["classSummary"]),
     queryClient.refetchQueries(["schoolTermSummary"]),

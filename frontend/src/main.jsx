@@ -18,6 +18,7 @@ const queryClient = new QueryClient({
       refetchOnWindowFocus: false,
       refetchOnMount: false,
       refetchOnReconnect: false,
+      keepPreviousData: true,
     },
   },
 });
@@ -33,6 +34,7 @@ persistQueryClient({
 
 // Register service worker and request push subscription
 if ("serviceWorker" in navigator && "PushManager" in window) {
+  console.log(1)
   window.addEventListener("load", async () => {
     try {
       let registration;
@@ -43,6 +45,7 @@ if ("serviceWorker" in navigator && "PushManager" in window) {
         console.error("Service Worker registration failed:", swError);
         return; // stop further execution if SW fails
       }
+      console.log(2)
 
       let permission;
       try {
@@ -54,10 +57,12 @@ if ("serviceWorker" in navigator && "PushManager" in window) {
       }
 
       if (permission !== "granted") {
-        console.warn("Notification permission not granted. Skipping push subscription.");
+        console.warn(
+          "Notification permission not granted. Skipping push subscription."
+        );
         return;
       }
-
+console.log(3)
       let subscription;
       try {
         subscription = await registration.pushManager.subscribe({
@@ -69,6 +74,7 @@ if ("serviceWorker" in navigator && "PushManager" in window) {
         console.error("Push subscription failed:", subError);
         return;
       }
+      console.log(4)
 
       try {
         const res = await api.post("/push/subscribe", subscription);
@@ -76,6 +82,8 @@ if ("serviceWorker" in navigator && "PushManager" in window) {
       } catch (apiError) {
         console.error("Failed to send subscription to backend:", apiError);
       }
+      console.log(5)
+
     } catch (outerError) {
       console.error("Unexpected error in SW/push registration:", outerError);
     }
@@ -92,7 +100,6 @@ createRoot(document.getElementById("root")).render(
     </Provider>
   </StrictMode>
 );
-
 
 // const queryClient = new QueryClient({
 //   defaultOptions: {
@@ -147,8 +154,6 @@ createRoot(document.getElementById("root")).render(
 //     }
 //   });
 // }
-
-
 
 // createRoot(document.getElementById("root")).render(
 //   <StrictMode>
