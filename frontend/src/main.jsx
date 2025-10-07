@@ -40,6 +40,7 @@ if ("serviceWorker" in navigator && "PushManager" in window) {
       let registration;
       try {
         registration = await navigator.serviceWorker.register("/custom-sw.js");
+
         console.log("Service Worker registered", registration);
       } catch (swError) {
         console.error("Service Worker registration failed:", swError);

@@ -1,15 +1,19 @@
 /// <reference lib="webworker" />
 
-import { clientsClaim } from "workbox-core";
-import { precacheAndRoute, cleanupOutdatedCaches } from "workbox-precaching";
+// ✅ Use Workbox from CDN (no build step required)
+importScripts("https://storage.googleapis.com/workbox-cdn/releases/6.5.4/workbox-sw.js");
 
-clientsClaim();
-cleanupOutdatedCaches();
+if (workbox) {
+  console.log("✅ Workbox loaded successfully");
 
-// Precache all Vite-built static files
-precacheAndRoute(self.__WB_MANIFEST || []);
+  workbox.core.clientsClaim();
+  workbox.precaching.cleanupOutdatedCaches();
+  workbox.precaching.precacheAndRoute(self.__WB_MANIFEST || []);
+} else {
+  console.error("❌ Workbox failed to load");
+}
 
-// Listen for push events
+// 🔔 Push notifications
 self.addEventListener("push", (event) => {
   const data = event.data?.json() || {};
   const title = data.title || "Nexa Notification";
@@ -22,10 +26,9 @@ self.addEventListener("push", (event) => {
 
   event.waitUntil(
     (async () => {
-      // Show system notification
       await self.registration.showNotification(title, options);
 
-      // // Update the app icon badge (Badging API)
+      // Badge (optional)
       if ("setAppBadge" in navigator) {
         const prev = self.unreadCount || 0;
         self.unreadCount = prev + 1;
@@ -36,17 +39,19 @@ self.addEventListener("push", (event) => {
         }
       }
 
-      // Notify any open clients
-      const clients = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
-      clients.forEach((client) => {
-        client.postMessage({ type: "NEW_MESSAGE", payload: data });
+      // Notify open tabs
+      const clients = await self.clients.matchAll({
+        type: "window",
+        includeUncontrolled: true,
       });
+      clients.forEach((client) =>
+        client.postMessage({ type: "NEW_MESSAGE", payload: data })
+      );
     })()
   );
 });
 
-
-// Handle notification clicks
+// 🔗 Notification click handler
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
   const url = event.notification.data;
