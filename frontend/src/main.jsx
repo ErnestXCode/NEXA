@@ -32,6 +32,32 @@ persistQueryClient({
   persister,
 });
 
+async function waitForJwtToken(maxWait = 4000) {
+  const start = Date.now();
+
+  while (Date.now() - start < maxWait) {
+    // Check if JWT cookie exists
+    const hasJwt = document.cookie.includes("jwt=");
+    if (hasJwt) {
+      try {
+        // Try to refresh with backend
+        const res = await api.post("/auth/refresh");
+        if (res.status === 200) {
+          console.log("✅ JWT refresh succeeded — backend ready.");
+          return true;
+        }
+      } catch {
+        // Still not accepted yet, retry
+      }
+    }
+
+    await new Promise((r) => setTimeout(r, 300));
+  }
+
+  console.warn("⚠️ JWT not ready after waiting period.");
+  return false;
+}
+
 // Register service worker and request push subscription
 if ("serviceWorker" in navigator && "PushManager" in window) {
   console.log(1);
@@ -80,6 +106,9 @@ if ("serviceWorker" in navigator && "PushManager" in window) {
       console.log(4);
 
       try {
+        console.log("⏳ Waiting for JWT to be ready...");
+        await waitForJwtToken();
+
         const res = await api.post("/push/subscribe", subscription);
         console.log("Push subscription saved on server:", res);
       } catch (apiError) {
