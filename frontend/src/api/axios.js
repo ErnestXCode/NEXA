@@ -60,3 +60,27 @@ api.interceptors.response.use(
 );
 
 export default api;
+
+
+export async function refreshAccessToken() {
+  try {
+    const res = await axios.post(
+      `${import.meta.env.VITE_BACKEND_URL}/api/auth/refresh`,
+      {},
+      { withCredentials: true }
+    );
+
+    const newAccessToken = res.data.accessToken;
+    store.dispatch(setCredentials({
+      user: store.getState().auth.user,
+      accessToken: newAccessToken
+    }));
+
+    console.log("Access token refreshed");
+    return newAccessToken;
+  } catch (err) {
+    console.error("Token refresh failed:", err);
+    store.dispatch(logOut());
+    throw err;
+  }
+}

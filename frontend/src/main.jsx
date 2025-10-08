@@ -9,6 +9,7 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { persistQueryClient } from "@tanstack/react-query-persist-client";
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 import api from "./api/axios.js";
+import { refreshAccessToken } from "./api/axios.js";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -32,15 +33,14 @@ persistQueryClient({
   persister,
 });
 
-
-
 // Register service worker and request push subscription
 if ("serviceWorker" in navigator && "PushManager" in window) {
-  console.log(1)
+  console.log(1);
   window.addEventListener("load", async () => {
     try {
       let registration;
       try {
+        await refreshAccessToken();
         registration = await navigator.serviceWorker.register("/custom-sw.js");
 
         console.log("Service Worker registered", registration);
@@ -48,7 +48,7 @@ if ("serviceWorker" in navigator && "PushManager" in window) {
         console.error("Service Worker registration failed:", swError);
         return; // stop further execution if SW fails
       }
-      console.log(2)
+      console.log(2);
 
       let permission;
       try {
@@ -65,7 +65,7 @@ if ("serviceWorker" in navigator && "PushManager" in window) {
         );
         return;
       }
-console.log(3)
+      console.log(3);
       let subscription;
       try {
         console.log("VAPID Key:", import.meta.env.VITE_VAPID_PUBLIC_KEY);
@@ -79,7 +79,7 @@ console.log(3)
         console.error("Push subscription failed:", subError);
         return;
       }
-      console.log(4)
+      console.log(4);
 
       try {
         const res = await api.post("/push/subscribe", subscription);
@@ -87,8 +87,7 @@ console.log(3)
       } catch (apiError) {
         console.error("Failed to send subscription to backend:", apiError);
       }
-      console.log(5)
-
+      console.log(5);
     } catch (outerError) {
       console.error("Unexpected error in SW/push registration:", outerError);
     }
