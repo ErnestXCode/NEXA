@@ -9,7 +9,6 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { persistQueryClient } from "@tanstack/react-query-persist-client";
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 import api from "./api/axios.js";
-import { refreshAccessToken } from "./api/axios.js";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -37,13 +36,6 @@ persistQueryClient({
 if ("serviceWorker" in navigator && "PushManager" in window) {
   console.log(1);
   window.addEventListener("load", async () => {
-    const token = store.getState().auth.accessToken;
-    // 🔥 Only refresh if no token yet
-    if (!token) {
-      console.log("No access token found — refreshing...");
-      await refreshAccessToken();
-    }
-
     try {
       let registration;
       try {
