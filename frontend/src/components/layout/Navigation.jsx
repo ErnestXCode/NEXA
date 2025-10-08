@@ -99,7 +99,7 @@ const Navigation = () => {
                 Messages
                 {unreadCount > 0 && (
                   <span className="absolute top-2 right-2 h-3 w-3 rounded-full bg-red-600 text-white text-sm">
-                    {unreadCount}
+                   
                   </span>
                 )}
               </NavLink>

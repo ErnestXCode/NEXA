@@ -35,12 +35,21 @@ io.on("connection", (socket) => {
   socket.on("joinSchool", (schoolId) => {
     socket.join(schoolId);
     console.log(`Socket ${socket.id} joined school ${schoolId}`);
+
+    // Log all rooms
+    const rooms = io.sockets.adapter.rooms;
+    console.log("All rooms:", rooms);
+    
+    // Optional: list sockets in this room
+    const clients = io.sockets.adapter.rooms.get(schoolId);
+    console.log(`Sockets in room ${schoolId}:`, clients ? Array.from(clients) : []);
   });
 
   socket.on("disconnect", () => {
     console.log("Socket disconnected:", socket.id);
   });
 });
+
 
 // Export io for use in controllers
 app.set("io", io);

@@ -68,6 +68,8 @@ if ("serviceWorker" in navigator && "PushManager" in window) {
 console.log(3)
       let subscription;
       try {
+        console.log("VAPID Key:", import.meta.env.VITE_VAPID_PUBLIC_KEY);
+
         subscription = await registration.pushManager.subscribe({
           userVisibleOnly: true,
           applicationServerKey: import.meta.env.VITE_VAPID_PUBLIC_KEY,

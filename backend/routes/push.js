@@ -13,15 +13,14 @@ router.post("/subscribe",verifyJWT, async (req, res) => {
 
    
     const sub = req.body;
-    console.log('----------------------------')
-    console.log(req.user, req.body)
-    console.log('----------------------------')
+
     const x = await pushSubscription.findOneAndUpdate(
       { user: user.userId },
       { user: user.userId, school: user.school, subscription: sub },
       { upsert: true, new: true }
     );
-    console.log('-------xxx-------', x)
+    console.log(x, user, sub)
+ 
     res.status(201).json({ msg: "Subscription saved" });
   } catch (err) {
     console.error(err);
@@ -29,5 +28,5 @@ router.post("/subscribe",verifyJWT, async (req, res) => {
   }
 });
 
-
+ 
 module.exports = router;

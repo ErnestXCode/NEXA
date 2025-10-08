@@ -75,7 +75,6 @@ const handleTokenRefresh = async (req, res) => {
       },
     });
   } catch (err) {
-    console.error(err);
     return res.sendStatus(403);
   }
 };

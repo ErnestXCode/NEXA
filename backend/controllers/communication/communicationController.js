@@ -6,7 +6,7 @@ const webpush = require("web-push");
 
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 webpush.setVapidDetails(
-  "mailto:noreply@schoolapp.com",
+  "mailto:enkaranu58@gmail.com",
   process.env.VAPID_PUBLIC_KEY,
   process.env.VAPID_PRIVATE_KEY
 );
@@ -29,16 +29,11 @@ const sendMessage = async (req, res) => {
       school: sender.school,
     });
 
-    console.log('new message', newMessage)
-
     // Populate sender for frontend
     const populatedMessage = await Message.findById(newMessage._id).populate(
       "sender",
       "name email role"
     );
-
-    console.log('pop message', populatedMessage)
-
 
     const senderDoc = await User.findById(sender.userId);
 
@@ -57,11 +52,8 @@ const sendMessage = async (req, res) => {
     // Chat / push notifications
     if (type === "chat") {
       const subscriptions = await PushSubscription.find({
-        school: sender.school
-      }).populate("user");
-
-    console.log('subscriptions', subscriptions)
-      
+        school: sender.school,
+      });
 
       const pushPayload = {
         title: `New message from [${senderDoc.role}] ${senderDoc.name}`,
@@ -78,9 +70,8 @@ const sendMessage = async (req, res) => {
 
       subscriptions.forEach((sub) => {
         // 🚫 Skip notifying the sender themself
-        console.log('sub', sub)
-        console.log(sub.user._id, sender.userId, sub.user._id.toString())
-        if (sub.user._id.toString() === sender.userId.toString()) console.log('as-------------ss');
+
+        if (sub.user.toString() === sender.userId.toString()) return;
 
         webpush
           .sendNotification(sub.subscription, JSON.stringify(pushPayload))
@@ -88,7 +79,7 @@ const sendMessage = async (req, res) => {
       });
 
       // Emit the **real message doc** for in-app chat
-      io.to(sender.school.toString()).emit("newMessage", populatedMessage);
+      io.emit("newMessage", populatedMessage); // bypasses the room
     }
 
     res.status(201).json(populatedMessage);
