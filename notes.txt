@@ -15,6 +15,20 @@ have cache for students in class teacher for attendance,
 
 remove choose dates option for live production 
 
+badge is not persistent in dashboard
+
+Option C: Real-time updates via Socket.IO (best for multi-device)
+
+Since you already use Socket.IO, use it to sync React Query data across all connected devices:
+
+socket.on("proofUpdated", () => {
+  queryClient.invalidateQueries(["proofs"]);
+  queryClient.refetchQueries(["proofs"]);
+});
+
+
+That way, when one user submits a payment proof, all parents (or the admin dashboard) see updates instantly — even on different browsers or devices.
+
 show loading students when loading for attendance
 
 show no data available if no data in any page , also show if connection is not there and have a button to reload 

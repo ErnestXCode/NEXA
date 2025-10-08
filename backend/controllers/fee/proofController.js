@@ -95,7 +95,7 @@ exports.submitProof = async (req, res) => {
     const payload = {
       title: "New Payment Proof Submitted",
       body: `${student.firstName} ${student.lastName} - KSh ${amount}`,
-      url: "/dashboard/proofs",
+      url: "/dashboard/fees/add",
     };
 
     subscriptions.forEach((sub) => {
@@ -121,26 +121,60 @@ exports.reviewProof = async (req, res) => {
   try {
     const { proofId, action } = req.params;
 
-    const proof = await PaymentProof.findById(proofId).populate("studentId");
+    const proof = await PaymentProof.findById(proofId)
+      .populate("studentId")
+      .populate("parentId"); // for notifying parent
     if (!proof) return res.status(404).json({ message: "Proof not found" });
     if (proof.status !== "pending")
       return res.status(400).json({ message: "Proof already reviewed" });
 
+    const student = proof.studentId;
+    const parent = proof.parentId;
+
+    const io = req.app.get("io"); // socket.io instance
+
+    let message;
+    let status;
+    let payload;
+
     if (action === "reject") {
       proof.status = "rejected";
       await proof.save();
+
+      message = `Your payment proof for ${student.firstName} ${student.lastName} was rejected.`;
+      status = "rejected";
+
+      // Notify parent via Socket.IO
+      io.to(parent._id.toString()).emit("proofReviewed", {
+        proofId: proof._id,
+        studentId: student._id,
+        status,
+        message,
+      });
+
+      // Push notification for offline parent
+      const subscriptions = await pushSubscription.find({ user: parent._id });
+      payload = {
+        title: "Payment Proof Rejected",
+        body: `${student.firstName} ${student.lastName} — proof was rejected. Please review and resubmit.`,
+        url: "/dashboard/fees/my-proofs",
+      };
+
+      subscriptions.forEach((sub) => {
+        webpush
+          .sendNotification(sub.subscription, JSON.stringify(payload))
+          .catch((err) => console.error("Push failed:", err));
+      });
+
       return res.json({ message: "Proof rejected", proof });
     }
 
     if (action === "confirm" || action === "approve") {
-      const student = await Student.findById(proof.studentId._id);
-
-      // Optional: auto-fill academicYear and term from school
+      // Record payment
       const school = await School.findById(student.school).lean();
       const academicYear = school?.currentAcademicYear || "2025/2026";
       const term = school?.currentTerm || "Term 1";
 
-      // Record official payment in FeeTransaction
       const feeTxn = await FeeTransaction.create({
         student: student._id,
         school: student.school,
@@ -150,11 +184,36 @@ exports.reviewProof = async (req, res) => {
         type: "payment",
         method: proof.method,
         note: `Confirmed via proof txn ${proof.txnCode}`,
-        handledBy: req.user.userId, // admin/bursar ID
+        handledBy: req.user.userId,
       });
 
       proof.status = "confirmed";
       await proof.save();
+
+      message = `Your payment proof for ${student.firstName} ${student.lastName} was confirmed!`;
+      status = "confirmed";
+
+      // Notify parent via Socket.IO
+      io.to(parent._id.toString()).emit("proofReviewed", {
+        proofId: proof._id,
+        studentId: student._id,
+        status,
+        message,
+      });
+
+      // Push notification for offline parent
+      const subscriptions = await pushSubscription.find({ user: parent._id });
+      payload = {
+        title: "Payment Proof Confirmed",
+        body: `${student.firstName} ${student.lastName} — KSh ${proof.amount} confirmed.`,
+        url: "/dashboard/fees/my-proofs",
+      };
+
+      subscriptions.forEach((sub) => {
+        webpush
+          .sendNotification(sub.subscription, JSON.stringify(payload))
+          .catch((err) => console.error("Push failed:", err));
+      });
 
       return res.json({
         message: "Proof confirmed, payment recorded",
@@ -169,6 +228,7 @@ exports.reviewProof = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
 
 // ---------------------
 // Admin fetches pending proofs

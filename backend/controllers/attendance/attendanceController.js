@@ -3,6 +3,8 @@ const Student = require("../../models/Student");
 const User = require("../../models/User");
 const notificationService = require("../../services/notificationService");
 const School = require("../../models/School");
+const pushSubscription = require("../../models/pushSubscription");
+const webpush = require('web-push')
 
 // Helper to set current academic year if not provided
 const getAcademicYear = (year) => year || School.currentAcademicYear();
@@ -60,12 +62,35 @@ exports.saveAttendance = async (req, res) => {
 
       results.push(doc);
 
-      if (notifyParents && status === "absent") {
-        const student = await Student.findById(studentId).populate("guardian");
+      if (["absent", "late"].includes(status)) {
+        const student = await Student.findById(studentId)
+          .populate("guardian", "name role");
+
         if (student?.guardian) {
-          notificationService.notifyParent(student.guardian, student, attendanceDate);
+          const subscriptions = await pushSubscription.find({
+            user: student.guardian._id,
+          });
+
+          const payload = {
+            title:
+              status === "absent"
+                ? "Attendance Alert: Absent"
+                : "Attendance Alert: Late Arrival",
+            body:
+              status === "absent"
+                ? `${student.firstName} ${student.lastName} was marked absent on ${attendanceDate.toDateString()}.`
+                : `${student.firstName} ${student.lastName} arrived late on ${attendanceDate.toDateString()}.`,
+            url: "/dashboard/parent/attendance",
+          };
+
+          subscriptions.forEach((sub) => {
+            webpush
+              .sendNotification(sub.subscription, JSON.stringify(payload))
+              .catch((err) => console.error("Push failed:", err));
+          });
         }
       }
+    
     }
 
     res.json({ msg: "Attendance saved" });

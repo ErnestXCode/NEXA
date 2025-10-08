@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
 import api from "../../../api/axios";
 import useUnreadMessages from "../../../hooks/useUnreadMessages";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 const ParentDashboard = () => {
   const [children, setChildren] = useState([]);
@@ -21,6 +21,8 @@ const ParentDashboard = () => {
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState(null);
 
+  const queryClient = useQueryClient()
+
   const submitProof = async () => {
     if (!selectedChild) return;
 
@@ -35,6 +37,7 @@ const ParentDashboard = () => {
       });
       setMessage("✅ Proof submitted successfully. Awaiting confirmation.");
       setProof({ amount: "", txnCode: "", method: "mpesa" });
+      queryClient.refetchQueries(["proofs", "pending"]);
     } catch (err) {
       console.error("Error submitting proof:", err);
       setMessage("❌ Failed to submit proof. Try again.");
