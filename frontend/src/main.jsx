@@ -32,6 +32,8 @@ persistQueryClient({
   persister,
 });
 
+
+
 // Register service worker and request push subscription
 if ("serviceWorker" in navigator && "PushManager" in window) {
   console.log(1)

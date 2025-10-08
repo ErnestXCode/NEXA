@@ -10,15 +10,18 @@ const router = express.Router();
 router.post("/subscribe",verifyJWT, async (req, res) => {
   try {
     const user = req.user; // make sure verifyJWT middleware is used
+
+   
     const sub = req.body;
     console.log('----------------------------')
     console.log(req.user, req.body)
     console.log('----------------------------')
-    await pushSubscription.findOneAndUpdate(
+    const x = await pushSubscription.findOneAndUpdate(
       { user: user.userId },
       { user: user.userId, school: user.school, subscription: sub },
       { upsert: true, new: true }
     );
+    console.log('-------xxx-------', x)
     res.status(201).json({ msg: "Subscription saved" });
   } catch (err) {
     console.error(err);

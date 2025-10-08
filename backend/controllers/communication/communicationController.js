@@ -57,7 +57,7 @@ const sendMessage = async (req, res) => {
     // Chat / push notifications
     if (type === "chat") {
       const subscriptions = await PushSubscription.find({
-        school: sender.school,
+        school: sender.school
       }).populate("user");
 
     console.log('subscriptions', subscriptions)
@@ -79,7 +79,8 @@ const sendMessage = async (req, res) => {
       subscriptions.forEach((sub) => {
         // 🚫 Skip notifying the sender themself
         console.log('sub', sub)
-        if (sub.user._id.toString() === sender.userId.toString()) return;
+        console.log(sub.user._id, sender.userId, sub.user._id.toString())
+        if (sub.user._id.toString() === sender.userId.toString()) console.log('as-------------ss');
 
         webpush
           .sendNotification(sub.subscription, JSON.stringify(pushPayload))
