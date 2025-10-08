@@ -37,10 +37,16 @@ persistQueryClient({
 if ("serviceWorker" in navigator && "PushManager" in window) {
   console.log(1);
   window.addEventListener("load", async () => {
+    const token = store.getState().auth.accessToken;
+    // 🔥 Only refresh if no token yet
+    if (!token) {
+      console.log("No access token found — refreshing...");
+      await refreshAccessToken();
+    }
+
     try {
       let registration;
       try {
-        await refreshAccessToken();
         registration = await navigator.serviceWorker.register("/custom-sw.js");
 
         console.log("Service Worker registered", registration);
