@@ -114,6 +114,89 @@ const Home = () => {
         </div>
       </section>
 
+          {/* App Modules Preview */}
+<section className="py-24 bg-gray-950 px-6 border-t border-gray-800">
+  <div className="max-w-6xl mx-auto text-center">
+    <h2 className="text-3xl font-semibold mb-14 text-white">
+      Explore What Nexa Can Do
+    </h2>
+
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+      {/* Communication */}
+      <div className="p-6 bg-gray-900 rounded-2xl border border-gray-800 hover:border-gray-700 transition-colors shadow">
+        <div className="w-full h-56 bg-gray-800 rounded-xl mb-5 flex items-center justify-center text-gray-500 text-sm">
+          Communication Area / Messages Screenshot
+        </div>
+        <h3 className="text-xl font-semibold text-white mb-2">Communication Hub</h3>
+        <p className="text-gray-400">
+          Real-time chat between teachers, parents, and administrators — all in one secure space. 
+          Stay updated with messages and announcements instantly.
+        </p>
+      </div>
+
+      {/* Attendance */}
+      <div className="p-6 bg-gray-900 rounded-2xl border border-gray-800 hover:border-gray-700 transition-colors shadow">
+        <div className="w-full h-56 bg-gray-800 rounded-xl mb-5 flex items-center justify-center text-gray-500 text-sm">
+          Attendance Dashboard Screenshot
+        </div>
+        <h3 className="text-xl font-semibold text-white mb-2">Smart Attendance</h3>
+        <p className="text-gray-400">
+          Mark and track attendance with ease. Class teachers can record daily logs, and admins 
+          can view real-time summaries and trends.
+        </p>
+      </div>
+
+      {/* Exams */}
+      <div className="p-6 bg-gray-900 rounded-2xl border border-gray-800 hover:border-gray-700 transition-colors shadow">
+        <div className="w-full h-56 bg-gray-800 rounded-xl mb-5 flex items-center justify-center text-gray-500 text-sm">
+          Exams or Report Card Screenshot
+        </div>
+        <h3 className="text-xl font-semibold text-white mb-2">Exams & Reports</h3>
+        <p className="text-gray-400">
+          Manage exams, record results, and generate beautiful report cards. Nexa simplifies 
+          academic records for teachers and school heads alike.
+        </p>
+      </div>
+
+      {/* Fees / Billing */}
+      <div className="p-6 bg-gray-900 rounded-2xl border border-gray-800 hover:border-gray-700 transition-colors shadow">
+        <div className="w-full h-56 bg-gray-800 rounded-xl mb-5 flex items-center justify-center text-gray-500 text-sm">
+          Fees / Billing Screenshot
+        </div>
+        <h3 className="text-xl font-semibold text-white mb-2">Billing & Fees</h3>
+        <p className="text-gray-400">
+          Record payments, manage balances, and view transparent transaction logs. 
+          Secure and accessible — perfect for bursars and admins.
+        </p>
+      </div>
+
+      {/* Reviews */}
+      <div className="p-6 bg-gray-900 rounded-2xl border border-gray-800 hover:border-gray-700 transition-colors shadow">
+        <div className="w-full h-56 bg-gray-800 rounded-xl mb-5 flex items-center justify-center text-gray-500 text-sm">
+          Review Section Screenshot
+        </div>
+        <h3 className="text-xl font-semibold text-white mb-2">Reviews & Feedback</h3>
+        <p className="text-gray-400">
+          Encourage feedback from parents and staff. Insights gathered help improve the 
+          experience for everyone involved.
+        </p>
+      </div>
+
+      {/* Settings */}
+      <div className="p-6 bg-gray-900 rounded-2xl border border-gray-800 hover:border-gray-700 transition-colors shadow">
+        <div className="w-full h-56 bg-gray-800 rounded-xl mb-5 flex items-center justify-center text-gray-500 text-sm">
+          Settings / Admin Panel Screenshot
+        </div>
+        <h3 className="text-xl font-semibold text-white mb-2">System Control</h3>
+        <p className="text-gray-400">
+          Fine-tune your school system with admin tools. Manage roles, users, and permissions 
+          effortlessly from the settings dashboard.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
       {/* Features Section */}
       <section className="py-24 bg-gray-950 px-6">
         <div className="max-w-6xl mx-auto text-center">
@@ -169,6 +252,10 @@ const Home = () => {
         </div>
       </div>
     </section>
+
+
+
+
 
       {/* CTA Section */}
       <section className="py-24 bg-gray-950 text-white text-center px-6">

@@ -1,33 +1,16 @@
 optimize backend
 
-fees should show summary for terms as well for classes and for school
-
 download templates for adding people
 
-deleting paypal.acc
-
-
-show only first name o logo 
-
-notification system
+show only first name on hello text 
 
 have cache for students in class teacher for attendance, 
 
 remove choose dates option for live production 
 
-badge is not persistent in dashboard
+badge is not persistent in dashboard, as in it clears when navigating
 
-Option C: Real-time updates via Socket.IO (best for multi-device)
-
-Since you already use Socket.IO, use it to sync React Query data across all connected devices:
-
-socket.on("proofUpdated", () => {
-  queryClient.invalidateQueries(["proofs"]);
-  queryClient.refetchQueries(["proofs"]);
-});
-
-
-That way, when one user submits a payment proof, all parents (or the admin dashboard) see updates instantly — even on different browsers or devices.
+sockets to run tanstack for refecthing
 
 show loading students when loading for attendance
 
@@ -35,13 +18,11 @@ show no data available if no data in any page , also show if connection is not t
 
 make sure attendance view is okay when lots of classes are marked
 
+attendance for classs teacher is missing alot
+
 log filter might be slow, and attendance log filters need alot of work
 
 make activities do more 
-
-maybe push subscription to backend is sending no actual accesstoken or sumn---------
-
- you see how the three files look where parents have children whose names are in students and onboarding also has those students in students.xlsx.......i want you to see how they are and give me 3 similar files, one for students, one for parents and one for onboarding -- with same headers but different parents , different emails, different names , different children etc-----i empahsize you see how the students in students.xlsx are being used in onboarding.xlsx and parents.xlsx in children section,,,see how they use only first name and last name in some parts and some parts they use all names including middlename,,,, dont screw this up, i wont be able to upload these for reference again,,,,,the ones i have uploaded is data for one fake school, now create for another fake school---remember they should have different emails and phonenumbers and names and details as the mongodb is the same----also another thing that really matters is that the three xlsx files you give me actually are conected like the ones i gave you
 
 student edit classlevel is not a dropdown , and middle name is for some reason above the other names
 
@@ -51,29 +32,17 @@ select option looks ugly for phones make them custom to the app and make em cons
 
 creating exams is delayed for some reason
 
-edit fee not found
-
-when saving results show saving... on button
+when saving results show saving... on buttons
 
 square on nexa notification to be detailed something image 
 
-reviews show as commas first for some reason
-
 make caching full proof for entire app, tanstack
-
-add confirm fee flow for parents and admin is the one to confirm them
 
 the next year carryover should check fo feerules of next class...or maybe they should remain as excess till the new year comes in
 
-fees history page for parents and admins/bursars as well
+fees history page for parents
 
 add streams to classes  
-
-fees is caching alot 
-
-add pricing , and pilot complete as well think very much on how we will actually bill customers and how i would maybe increase it without losing them , will it be modular, will it be entire app, will it be per student, how to bill different amounts to different sizes of schools 
-
-free alternatives to sendgrid for forgot password , registering admin
 
 make it so , if the school has paybil, they have an option to use it to automate fees that way im not going losses all i have to is to check---can do same with bank apis as well, that way theres both manual and automated options, if the school does use some api, the parent flow of confirming payment should not show , they just pay paybill and stuff is just automated , but if no paybill or bank api you can show the parent admin fee confirmation flow.
 
