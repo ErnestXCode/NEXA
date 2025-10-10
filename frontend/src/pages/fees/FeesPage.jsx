@@ -30,7 +30,7 @@ const FeesPage = () => {
 
   // local state for new fee rule form
   const [newRule, setNewRule] = useState({
-    academicYear: "2025/2026",
+    academicYear,
     term: "Term 1",
     fromClass: "",
     toClass: "",

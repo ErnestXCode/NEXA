@@ -358,7 +358,7 @@ const removePaymentOption = (idx) => {
           </section>
 
           {/* Class Levels */}
-          {(
+          {/* {(
             <section>
               <h2 className="text-gray-200 font-semibold mb-3 border-b border-gray-700 pb-1">
                 Class Levels & Streams
@@ -465,7 +465,117 @@ const removePaymentOption = (idx) => {
                 </button>
               </div>
             </section>
+          )} */}
+
+          <section>
+  <h2 className="text-gray-200 font-semibold mb-3 border-b border-gray-700 pb-1">
+    Class Levels & Streams
+  </h2>
+
+  <div
+    className="
+      grid gap-3
+      sm:grid-cols-2
+      lg:grid-cols-3
+      xl:grid-cols-4
+    "
+  >
+    {school.classLevels.map((cls, idx) => (
+      <div
+        key={idx}
+        className="bg-gray-800 p-3 rounded border border-gray-700 flex flex-col"
+      >
+        <div className="flex justify-between items-center mb-2">
+          <input
+            value={cls.name}
+            onChange={(e) => {
+              const newLevels = [...school.classLevels];
+              newLevels[idx].name = e.target.value;
+              setSchool((prev) => ({
+                ...prev,
+                classLevels: newLevels,
+              }));
+            }}
+            className="flex-1 mr-2 p-2 rounded bg-gray-700 text-white text-sm"
+          />
+          <button
+            type="button"
+            onClick={() => {
+              const newLevels = school.classLevels.filter((_, i) => i !== idx);
+              setSchool((prev) => ({
+                ...prev,
+                classLevels: newLevels,
+              }));
+            }}
+            className="text-red-400 hover:text-red-600 text-sm"
+          >
+            ✕ 
+          </button>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          {cls.streams.map((s, i) => (
+            <span
+              key={i}
+              className="bg-green-600 text-white px-2 py-1 rounded-full text-sm flex items-center gap-1"
+            >
+              {s}
+              <button
+                type="button"
+                onClick={() => {
+                  const newLevels = [...school.classLevels];
+                  newLevels[idx].streams = newLevels[idx].streams.filter(
+                    (_, si) => si !== i
+                  );
+                  setSchool((prev) => ({
+                    ...prev,
+                    classLevels: newLevels,
+                  }));
+                }}
+                className="ml-1 text-xs text-red-200 hover:text-red-400"
+              >
+                ✕
+              </button>
+            </span>
+          ))}
+          {false && (
+            <input
+              type="text"
+              placeholder="Add stream"
+              onKeyDown={(e) => {
+                if (["Enter", ","].includes(e.key)) {
+                  e.preventDefault();
+                  const newLevels = [...school.classLevels];
+                  newLevels[idx].streams.push(e.target.value.trim());
+                  setSchool((prev) => ({
+                    ...prev,
+                    classLevels: newLevels,
+                  }));
+                  e.target.value = "";
+                }
+              }}
+              className="flex-1 min-w-[120px] p-2 rounded bg-gray-700 text-white text-sm"
+            />
           )}
+        </div>
+      </div>
+    ))}
+
+    <button
+      type="button"
+      onClick={() =>
+        setSchool((prev) => ({
+          ...prev,
+          classLevels: [...prev.classLevels, { name: "New Class", streams: [] }],
+        }))
+      }
+      className="px-3 py-2 bg-gray-700 text-white rounded hover:bg-gray-600 text-sm text-center"
+    >
+      ➕ Add Level
+    </button>
+  </div>
+</section>
+
 
          
 

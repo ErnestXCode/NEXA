@@ -8,7 +8,6 @@ import {
 import { useEffect, useState } from "react";
 import api from "../../api/axios";
 
-
 const Home = () => {
   const features = [
     {
@@ -55,7 +54,10 @@ const Home = () => {
           <NavLink to="/" className="hover:text-white transition-colors">
             Home
           </NavLink>
-          <NavLink to="/features" className="hover:text-white transition-colors">
+          <NavLink
+            to="/features"
+            className="hover:text-white transition-colors"
+          >
             Features
           </NavLink>
           <NavLink to="/pricing" className="hover:text-white transition-colors">
@@ -94,13 +96,22 @@ const Home = () => {
           <NavLink to="/" className="text-gray-300 hover:text-white text-sm">
             Home
           </NavLink>
-          <NavLink to="/features" className="text-gray-300 hover:text-white text-sm">
+          <NavLink
+            to="/features"
+            className="text-gray-300 hover:text-white text-sm"
+          >
             Features
           </NavLink>
-          <NavLink to="/pricing" className="text-gray-300 hover:text-white text-sm">
+          <NavLink
+            to="/pricing"
+            className="text-gray-300 hover:text-white text-sm"
+          >
             Pricing
           </NavLink>
-          <NavLink to="/contact" className="text-gray-300 hover:text-white text-sm">
+          <NavLink
+            to="/contact"
+            className="text-gray-300 hover:text-white text-sm"
+          >
             Contact
           </NavLink>
         </div>
@@ -114,88 +125,103 @@ const Home = () => {
         </div>
       </section>
 
-          {/* App Modules Preview */}
-<section className="py-24 bg-gray-950 px-6 border-t border-gray-800">
-  <div className="max-w-6xl mx-auto text-center">
-    <h2 className="text-3xl font-semibold mb-14 text-white">
-      Explore What Nexa Can Do
-    </h2>
+      {/* App Modules Preview */}
+      <section className="py-24 bg-gray-950 px-6 border-t border-gray-800">
+        <div className="max-w-6xl mx-auto text-center">
+          <h2 className="text-3xl font-semibold mb-14 text-white">
+            Explore What Nexa Can Do
+          </h2>
 
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-      {/* Communication */}
-      <div className="p-6 bg-gray-900 rounded-2xl border border-gray-800 hover:border-gray-700 transition-colors shadow">
-        <div className="w-full h-56 bg-gray-800 rounded-xl mb-5 flex items-center justify-center text-gray-500 text-sm">
-          Communication Area / Messages Screenshot
-        </div>
-        <h3 className="text-xl font-semibold text-white mb-2">Communication Hub</h3>
-        <p className="text-gray-400">
-          Real-time chat between teachers, parents, and administrators — all in one secure space. 
-          Stay updated with messages and announcements instantly.
-        </p>
-      </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+            {/* Communication */}
+            <div className="p-6 bg-gray-900 rounded-2xl border border-gray-800 hover:border-gray-700 transition-colors shadow">
+              <div className="w-full h-56 bg-gray-800 rounded-xl mb-5 flex items-center justify-center text-gray-500 text-sm">
+                Communication Area / Messages Screenshot
+              </div>
+              <h3 className="text-xl font-semibold text-white mb-2">
+                Communication Hub
+              </h3>
+              <p className="text-gray-400">
+                Real-time chat between teachers, parents, and administrators —
+                all in one secure space. Stay updated with messages and
+                announcements instantly.
+              </p>
+            </div>
 
-      {/* Attendance */}
-      <div className="p-6 bg-gray-900 rounded-2xl border border-gray-800 hover:border-gray-700 transition-colors shadow">
-        <div className="w-full h-56 bg-gray-800 rounded-xl mb-5 flex items-center justify-center text-gray-500 text-sm">
-          Attendance Dashboard Screenshot
-        </div>
-        <h3 className="text-xl font-semibold text-white mb-2">Smart Attendance</h3>
-        <p className="text-gray-400">
-          Mark and track attendance with ease. Class teachers can record daily logs, and admins 
-          can view real-time summaries and trends.
-        </p>
-      </div>
+            {/* Attendance */}
+            <div className="p-6 bg-gray-900 rounded-2xl border border-gray-800 hover:border-gray-700 transition-colors shadow">
+              <div className="w-full h-56 bg-gray-800 rounded-xl mb-5 flex items-center justify-center text-gray-500 text-sm">
+                Attendance Dashboard Screenshot
+              </div>
+              <h3 className="text-xl font-semibold text-white mb-2">
+                Smart Attendance
+              </h3>
+              <p className="text-gray-400">
+                Mark and track attendance with ease. Class teachers can record
+                daily logs, and admins can view real-time summaries and trends.
+              </p>
+            </div>
 
-      {/* Exams */}
-      <div className="p-6 bg-gray-900 rounded-2xl border border-gray-800 hover:border-gray-700 transition-colors shadow">
-        <div className="w-full h-56 bg-gray-800 rounded-xl mb-5 flex items-center justify-center text-gray-500 text-sm">
-          Exams or Report Card Screenshot
-        </div>
-        <h3 className="text-xl font-semibold text-white mb-2">Exams & Reports</h3>
-        <p className="text-gray-400">
-          Manage exams, record results, and generate beautiful report cards. Nexa simplifies 
-          academic records for teachers and school heads alike.
-        </p>
-      </div>
+            {/* Exams */}
+            <div className="p-6 bg-gray-900 rounded-2xl border border-gray-800 hover:border-gray-700 transition-colors shadow">
+              <div className="w-full h-56 bg-gray-800 rounded-xl mb-5 flex items-center justify-center text-gray-500 text-sm">
+                Exams or Report Card Screenshot
+              </div>
+              <h3 className="text-xl font-semibold text-white mb-2">
+                Exams & Reports
+              </h3>
+              <p className="text-gray-400">
+                Manage exams, record results, and generate beautiful report
+                cards. Nexa simplifies academic records for teachers and school
+                heads alike.
+              </p>
+            </div>
 
-      {/* Fees / Billing */}
-      <div className="p-6 bg-gray-900 rounded-2xl border border-gray-800 hover:border-gray-700 transition-colors shadow">
-        <div className="w-full h-56 bg-gray-800 rounded-xl mb-5 flex items-center justify-center text-gray-500 text-sm">
-          Fees / Billing Screenshot
-        </div>
-        <h3 className="text-xl font-semibold text-white mb-2">Billing & Fees</h3>
-        <p className="text-gray-400">
-          Record payments, manage balances, and view transparent transaction logs. 
-          Secure and accessible — perfect for bursars and admins.
-        </p>
-      </div>
+            {/* Fees / Billing */}
+            <div className="p-6 bg-gray-900 rounded-2xl border border-gray-800 hover:border-gray-700 transition-colors shadow">
+              <div className="w-full h-56 bg-gray-800 rounded-xl mb-5 flex items-center justify-center text-gray-500 text-sm">
+                Fees / Billing Screenshot
+              </div>
+              <h3 className="text-xl font-semibold text-white mb-2">
+                Billing & Fees
+              </h3>
+              <p className="text-gray-400">
+                Record payments, manage balances, and view transparent
+                transaction logs. Secure and accessible — perfect for bursars
+                and admins.
+              </p>
+            </div>
 
-      {/* Reviews */}
-      <div className="p-6 bg-gray-900 rounded-2xl border border-gray-800 hover:border-gray-700 transition-colors shadow">
-        <div className="w-full h-56 bg-gray-800 rounded-xl mb-5 flex items-center justify-center text-gray-500 text-sm">
-          Review Section Screenshot
-        </div>
-        <h3 className="text-xl font-semibold text-white mb-2">Reviews & Feedback</h3>
-        <p className="text-gray-400">
-          Encourage feedback from parents and staff. Insights gathered help improve the 
-          experience for everyone involved.
-        </p>
-      </div>
+            {/* Reviews */}
+            <div className="p-6 bg-gray-900 rounded-2xl border border-gray-800 hover:border-gray-700 transition-colors shadow">
+              <div className="w-full h-56 bg-gray-800 rounded-xl mb-5 flex items-center justify-center text-gray-500 text-sm">
+                Review Section Screenshot
+              </div>
+              <h3 className="text-xl font-semibold text-white mb-2">
+                Reviews & Feedback
+              </h3>
+              <p className="text-gray-400">
+                Encourage feedback from parents and staff. Insights gathered
+                help improve the experience for everyone involved.
+              </p>
+            </div>
 
-      {/* Settings */}
-      <div className="p-6 bg-gray-900 rounded-2xl border border-gray-800 hover:border-gray-700 transition-colors shadow">
-        <div className="w-full h-56 bg-gray-800 rounded-xl mb-5 flex items-center justify-center text-gray-500 text-sm">
-          Settings / Admin Panel Screenshot
+            {/* Settings */}
+            <div className="p-6 bg-gray-900 rounded-2xl border border-gray-800 hover:border-gray-700 transition-colors shadow">
+              <div className="w-full h-56 bg-gray-800 rounded-xl mb-5 flex items-center justify-center text-gray-500 text-sm">
+                Settings / Admin Panel Screenshot
+              </div>
+              <h3 className="text-xl font-semibold text-white mb-2">
+                System Control
+              </h3>
+              <p className="text-gray-400">
+                Fine-tune your school system with admin tools. Manage roles,
+                users, and permissions effortlessly from the settings dashboard.
+              </p>
+            </div>
+          </div>
         </div>
-        <h3 className="text-xl font-semibold text-white mb-2">System Control</h3>
-        <p className="text-gray-400">
-          Fine-tune your school system with admin tools. Manage roles, users, and permissions 
-          effortlessly from the settings dashboard.
-        </p>
-      </div>
-    </div>
-  </div>
-</section>
+      </section>
 
       {/* Features Section */}
       <section className="py-24 bg-gray-950 px-6">
@@ -227,35 +253,35 @@ const Home = () => {
 
       {/* Testimonials Section */}
       <section className="py-24 bg-gray-900 px-6">
-      <div className="max-w-6xl mx-auto text-center">
-        <h2 className="text-3xl font-semibold mb-14 text-white">
-          What Our Users Say
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-          {testimonials.map((t, i) => (
-            <div
-              key={i}
-              className="p-8 border border-gray-800 rounded-2xl shadow bg-gray-950 hover:border-gray-700 transition-colors"
-            >
-              {t.avatar && (
-                <img
-                  src={t.avatar}
-                  alt={t.name}
-                  className="w-16 h-16 rounded-full mx-auto mb-5 object-cover"
-                />
-              )}
-              <p className="italic mb-3 text-gray-300">“{t.message}”</p>
-              <p className="font-semibold text-white">— {t.name}, {t.school}</p>
-              {t.rating && <p className="text-yellow-400 mt-2">⭐ {t.rating}</p>}
-            </div>
-          ))}
+        <div className="max-w-6xl mx-auto text-center">
+          <h2 className="text-3xl font-semibold mb-14 text-white">
+            What Our Users Say
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+            {testimonials.map((t, i) => (
+              <div
+                key={i}
+                className="p-8 border border-gray-800 rounded-2xl shadow bg-gray-950 hover:border-gray-700 transition-colors"
+              >
+                {t.avatar && (
+                  <img
+                    src={t.avatar}
+                    alt={t.name}
+                    className="w-16 h-16 rounded-full mx-auto mb-5 object-cover"
+                  />
+                )}
+                <p className="italic mb-3 text-gray-300">“{t.message}”</p>
+                <p className="font-semibold text-white">
+                  — {t.name}, {t.school}
+                </p>
+                {t.rating && (
+                  <p className="text-yellow-400 mt-2">⭐ {t.rating}</p>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
-    </section>
-
-
-
-
+      </section>
 
       {/* CTA Section */}
       <section className="py-24 bg-gray-950 text-white text-center px-6">
