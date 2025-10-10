@@ -41,6 +41,7 @@ import Billing from "./pages/home/Billing";
 import AttendanceLogsPage from "./pages/attendance/AttendanceLogsPage";
 import ResultsAuditPage from "./pages/exams/ResultsAuditPage";
 import FeeAuditPage from "./pages/fees/FeeAuditPage";
+import CreditAuditPage from "./pages/fees/CreditAuditPage";
 
 
 const HomeRedirect = () => {
@@ -92,6 +93,7 @@ function App() {
                 <Route path="fees" element={<FeesPage />} />
                 <Route path="fees/add" element={<AddFeePage />} />
                 <Route path="fees/logs" element={<FeeAuditPage />} />
+                <Route path="fees/credit" element={<CreditAuditPage />} />
 
                 <Route path="attendance" element={<AttendanceDashboard />} />
                 <Route path="attendance/mark" element={<AttendancePage />} />

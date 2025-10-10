@@ -319,6 +319,14 @@ const Navigation = () => {
                   >
                     Fee Logs
                   </NavLink>
+                  <NavLink
+                    end
+                    onClick={handleCloseSidenav}
+                    to="/dashboard/fees/credit"
+                    className={navLinkClasses}
+                  >
+                    Credit Logs
+                  </NavLink>
                 </div>
 
                 <div>

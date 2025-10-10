@@ -117,6 +117,8 @@ app.use("/api/push", require("./routes/push"));
 app.use("/api/reviews", require("./routes/review"));
 app.use("/api/pesapal", require("./routes/pesapal"));
 app.use("/api/manual-payments", require("./routes/manualPayments"));
+app.use("/api/credits", require("./routes/credits"));
+
 
 app.get("/api/ping", (req, res) => {
   return res.status(200).json({
