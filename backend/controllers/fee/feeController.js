@@ -225,21 +225,7 @@ exports.setFeeRules = async (req, res) => {
 /* -------------------------------
    🔍 Get Transactions for Student
 --------------------------------*/
-exports.getStudentBalance = async (req, res) => {
-  try {
-    const { studentId } = req.params; // 👈 add this
-    const { academicYear } = req.query;
 
-    const student = await Student.findById(studentId);
-    if (!student) return res.status(404).json({ message: "Student not found" });
-
-    const balances = await student.computeBalances(academicYear);
-    res.json({ studentId, academicYear, balances });
-  } catch (err) {
-    console.error("getStudentBalance error:", err);
-    res.status(500).json({ message: "Server error" });
-  }
-};
 
 exports.getStudentTransactions = async (req, res) => {
   try {
@@ -998,6 +984,28 @@ exports.deleteFeeRule = async (req, res) => {
     res.json({ message: "Fee rule deleted", feeRules: school.feeRules });
   } catch (err) {
     console.error("deleteFeeRule error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+
+exports.getStudentLogs = async (req, res) => {
+  try {
+    const { studentId } = req.params;
+
+    const [transactions, credits] = await Promise.all([
+      FeeTransaction.find({ student: studentId })
+        .populate("handledBy", "name")
+        .sort({ createdAt: -1 }),
+      StudentCredit.find({ student: studentId }).sort({ createdAt: -1 }),
+    ]);
+
+    res.json({
+      transactions,
+      credits,
+    });
+  } catch (err) {
+    console.error("getStudentLogs error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
