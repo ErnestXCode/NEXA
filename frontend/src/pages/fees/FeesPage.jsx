@@ -2,6 +2,8 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "../../api/axios";
+import { useNavigate } from "react-router-dom";
+
 
 import {
   PieChart,
@@ -26,6 +28,8 @@ const fetcher = async (url) => {
 const FeesPage = () => {
   const queryClient = useQueryClient();
   const [academicYear, setAcademicYear] = useState("2025/2026");
+  const navigate = useNavigate();
+
 
 
   // local state for new fee rule form
@@ -841,6 +845,7 @@ const FeesPage = () => {
                   {debtors.debtors.map((d, idx) => (
                     <tr
                       key={d.studentId}
+                      onClick={() => navigate(`/dashboard/debtors/${d.studentId}`)}
                       className="hover:bg-gray-800/50 transition duration-150"
                     >
                       {/* Name */}

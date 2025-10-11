@@ -17,6 +17,7 @@ const {
   onboardStudents,
   deleteFeeRule,
   getAllTransactions,
+  getStudentFeeHistory,
 } = require("../controllers/fee/feeController");
 
 const {
@@ -40,9 +41,9 @@ router.get("/students/:studentId/balance", verifyJWT, getStudentBalance);
 
 // 🔍 Fetch student transaction history
 router.get(
-  "/students/:studentId/transactions",
+  "/students/:studentId/history",
   verifyJWT,
-  getStudentTransactions
+  getStudentFeeHistory
 );
 
 // 🏫 Update school fee rules

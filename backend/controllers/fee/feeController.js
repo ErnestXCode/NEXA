@@ -6,7 +6,8 @@ const StudentCredit = require("../../models/StudentCredit");
 exports.recordTransaction = async (req, res) => {
   console.time("recordTransaction");
   try {
-    const { studentId, academicYear, term, amount, type, method, note } = req.body;
+    const { studentId, academicYear, term, amount, type, method, note } =
+      req.body;
     const userId = req.user.userId;
 
     // ✅ sanitize amount
@@ -89,7 +90,13 @@ exports.recordTransaction = async (req, res) => {
       if (!nextExpected || nextExpected <= 0) break;
 
       const nextPaid = await FeeTransaction.aggregate([
-        { $match: { student: student._id, academicYear: currentYear, term: nextTerm } },
+        {
+          $match: {
+            student: student._id,
+            academicYear: currentYear,
+            term: nextTerm,
+          },
+        },
         { $group: { _id: null, total: { $sum: "$amount" } } },
       ]);
       const nextAlreadyPaid = nextPaid[0]?.total || 0;
@@ -125,8 +132,6 @@ exports.recordTransaction = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
-
-
 
 /* -------------------------------
    📋 Get All Fee Transactions (Audit)
@@ -225,7 +230,6 @@ exports.setFeeRules = async (req, res) => {
 /* -------------------------------
    🔍 Get Transactions for Student
 --------------------------------*/
-
 
 exports.getStudentTransactions = async (req, res) => {
   try {
@@ -988,7 +992,6 @@ exports.deleteFeeRule = async (req, res) => {
   }
 };
 
-
 exports.getStudentLogs = async (req, res) => {
   try {
     const { studentId } = req.params;
@@ -1009,3 +1012,72 @@ exports.getStudentLogs = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+// controllers/feeController.js
+exports.getStudentFeeHistory = async (req, res) => {
+  console.time("getStudentFeeHistory");
+  try {
+    const schoolId = req.user.school;
+    const { studentId } = req.params;
+
+    // Verify student belongs to the school
+    const student = await Student.findOne({
+      _id: studentId,
+      school: schoolId,
+    }).lean();
+
+    if (!student) {
+      console.timeEnd("getStudentFeeHistory");
+      return res
+        .status(404)
+        .json({ message: "Student not found or not in your school" });
+    }
+
+    console.log('student---------', student)
+
+    // Fetch all transactions for that student — all years, all terms
+    const transactions = await FeeTransaction.find({
+      student: studentId,
+      school: schoolId,
+    })
+      .populate("handledBy", "name email") // optional, but helpful for context
+      .sort({ createdAt: -1 }) // most recent first
+      .lean();
+
+      console.log('trans------', transactions)
+
+    // Compute totals for quick overview
+    const totalPaid = transactions
+      .filter((t) => t.type === "payment")
+      .reduce((sum, t) => sum + t.amount, 0);
+
+    const totalAdjustments = transactions
+      .filter((t) => t.type === "adjustment")
+      .reduce((sum, t) => sum + t.amount, 0);
+
+    const totalFines = transactions
+      .filter((t) => t.type === "fine")
+      .reduce((sum, t) => sum + t.amount, 0);
+
+    console.timeEnd("getStudentFeeHistory");
+
+    res.json({
+      student: {
+        id: student._id,
+        name: `${student.firstName} ${student.lastName}`,
+        classLevel: student.classLevel,
+      },
+      totals: {
+        paid: totalPaid,
+        adjustments: totalAdjustments,
+        fines: totalFines,
+      },
+      totalTransactions: transactions.length,
+      transactions,
+    });
+  } catch (err) {
+    console.error("getStudentFeeHistory error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
