@@ -1,14 +1,20 @@
 import React, { useState } from "react";
 import api from "../../api/axios";
+import Modal from "../../components/layout/Modal";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import * as XLSX from "xlsx";
-
-
 
 const AddFeePage = () => {
   const [filteredStudents, setFilteredStudents] = useState([]);
   const currentYear = new Date().getFullYear();
   const defaultAcademicYear = `${currentYear}/${currentYear + 1}`;
+
+  const [modal, setModal] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    type: "info",
+  });
 
   const [form, setForm] = useState({
     studentId: "",
@@ -39,18 +45,17 @@ const AddFeePage = () => {
   const methods = ["cash", "mpesa", "card"];
   const terms = ["Term 1", "Term 2", "Term 3"];
 
-const queryClient = useQueryClient()
+  const queryClient = useQueryClient();
 
   const refetchFinancialData = async () => {
-  await Promise.all([
-    queryClient.refetchQueries(["schoolSummary"]),
-    queryClient.refetchQueries(["classSummary"]),
-    queryClient.refetchQueries(["schoolTermSummary"]),
-    queryClient.refetchQueries(["classTermSummary"]),
-    queryClient.refetchQueries(["debtors"]),
-  ]);
-};
-
+    await Promise.all([
+      queryClient.refetchQueries(["schoolSummary"]),
+      queryClient.refetchQueries(["classSummary"]),
+      queryClient.refetchQueries(["schoolTermSummary"]),
+      queryClient.refetchQueries(["classTermSummary"]),
+      queryClient.refetchQueries(["debtors"]),
+    ]);
+  };
 
   // ✅ Query: all students
   const { data: students = [] } = useQuery({
@@ -76,8 +81,13 @@ const queryClient = useQueryClient()
       const res = await api.post("/fees/transactions", newFee);
       return res.data;
     },
-    onSuccess:async  () => {
-      alert("Payment recorded successfully");
+    onSuccess: async () => {
+      setModal({
+        isOpen: true,
+        title: "Success",
+        message: "Payment recorded successfully!",
+        type: "success",
+      });
       setForm({
         studentId: "",
         studentName: "",
@@ -89,10 +99,15 @@ const queryClient = useQueryClient()
         note: "",
       });
 
-     await refetchFinancialData()
+      await refetchFinancialData();
     },
     onError: (err) => {
-      alert(err.response?.data?.message || "Error submitting payment");
+      setModal({
+        isOpen: true,
+        title: "Error",
+        message: err.response?.data?.message || "Error submitting payment",
+        type: "error",
+      });
     },
   });
 
@@ -114,8 +129,7 @@ const queryClient = useQueryClient()
       return data;
     },
     onSuccess: async () => {
-     await refetchFinancialData()
-      
+      await refetchFinancialData();
     },
   });
 
@@ -128,8 +142,7 @@ const queryClient = useQueryClient()
       queryClient.refetchQueries(["proofs", "pending"]);
       queryClient.refetchQueries(["myProofs"]);
 
-           await refetchFinancialData()
-
+      await refetchFinancialData();
     },
   });
 
@@ -162,7 +175,15 @@ const queryClient = useQueryClient()
   const handleSubmit = (e) => {
     try {
       e.preventDefault();
-      if (!form.studentId) return alert("Please select a valid student");
+      if (!form.studentId) {
+        return setModal({
+          isOpen: true,
+          title: "Validation Error",
+          message: "Please select a valid student before submitting.",
+          type: "error",
+        });
+      }
+
       let amountToSend = Number(form.amount);
       if (form.type === "payment") {
         // always positive for payment
@@ -199,7 +220,12 @@ const queryClient = useQueryClient()
     const validRows = bulkStudents.filter((s) => s.studentId);
 
     if (validRows.length === 0) {
-      return alert("No valid students to submit");
+      return setModal({
+        isOpen: true,
+        title: "Validation Error",
+        message: "No valid students to submit.",
+        type: "error",
+      });
     }
 
     const isCSVUpload = bulkStudents.some((s) => s.error || !s.studentId); // or a better flag if you track CSV separately
@@ -631,6 +657,15 @@ const queryClient = useQueryClient()
           </table>
         )}
       </div>
+
+      {modal.isOpen && (
+        <Modal
+          title={modal.title}
+          message={modal.message}
+          type={modal.type}
+          onClose={() => setModal({ ...modal, isOpen: false })}
+        />
+      )}
     </div>
   );
 };
