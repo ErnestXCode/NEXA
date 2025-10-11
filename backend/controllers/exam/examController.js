@@ -291,9 +291,35 @@ const getResultsForExamClass = async (req, res) => {
   }
 };
 
+// Update exam
+const updateExam = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, term, date, academicYear } = req.body;
+    const school = req.user.school;
+
+    const exam = await Exam.findOneAndUpdate(
+      { _id: id, school },
+      { name, term, date, academicYear },
+      { new: true }
+    );
+
+    if (!exam) {
+      return res.status(404).json({ msg: "Exam not found or unauthorized" });
+    }
+
+    res.status(200).json({ msg: "Exam updated successfully", exam });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ msg: "Error updating exam", error: err.message });
+  }
+};
+
+
 module.exports = {
   createExam,
   getAllExams,
+  updateExam,
   getResultsAudit,
   recordResult,
   getResultsForExamClass,

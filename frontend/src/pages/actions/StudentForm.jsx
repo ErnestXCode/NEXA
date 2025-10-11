@@ -110,6 +110,52 @@ const StudentForm = ({ onNext }) => {
     }
   };
 
+  const downloadStudentTemplate = () => {
+  // Define headers
+  const headers = [
+    "firstName",
+    "middleName",
+    "lastName",
+    "gender",
+    "dateOfBirth",
+    "classLevel",
+  ];
+
+  // Example row
+  const exampleData = [
+    [
+      "John",        // firstName
+      "Dan",         // middleName
+      "Doe",         // lastName
+      "male",        // gender
+      "2010-05-15",  // dateOfBirth (yyyy-mm-dd)
+      "Grade 1",     // classLevel
+    ],
+    [
+      "Mary",
+      "Jane",
+      "Smith",
+      "female",
+      "2011-08-22",
+      "Grade 2",
+    ],
+  ];
+
+  // Combine headers + example rows
+  const worksheetData = [headers, ...exampleData];
+
+  // Create worksheet
+  const ws = XLSX.utils.aoa_to_sheet(worksheetData);
+
+  // Create workbook and append the worksheet
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "StudentTemplate");
+
+  // Trigger download
+  XLSX.writeFile(wb, "StudentTemplate.xlsx");
+};
+
+
   return (
     <main className="p-6 bg-gray-950 overflow-hidden flex justify-center items-start">
       <form
@@ -215,6 +261,14 @@ const StudentForm = ({ onNext }) => {
           <label className="block text-gray-300 text-sm mb-1">
             Or upload CSV / Excel for bulk
           </label>
+          <button
+  type="button"
+  onClick={downloadStudentTemplate}
+  className="mb-3 py-2 px-4 rounded bg-blue-600 text-white hover:bg-blue-500"
+>
+  Download Excel Template
+</button>
+
           <input
             type="file"
             accept=".csv,.xlsx,.xls"

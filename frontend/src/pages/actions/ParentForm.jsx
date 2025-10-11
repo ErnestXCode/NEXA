@@ -164,6 +164,36 @@ const ParentForm = ({ onNext }) => {
     }
   };
 
+  const downloadParentTemplate = () => {
+  // Headers
+  const headers = ["name", "email", "phoneNumber", "password", "children"];
+
+  // Example row with fake data
+  const exampleData = [
+    [
+      "Jane Doe",                  // name
+      "janedoe@example.com",       // email
+      "+254712345678",             // phoneNumber
+      "Password1",                 // password
+      "John Doe, Mary Jane Smith"  // children (fake examples)
+    ]
+  ];
+
+  // Combine headers + example row
+  const worksheetData = [headers, ...exampleData];
+
+  // Create worksheet
+  const ws = XLSX.utils.aoa_to_sheet(worksheetData);
+
+  // Create workbook and append worksheet
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "ParentTemplate");
+
+  // Trigger download
+  XLSX.writeFile(wb, "ParentTemplate.xlsx");
+};
+
+
   return (
     <main className="flex items-start justify-center p-6 overflow-hidden bg-gray-950">
       <div className="grid w-full max-w-6xl grid-cols-1 gap-6 md:grid-cols-2">
@@ -332,6 +362,15 @@ const ParentForm = ({ onNext }) => {
               <li>If a child cannot be found, it will be ignored</li>
             </ul>
           </div>
+
+          <button
+  type="button"
+  onClick={downloadParentTemplate}
+  className="mb-3 py-2 px-4 rounded bg-blue-600 text-white hover:bg-blue-500"
+>
+  Download Excel Template
+</button>
+
 
           <input
             type="file"

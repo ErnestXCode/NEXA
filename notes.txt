@@ -4,6 +4,8 @@ download templates for adding people
 
 show only first name on hello text 
 
+dashboard is loading alot, prolly using alot of resources checking for accesstoken, lets see if we can do anything about it, tho i am realizing that i cannot prolly change it
+
 have cache for students in class teacher for attendance, 
 
 remove choose dates option for live production 
@@ -11,6 +13,8 @@ remove choose dates option for live production
 badge is not persistent in dashboard, as in it clears when navigating
 
 sockets to run tanstack for refecthing
+
+two simultaneous requests to ignore latter if same thing 
 
 show loading students when loading for attendance
 

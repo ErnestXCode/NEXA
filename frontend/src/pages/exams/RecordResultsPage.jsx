@@ -14,6 +14,10 @@ const RecordResultsPage = () => {
   const [academicYear, setAcademicYear] = useState("");
   const [isDesktop, setIsDesktop] = useState(true);
   const currentUser = useSelector(selectCurrentUser);
+  const [modalMessage, setModalMessage] = useState("");
+  const [showModal, setShowModal] = useState(false);
+  const [isError, setIsError] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   // 🔹 Set default academic year (currentYear/nextYear)
   useEffect(() => {
@@ -114,6 +118,7 @@ const RecordResultsPage = () => {
   };
 
   const handleSubmit = async () => {
+    setSaving(true); // ✅ start loading state here
     try {
       const studentResults = Object.keys(results).map((id) => {
         const entry = results[id] || { subjects: [] };
@@ -130,42 +135,52 @@ const RecordResultsPage = () => {
         studentResults,
       });
 
-      alert("Results saved!");
+      setModalMessage("Results saved successfully!");
+      setIsError(false);
+      setShowModal(true);
     } catch (err) {
       console.error(err);
-      alert("Failed to save results");
+      setModalMessage("Failed to save results. Please try again.");
+      setIsError(true);
+      setShowModal(true);
+    } finally {
+      setSaving(false);
     }
   };
 
   // 🔹 Extract unique classes
-const uniqueClasses = [...new Set(students.map((s) => s.classLevel || "Unassigned"))];
+  const uniqueClasses = [
+    ...new Set(students.map((s) => s.classLevel || "Unassigned")),
+  ];
 
-// 🔹 Define a natural ordering function
-const getOrderValue = (level) => {
-  if (!level) return 999;
+  // 🔹 Define a natural ordering function
+  const getOrderValue = (level) => {
+    if (!level) return 999;
 
-  const lower = level.toLowerCase();
+    const lower = level.toLowerCase();
 
-  // Handle PP (pre-primary)
-  if (lower.startsWith("pp")) {
-    const num = parseInt(lower.replace("pp", "").trim());
-    return num || 0; // PP1 → 1, PP2 → 2
-  }
+    // Handle PP (pre-primary)
+    if (lower.startsWith("pp")) {
+      const num = parseInt(lower.replace("pp", "").trim());
+      return num || 0; // PP1 → 1, PP2 → 2
+    }
 
-  // Handle Grade or Class with a number
-  const match = lower.match(/\d+/);
-  if (match) return 100 + parseInt(match[0]); // Grade 1 → 101, Grade 2 → 102, etc.
+    // Handle Grade or Class with a number
+    const match = lower.match(/\d+/);
+    if (match) return 100 + parseInt(match[0]); // Grade 1 → 101, Grade 2 → 102, etc.
 
-  // Handle Nursery, Baby, or anything else
-  if (lower.includes("baby")) return 0;
-  if (lower.includes("nursery")) return 0;
+    // Handle Nursery, Baby, or anything else
+    if (lower.includes("baby")) return 0;
+    if (lower.includes("nursery")) return 0;
 
-  // Fallback for unrecognized levels
-  return 999;
-};
+    // Fallback for unrecognized levels
+    return 999;
+  };
 
-// 🔹 Sort dynamically
-const classLevels = uniqueClasses.sort((a, b) => getOrderValue(a) - getOrderValue(b));
+  // 🔹 Sort dynamically
+  const classLevels = uniqueClasses.sort(
+    (a, b) => getOrderValue(a) - getOrderValue(b)
+  );
 
   const filteredStudents = students.filter(
     (s) => selectedClass && s.classLevel === selectedClass
@@ -178,96 +193,94 @@ const classLevels = uniqueClasses.sort((a, b) => getOrderValue(a) - getOrderValu
     <div className="p-6 space-y-6">
       <h1 className="text-2xl font-bold">Record Results</h1>
 
-   {/* 🔹 Filters Section */}
-<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-  {/* Academic Year */}
-  <div className="flex flex-col">
-    <label className="mb-1 text-sm text-gray-400">Academic Year</label>
-    <input
-      type="text"
-      placeholder="Academic Year (e.g. 2025/2026)"
-      value={academicYear}
-      onChange={(e) => isEditableYear && setAcademicYear(e.target.value)}
-      className={`p-2 rounded bg-gray-800 text-white border border-gray-700 focus:ring-2 focus:ring-blue-500 focus:outline-none transition ${
-        !isEditableYear ? "opacity-50 cursor-not-allowed" : ""
-      }`}
-      disabled={!isEditableYear}
-    />
-  </div>
-
-  {/* Select Exam */}
-  <div className="flex flex-col">
-    <label className="mb-1 text-sm text-gray-400">Exam</label>
-    {academicYear && (
-      exams.length === 0 ? (
-        <div className="p-2 text-center text-gray-400 bg-gray-800 rounded border border-gray-700">
-          No exams yet for {academicYear}
+      {/* 🔹 Filters Section */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {/* Academic Year */}
+        <div className="flex flex-col">
+          <label className="mb-1 text-sm text-gray-400">Academic Year</label>
+          <input
+            type="text"
+            placeholder="Academic Year (e.g. 2025/2026)"
+            value={academicYear}
+            onChange={(e) => isEditableYear && setAcademicYear(e.target.value)}
+            className={`p-2 rounded bg-gray-800 text-white border border-gray-700 focus:ring-2 focus:ring-blue-500 focus:outline-none transition ${
+              !isEditableYear ? "opacity-50 cursor-not-allowed" : ""
+            }`}
+            disabled={!isEditableYear}
+          />
         </div>
-      ) : (
-        <select
-          value={examId}
-          onChange={(e) => {
-            setExamId(e.target.value);
-            setSelectedClass("");
-            setSelectedSubject("");
-            setResults({});
-          }}
-          className="p-2 rounded bg-gray-800 text-white border border-gray-700 focus:ring-2 focus:ring-blue-500 focus:outline-none transition"
-        >
-          <option value="">Select Exam</option>
-          {exams.map((e) => (
-            <option key={e._id} value={e._id}>
-              {e.name} - {e.term} - {e.academicYear}
-            </option>
-          ))}
-        </select>
-      )
-    )}
-  </div>
 
-  {/* Select Class */}
-  {examId && (
-    <div className="flex flex-col">
-      <label className="mb-1 text-sm text-gray-400">Class</label>
-      <select
-        value={selectedClass}
-        onChange={(e) => {
-          setSelectedClass(e.target.value);
-          setSelectedSubject("");
-          setResults({});
-        }}
-        className="p-2 rounded bg-gray-800 text-white border border-gray-700 focus:ring-2 focus:ring-blue-500 focus:outline-none transition"
-      >
-        <option value="">Select Class</option>
-        {classLevels.map((level) => (
-          <option key={level} value={level}>
-            {level}
-          </option>
-        ))}
-      </select>
-    </div>
-  )}
+        {/* Select Exam */}
+        <div className="flex flex-col">
+          <label className="mb-1 text-sm text-gray-400">Exam</label>
+          {academicYear &&
+            (exams.length === 0 ? (
+              <div className="p-2 text-center text-gray-400 bg-gray-800 rounded border border-gray-700">
+                No exams yet for {academicYear}
+              </div>
+            ) : (
+              <select
+                value={examId}
+                onChange={(e) => {
+                  setExamId(e.target.value);
+                  setSelectedClass("");
+                  setSelectedSubject("");
+                  setResults({});
+                }}
+                className="p-2 rounded bg-gray-800 text-white border border-gray-700 focus:ring-2 focus:ring-blue-500 focus:outline-none transition"
+              >
+                <option value="">Select Exam</option>
+                {exams.map((e) => (
+                  <option key={e._id} value={e._id}>
+                    {e.name} - {e.term} - {e.academicYear}
+                  </option>
+                ))}
+              </select>
+            ))}
+        </div>
 
-  {/* Select Subject */}
-  {examId && selectedClass && (
-    <div className="flex flex-col">
-      <label className="mb-1 text-sm text-gray-400">Subject</label>
-      <select
-        value={selectedSubject}
-        onChange={(e) => setSelectedSubject(e.target.value)}
-        className="p-2 rounded bg-gray-800 text-white border border-gray-700 focus:ring-2 focus:ring-blue-500 focus:outline-none transition"
-      >
-        <option value="">All Subjects (Admin Mode)</option>
-        {(subjectsByClass[selectedClass] || []).map((subj) => (
-          <option key={subj} value={subj}>
-            {subj}
-          </option>
-        ))}
-      </select>
-    </div>
-  )}
-</div>
+        {/* Select Class */}
+        {examId && (
+          <div className="flex flex-col">
+            <label className="mb-1 text-sm text-gray-400">Class</label>
+            <select
+              value={selectedClass}
+              onChange={(e) => {
+                setSelectedClass(e.target.value);
+                setSelectedSubject("");
+                setResults({});
+              }}
+              className="p-2 rounded bg-gray-800 text-white border border-gray-700 focus:ring-2 focus:ring-blue-500 focus:outline-none transition"
+            >
+              <option value="">Select Class</option>
+              {classLevels.map((level) => (
+                <option key={level} value={level}>
+                  {level}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
+        {/* Select Subject */}
+        {examId && selectedClass && (
+          <div className="flex flex-col">
+            <label className="mb-1 text-sm text-gray-400">Subject</label>
+            <select
+              value={selectedSubject}
+              onChange={(e) => setSelectedSubject(e.target.value)}
+              className="p-2 rounded bg-gray-800 text-white border border-gray-700 focus:ring-2 focus:ring-blue-500 focus:outline-none transition"
+            >
+              <option value="">All Subjects (Admin Mode)</option>
+              {(subjectsByClass[selectedClass] || []).map((subj) => (
+                <option key={subj} value={subj}>
+                  {subj}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+      </div>
 
       {/* Step 4: Results Table */}
       {examId && selectedClass && (
@@ -308,10 +321,15 @@ const classLevels = uniqueClasses.sort((a, b) => getOrderValue(a) - getOrderValu
                           min="0"
                           max="100"
                           value={
-                            subjectsArr.find((s) => s.name === selectedSubject)?.score ?? ""
+                            subjectsArr.find((s) => s.name === selectedSubject)
+                              ?.score ?? ""
                           }
                           onChange={(e) =>
-                            handleScoreChange(student._id, selectedSubject, Number(e.target.value))
+                            handleScoreChange(
+                              student._id,
+                              selectedSubject,
+                              Number(e.target.value)
+                            )
                           }
                           className="w-20 p-1 text-white bg-gray-800 rounded no-spinner"
                         />
@@ -323,9 +341,16 @@ const classLevels = uniqueClasses.sort((a, b) => getOrderValue(a) - getOrderValu
                             type="number"
                             min="0"
                             max="100"
-                            value={subjectsArr.find((s) => s.name === subj)?.score ?? ""}
+                            value={
+                              subjectsArr.find((s) => s.name === subj)?.score ??
+                              ""
+                            }
                             onChange={(e) =>
-                              handleScoreChange(student._id, subj, Number(e.target.value))
+                              handleScoreChange(
+                                student._id,
+                                subj,
+                                Number(e.target.value)
+                              )
                             }
                             className="w-20 p-1 text-white bg-gray-800 rounded no-spinner"
                           />
@@ -342,10 +367,14 @@ const classLevels = uniqueClasses.sort((a, b) => getOrderValue(a) - getOrderValu
 
       <button
         onClick={handleSubmit}
-        disabled={!examId || !selectedClass}
-        className="px-4 py-2 text-white bg-green-600 rounded hover:bg-green-700"
+        disabled={!examId || !selectedClass || saving}
+        className={`px-4 py-2 text-white rounded transition ${
+          saving
+            ? "bg-gray-600 cursor-not-allowed"
+            : "bg-green-600 hover:bg-green-700"
+        }`}
       >
-        Save Results
+        {saving ? "Saving..." : "Save Results"}
       </button>
 
       <style>{`
@@ -358,6 +387,27 @@ const classLevels = uniqueClasses.sort((a, b) => getOrderValue(a) - getOrderValu
           -moz-appearance: textfield;
         }
       `}</style>
+
+      {showModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-60 z-50">
+          <div className="bg-gray-800 text-white rounded-lg shadow-xl p-6 w-80 border border-gray-700 modal-enter">
+            <h3
+              className={`text-lg font-semibold mb-2 ${
+                isError ? "text-red-400" : "text-green-400"
+              }`}
+            >
+              {isError ? "Error" : "Success"}
+            </h3>
+            <p className="mb-4 text-gray-200">{modalMessage}</p>
+            <button
+              onClick={() => setShowModal(false)}
+              className="w-full px-4 py-2 bg-blue-600 rounded hover:bg-blue-700 transition"
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

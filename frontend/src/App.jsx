@@ -42,6 +42,7 @@ import AttendanceLogsPage from "./pages/attendance/AttendanceLogsPage";
 import ResultsAuditPage from "./pages/exams/ResultsAuditPage";
 import FeeAuditPage from "./pages/fees/FeeAuditPage";
 import CreditAuditPage from "./pages/fees/CreditAuditPage";
+import ResetPassword from "./pages/auth/ResetPassword";
 
 
 const HomeRedirect = () => {
@@ -81,6 +82,7 @@ function App() {
           <Route path="/contact" element={<Contact />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/reset-password/:token" element={<ResetPassword />} />
 
           {/* Protected routes */}
           <Route element={<PersistLogin />}>

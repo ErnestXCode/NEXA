@@ -5,7 +5,8 @@ const {
   getAllExams,
   recordResult,
   getResultsForExamClass,
-  getResultsAudit
+  getResultsAudit,
+  updateExam
 } = require("../controllers/exam/examController");
 const verifyJWT = require("../middleware/verifyJWT");
 const checkSchoolPaid = require("../middleware/checkSchoolPaid");
@@ -35,6 +36,10 @@ router.get(
   authorize(["teacher", "admin"]),
   getResultsForExamClass
 );
+
+// Update exam
+router.put("/:id", verifyJWT, authorize(["admin", "teacher"]), updateExam);
+
 
 
 

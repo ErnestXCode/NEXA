@@ -56,12 +56,14 @@ const Feedback = () => {
   }, []);
 
   return (
-    <div className=" flex items-center justify-center my-auto p-6 bg-gradient-to-br from-gray-900 via-gray-950 to-black">
-      <div className="w-full max-w-md p-8 rounded-3xl bg-gray-900/70 backdrop-blur-md border border-gray-700 shadow-xl">
-        <h2 className="text-3xl font-bold text-center text-white mb-6">
+    <div className="flex items-center justify-center min-h-screen p-6 bg-gradient-to-br from-gray-900 via-gray-950 to-black">
+      <div className="w-full max-w-lg p-8 md:p-10 rounded-3xl bg-gray-900/70 backdrop-blur-md border border-gray-700 shadow-2xl">
+        <h2 className="text-3xl md:text-4xl font-bold text-center text-white mb-8">
           Send Us Feedback
         </h2>
-        <form onSubmit={handleSubmit} className="flex flex-col space-y-5">
+
+        <form onSubmit={handleSubmit} className="flex flex-col space-y-6">
+          {/* Name */}
           <input
             ref={nameRef}
             name="name"
@@ -70,9 +72,10 @@ const Feedback = () => {
             required
             value={inputData.name}
             onChange={handleChange}
-            className="p-4 rounded-2xl bg-gray-800/80 border border-gray-600 focus:border-blue-500 focus:ring focus:ring-blue-500/30 outline-none transition placeholder-gray-400 text-white"
+            className="p-4 md:p-5 rounded-2xl bg-gray-800/80 border border-gray-600 focus:border-blue-500 focus:ring focus:ring-blue-500/30 outline-none transition placeholder-gray-400 text-white shadow-sm"
           />
 
+          {/* Email */}
           <input
             name="email"
             type="email"
@@ -80,9 +83,10 @@ const Feedback = () => {
             required
             value={inputData.email}
             onChange={handleChange}
-            className="p-4 rounded-2xl bg-gray-800/80 border border-gray-600 focus:border-blue-500 focus:ring focus:ring-blue-500/30 outline-none transition placeholder-gray-400 text-white"
+            className="p-4 md:p-5 rounded-2xl bg-gray-800/80 border border-gray-600 focus:border-blue-500 focus:ring focus:ring-blue-500/30 outline-none transition placeholder-gray-400 text-white shadow-sm"
           />
 
+          {/* Message */}
           <textarea
             name="message"
             placeholder="Your Message"
@@ -90,13 +94,14 @@ const Feedback = () => {
             required
             value={inputData.message}
             onChange={handleChange}
-            className="p-4 rounded-2xl bg-gray-800/80 border border-gray-600 focus:border-blue-500 focus:ring focus:ring-blue-500/30 outline-none transition placeholder-gray-400 text-white resize-none"
+            className="p-4 md:p-5 rounded-2xl bg-gray-800/80 border border-gray-600 focus:border-blue-500 focus:ring focus:ring-blue-500/30 outline-none transition placeholder-gray-400 text-white resize-none shadow-sm"
           />
 
+          {/* Submit Button */}
           <button
             type="submit"
             disabled={sending}
-            className={`p-4 rounded-2xl text-white font-semibold bg-gradient-to-r from-blue-500 to-purple-600 hover:from-purple-600 hover:to-blue-500 transition-all duration-300 shadow-lg ${
+            className={`p-4 md:p-5 rounded-2xl text-white font-semibold bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-purple-600 transition-all duration-300 shadow-lg transform hover:scale-105 ${
               sending ? "opacity-50 cursor-not-allowed" : ""
             }`}
           >

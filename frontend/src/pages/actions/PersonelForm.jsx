@@ -154,6 +154,59 @@ const PersonelForm = ({ onNext }) => {
     }
   };
 
+const downloadTemplate = () => {
+  // Define headers
+  const headers = [
+    "name",
+    "email",
+    "phoneNumber",
+    "role",
+    "password",
+    "isClassTeacher",
+    "classLevel",
+    "subjects",
+  ];
+
+  // Example rows
+  const exampleData = [
+    [
+      "John Doe",                    // name
+      "john.doe@school.ac.ke",       // email
+      "0712345678",                  // phoneNumber
+      "teacher",                     // role
+      "Pass123",                     // password
+      "true",                        // isClassTeacher
+      "Grade 1",                     // classLevel
+      "Mathematics,Physics"                 // subjects
+    ],
+    [
+      "Jane Smith",                  // name
+      "jane.smith@school.ac.ke",     // email
+      "0723456789",                  // phoneNumber
+      "bursar",                      // role
+      "Bursar123",                   // password
+      "",                        // isClassTeacher
+      "",                             // classLevel
+      ""                              // subjects
+    ],
+  ];
+
+  // Combine headers + example rows
+  const worksheetData = [headers, ...exampleData];
+
+  // Create worksheet
+  const ws = XLSX.utils.aoa_to_sheet(worksheetData);
+
+  // Create workbook and append the worksheet
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Template");
+
+  // Trigger download
+  XLSX.writeFile(wb, "PersonnelTemplate.xlsx");
+};
+
+
+
   return (
     <main className="p-6 bg-gray-950 overflow-hidden flex justify-center items-start">
       <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -365,6 +418,15 @@ const PersonelForm = ({ onNext }) => {
               <li>subjects (comma-separated, only for teachers)</li>
             </ul>
           </div>
+
+          <button
+  type="button"
+  onClick={downloadTemplate}
+  className="mb-3 py-2 px-4 rounded bg-blue-600 text-white hover:bg-blue-500"
+>
+  Download Excel Template
+</button>
+
 
           <input
             type="file"

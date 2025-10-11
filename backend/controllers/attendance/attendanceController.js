@@ -1,22 +1,22 @@
 const Attendance = require("../../models/Attendance");
+const Activity = require("../../models/Activity");
 const Student = require("../../models/Student");
 const User = require("../../models/User");
 const notificationService = require("../../services/notificationService");
 const School = require("../../models/School");
 const pushSubscription = require("../../models/pushSubscription");
-const webpush = require('web-push')
+const webpush = require("web-push");
 
 // Helper to set current academic year if not provided
 const getAcademicYear = (year) => year || School.currentAcademicYear();
 
 // --- Save attendance ---
 
-
-
 // --- Save attendance ---
 exports.saveAttendance = async (req, res) => {
   try {
-    const { classLevel, date, term, records, notifyParents, academicYear } = req.body;
+    const { classLevel, date, term, records, notifyParents, academicYear } =
+      req.body;
     const requester = await User.findById(req.user.userId);
     const markedBy = requester._id;
 
@@ -63,8 +63,10 @@ exports.saveAttendance = async (req, res) => {
       results.push(doc);
 
       if (["absent", "late"].includes(status)) {
-        const student = await Student.findById(studentId)
-          .populate("guardian", "name role");
+        const student = await Student.findById(studentId).populate(
+          "guardian",
+          "name role"
+        );
 
         if (student?.guardian) {
           const subscriptions = await pushSubscription.find({
@@ -78,8 +80,12 @@ exports.saveAttendance = async (req, res) => {
                 : "Attendance Alert: Late Arrival",
             body:
               status === "absent"
-                ? `${student.firstName} ${student.lastName} was marked absent on ${attendanceDate.toDateString()}.`
-                : `${student.firstName} ${student.lastName} arrived late on ${attendanceDate.toDateString()}.`,
+                ? `${student.firstName} ${
+                    student.lastName
+                  } was marked absent on ${attendanceDate.toDateString()}.`
+                : `${student.firstName} ${
+                    student.lastName
+                  } arrived late on ${attendanceDate.toDateString()}.`,
             url: "/dashboard/parent/attendance",
           };
 
@@ -90,8 +96,15 @@ exports.saveAttendance = async (req, res) => {
           });
         }
       }
-    
     }
+
+    const newLog = new Activity({
+      type: "attendance",
+      description: `Attendance marked for ${attendanceClassLevel} by ${requester.name} on ${attendanceDate}`,
+      createdBy: req.user.userId,
+      school: req.user.school,
+    });
+    await newLog.save();
 
     res.json({ msg: "Attendance saved" });
   } catch (err) {
@@ -99,7 +112,6 @@ exports.saveAttendance = async (req, res) => {
     res.status(500).json({ msg: "Server error" });
   }
 };
-
 
 exports.getAllAttendanceLogs = async (req, res) => {
   try {
@@ -115,7 +127,7 @@ exports.getAllAttendanceLogs = async (req, res) => {
     } = req.query;
 
     const query = {
-      school: req.user.school
+      school: req.user.school,
     };
 
     if (date) query.date = new Date(date);
@@ -198,7 +210,6 @@ exports.getAttendanceByDate = async (req, res) => {
   }
 };
 
-
 // --- Get attendance details for recent days ---
 // --- Get attendance details for recent days ---
 exports.getAttendanceDetails = async (req, res) => {
@@ -265,7 +276,6 @@ exports.getAttendanceDetails = async (req, res) => {
   }
 };
 
-
 // --- Get stats by date range ---
 // --- Get stats by date range ---
 exports.getStatsByRange = async (req, res) => {
@@ -285,7 +295,7 @@ exports.getStatsByRange = async (req, res) => {
           date: { $gte: new Date(startDate), $lte: new Date(endDate) },
           academicYear: academicYear, // ✅ keep as string
           term,
-          school: req.user.school
+          school: req.user.school,
         },
       },
       {
@@ -361,7 +371,6 @@ exports.getAbsenteeListRange = async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 };
-
 
 // --- Get class-level stats (admin dashboard) ---
 exports.getClassStats = async (req, res) => {

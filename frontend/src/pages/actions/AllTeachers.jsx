@@ -19,13 +19,14 @@ const AllTeachers = () => {
   const queryClient = useQueryClient();
   const [showModal, setShowModal] = useState(false);
   const [teacherToDelete, setTeacherToDelete] = useState(null);
-  const [searchTerm, setSearchTerm] = useState("");
 
-  const {
-    data: teachers = [],
-    isLoading,
-    isError,
-  } = useQuery({
+  // Filters
+  const [searchName, setSearchName] = useState("");
+  const [searchSubject, setSearchSubject] = useState("");
+  const [filterClassTeacher, setFilterClassTeacher] = useState(""); // "", "yes", "no"
+  const [filterClassLevel, setFilterClassLevel] = useState("");
+
+  const { data: teachers = [], isLoading, isError } = useQuery({
     queryKey: ["teachers"],
     queryFn: fetchTeachers,
   });
@@ -74,24 +75,58 @@ const AllTeachers = () => {
     navigate(`/dashboard/personnel/edit/${id}`);
   };
 
-  // Filter teachers by name
+  // Filter teachers by all criteria
   const filteredTeachers = useMemo(() => {
-    return teachers.filter((t) =>
-      t.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [teachers, searchTerm]);
+    return teachers.filter((t) => {
+      const matchesName = t.name.toLowerCase().includes(searchName.toLowerCase());
+      const matchesSubject =
+        searchSubject === "" ||
+        (t.subjects && t.subjects.some((s) => s.toLowerCase().includes(searchSubject.toLowerCase())));
+      const matchesClassTeacher =
+        filterClassTeacher === "" ||
+        (filterClassTeacher === "yes" && t.isClassTeacher) ||
+        (filterClassTeacher === "no" && !t.isClassTeacher);
+      const matchesClassLevel =
+        filterClassLevel === "" || t.classLevel?.toLowerCase().includes(filterClassLevel.toLowerCase());
+
+      return matchesName && matchesSubject && matchesClassTeacher && matchesClassLevel;
+    });
+  }, [teachers, searchName, searchSubject, filterClassTeacher, filterClassLevel]);
 
   return (
-    <main className="p-6 bg-gray-950 overfow-y-hidden relative">
+    <main className="p-6 bg-gray-950 overflow-y-hidden relative">
       <h1 className="text-2xl font-bold mb-4 text-white">All Teachers</h1>
 
-      {/* Search input */}
-      <div className="mb-4">
+      {/* Filters */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
         <input
           type="text"
           placeholder="Search by name..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          value={searchName}
+          onChange={(e) => setSearchName(e.target.value)}
+          className="w-full p-2 rounded bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+        <input
+          type="text"
+          placeholder="Search by subject..."
+          value={searchSubject}
+          onChange={(e) => setSearchSubject(e.target.value)}
+          className="w-full p-2 rounded bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+        <select
+          value={filterClassTeacher}
+          onChange={(e) => setFilterClassTeacher(e.target.value)}
+          className="w-full p-2 rounded bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="">All Class Teachers</option>
+          <option value="yes">Yes</option>
+          <option value="no">No</option>
+        </select>
+        <input
+          type="text"
+          placeholder="Filter by class level"
+          value={filterClassLevel}
+          onChange={(e) => setFilterClassLevel(e.target.value)}
           className="w-full p-2 rounded bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       </div>
@@ -140,7 +175,6 @@ const AllTeachers = () => {
                           "-"
                         )}
                       </td>
-
                       <td className="p-2 text-white">
                         {t.phoneNumber ? (
                           <a
@@ -153,7 +187,6 @@ const AllTeachers = () => {
                           "-"
                         )}
                       </td>
-
                       <td className="p-2">
                         {t.subjects && t.subjects.length > 0 ? (
                           <div className="flex flex-wrap gap-1 max-w-xs">
@@ -162,7 +195,7 @@ const AllTeachers = () => {
                                 key={idx}
                                 className="bg-gray-800 text-white px-2 py-0.5 rounded text-xs font-medium truncate"
                                 style={{ minWidth: "50px" }}
-                                title={subj} // shows full subject on hover
+                                title={subj}
                               >
                                 {subj}
                               </span>
@@ -172,10 +205,7 @@ const AllTeachers = () => {
                           "-"
                         )}
                       </td>
-
-                      <td className="p-2 text-white">
-                        {t.isClassTeacher ? "Yes" : "No"}
-                      </td>
+                      <td className="p-2 text-white">{t.isClassTeacher ? "Yes" : "No"}</td>
                       <td className="p-2 text-white">
                         {t.isClassTeacher && t.classLevel ? t.classLevel : "-"}
                       </td>
@@ -212,9 +242,7 @@ const AllTeachers = () => {
       {showModal && teacherToDelete && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
           <div className="bg-gray-900 rounded-lg p-6 w-80">
-            <h2 className="text-lg font-bold text-white mb-4">
-              Delete Teacher
-            </h2>
+            <h2 className="text-lg font-bold text-white mb-4">Delete Teacher</h2>
             <p className="text-gray-300 mb-6">
               Are you sure you want to delete{" "}
               <span className="font-semibold">{teacherToDelete.name}</span>?
