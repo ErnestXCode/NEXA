@@ -39,24 +39,24 @@ const Navigation = () => {
 
   return (
     <nav className="p-4 flex justify-between items-center bg-gray-900 text-white sticky top-0 z-20">
-      <h1 className="font-semibold text-lg">
-        <NavLink end to="/dashboard">
-         NEXA | Hello, {currentUser?.name?.split(" ")[0]}
-        </NavLink>
-      </h1>
+      <h1 className="font-semibold md:text-lg text-sm">
+    <NavLink end to="/dashboard">
+      NEXA | Hello, {currentUser?.name?.split(" ")[0]}
+    </NavLink>
+  </h1>
 
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 bg-black rounded-full flex items-center justify-center font-semibold">
-         {currentUser?.name?.charAt(0).toUpperCase()}
-        </div>
-        <button
-  onClick={() => setSidenav(true)}
-  className="px-4 py-2 rounded-lg border border-gray-700 bg-gray-800/70 hover:bg-gray-700 transition font-medium text-white"
->
-  ☰ Menu
-</button>
+  <div className="flex items-center gap-3">
+    <div className="w-8 h-8 md:w-10 md:h-10 bg-black rounded-full flex items-center justify-center font-semibold text-xs md:text-base">
+  {currentUser?.name?.charAt(0).toUpperCase()}
+</div>
 
-      </div>
+    <button
+      onClick={() => setSidenav(true)}
+      className="px-3 md:px-4 py-2 rounded-lg border border-gray-700 bg-gray-800/70 hover:bg-gray-700 transition font-medium text-white text-sm md:text-base"
+    >
+      ☰ Menu
+    </button>
+  </div>
 
       {sidenav && (
         <div className="fixed inset-0 z-40 flex" onClick={handleCloseSidenav}>
@@ -72,7 +72,7 @@ const Navigation = () => {
               <button
                 onClick={handleLogout}
                 className="px-4 py-2 cursor-pointer rounded-lg border border-gray-700 bg-gray-800/50 backdrop-blur-sm hover:bg-gray-700/60 hover:backdrop-blur-md transition-all duration-300 font-medium text-white shadow-md hover:shadow-lg hover:shadow-blue-600/10"
-    >
+              >
                 Logout
               </button>
               <button
