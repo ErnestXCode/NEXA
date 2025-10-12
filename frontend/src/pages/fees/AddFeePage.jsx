@@ -602,61 +602,73 @@ const AddFeePage = () => {
         </div>
       </div>
 
-      {/* --- Proofs Management --- */}
       <div className="p-6 bg-gray-900 rounded-md shadow-md">
-        <h2 className="text-2xl font-bold mb-6">Payment Proofs</h2>
-        {loadingProofs ? (
-          <p>Loading proofs...</p>
-        ) : proofs.length === 0 ? (
-          <p>No proofs submitted yet.</p>
-        ) : (
-          <table className="w-full border border-gray-800 rounded text-sm">
-            <thead className="bg-gray-800">
-              <tr>
-                <th className="p-2">Parent</th>
-                <th className="p-2">Student</th>
-                <th className="p-2">Amount</th>
-                <th className="p-2">Txn Code</th>
-                <th className="p-2">Method</th>
-                <th className="p-2">Status</th>
-                <th className="p-2">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {proofs.map((p) => (
-                <tr key={p._id} className="border-t border-gray-800">
-                  <td className="p-2">{p.parentId?.name || "N/A"}</td>
-                  <td className="p-2">
-                    {p.studentId?.firstName} {p.studentId?.lastName}
-                  </td>
-                  <td className="p-2">KSh {p.amount}</td>
-                  <td className="p-2">{p.txnCode}</td>
-                  <td className="p-2">{p.method}</td>
-                  <td className="p-2">{p.status}</td>
-                  <td className="p-2 flex gap-2">
-                    {p.status === "pending" && (
-                      <>
-                        <button
-                          onClick={() => handleProofAction(p._id, "approve")}
-                          className="bg-green-600 hover:bg-green-700 px-3 py-1 rounded"
-                        >
-                          Approve
-                        </button>
-                        <button
-                          onClick={() => handleProofAction(p._id, "reject")}
-                          className="bg-red-600 hover:bg-red-700 px-3 py-1 rounded"
-                        >
-                          Reject
-                        </button>
-                      </>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
+  <h2 className="text-2xl font-bold mb-6 border-b border-gray-800 pb-2">Payment Proofs</h2>
+
+  {loadingProofs ? (
+    <p>Loading proofs...</p>
+  ) : proofs.length === 0 ? (
+    <p>No payment proofs submitted yet.</p>
+  ) : (
+    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {proofs.map((p) => (
+        <div
+          key={p._id}
+          className="bg-gray-800 border border-gray-700 rounded-lg p-4 flex flex-col justify-between shadow hover:shadow-lg transition"
+        >
+          {/* Header */}
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-sm text-gray-400">
+              {p.parentId?.name || "Unknown Parent"}
+            </span>
+            <span
+              className={`text-xs px-2 py-1 rounded-full ${
+                p.status === "pending"
+                  ? "bg-yellow-600 text-white"
+                  : p.status === "approved"
+                  ? "bg-green-600 text-white"
+                  : "bg-red-600 text-white"
+              }`}
+            >
+              {p.status.toUpperCase()}
+            </span>
+          </div>
+
+          {/* Main Info */}
+          <div className="space-y-1">
+            <p className="text-lg font-semibold text-white">
+              {p.studentId?.firstName} {p.studentId?.lastName}
+            </p>
+            <p className="text-gray-400 text-sm">Method: {p.method.toUpperCase()}</p>
+            <p className="text-gray-400 text-sm">Txn Code: {p.txnCode}</p>
+            <p className="text-blue-400 font-semibold">KSh {p.amount.toLocaleString()}</p>
+          </div>
+
+          {/* Actions */}
+          {p.status === "pending" && (
+            <div className="flex gap-2 mt-3">
+              <button
+                onClick={() => handleProofAction(p._id, "approve")}
+                className="flex-1 bg-green-600 hover:bg-green-700 py-1.5 rounded text-sm"
+              >
+                Approve
+              </button>
+              <button
+                onClick={() => handleProofAction(p._id, "reject")}
+                className="flex-1 bg-red-600 hover:bg-red-700 py-1.5 rounded text-sm"
+              >
+                Reject
+              </button>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  )}
+</div>
+
+
+      
 
       {modal.isOpen && (
         <Modal

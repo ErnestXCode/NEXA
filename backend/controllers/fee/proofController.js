@@ -2,6 +2,7 @@
 const PaymentProof = require("../../models/PaymentProof");
 const Student = require("../../models/Student");
 const FeeTransaction = require("../../models/FeeTransaction");
+const StudentCredit = require("../../models/StudentCredit");
 const School = require("../../models/School");
 const pushSubscription = require("../../models/pushSubscription");
 const webpush = require("web-push");
@@ -117,25 +118,123 @@ exports.submitProof = async (req, res) => {
 // ---------------------
 // Admin confirms/rejects proof
 // ---------------------
+
+async function recordTransactionInternal(req) {
+  const { studentId, academicYear, term, amount, type, method, note } = req.body;
+  const userId = req.user.userId;
+
+  let amt = Number(amount);
+  if (type === "payment") amt = Math.abs(amt);
+  else if (type === "adjustment") amt = Number(amount);
+  if (isNaN(amt)) throw new Error("Amount must be a valid number");
+
+  const student = await Student.findById(studentId).populate("school");
+  if (!student) throw new Error("Student not found");
+
+  const expected = await student.getExpectedFee(academicYear, term);
+  const currentPaid = await FeeTransaction.aggregate([
+    { $match: { student: student._id, academicYear, term } },
+    { $group: { _id: null, total: { $sum: "$amount" } } },
+  ]);
+  const alreadyPaid = currentPaid[0]?.total || 0;
+
+  let toApply = Math.min(amt, Math.max(0, expected - alreadyPaid));
+  let excess = amt - toApply;
+
+  const txn = await FeeTransaction.create({
+    student: studentId,
+    school: student.school._id,
+    academicYear,
+    term,
+    amount: toApply,
+    type,
+    method,
+    note,
+    handledBy: userId,
+  });
+
+  // Carryover excess
+  const terms = ["Term 1", "Term 2", "Term 3"];
+  let currentYear = academicYear;
+  let nextTermIndex = terms.indexOf(term) + 1;
+
+  while (excess > 0) {
+    if (nextTermIndex >= terms.length) {
+      const [startY, endY] = currentYear.split("/").map(Number);
+      const nextYear = `${startY + 1}/${endY + 1}`;
+      await FeeTransaction.create({
+        student: student._id,
+        school: student.school._id,
+        academicYear: nextYear,
+        term: "Term 1",
+        amount: excess,
+        type,
+        method,
+        note: `Carryover credit from ${academicYear} ${term}`,
+        handledBy: userId,
+      });
+      await StudentCredit.create({
+        student: student._id,
+        school: student.school._id,
+        academicYear: nextYear,
+        term: "Term 1",
+        amount: excess,
+        source: `Overpayment from ${academicYear} ${term}`,
+        createdBy: userId,
+      });
+      break;
+    }
+
+    const nextTerm = terms[nextTermIndex];
+    const nextExpected = await student.getExpectedFee(currentYear, nextTerm);
+    if (!nextExpected || nextExpected <= 0) break;
+
+    const nextPaid = await FeeTransaction.aggregate([
+      { $match: { student: student._id, academicYear: currentYear, term: nextTerm } },
+      { $group: { _id: null, total: { $sum: "$amount" } } },
+    ]);
+    const nextAlreadyPaid = nextPaid[0]?.total || 0;
+    const nextRoom = Math.max(0, nextExpected - nextAlreadyPaid);
+
+    const applied = Math.min(excess, nextRoom);
+    excess -= applied;
+
+    if (applied > 0) {
+      await FeeTransaction.create({
+        student: student._id,
+        school: student.school._id,
+        academicYear: currentYear,
+        term: nextTerm,
+        amount: applied,
+        type,
+        method,
+        note: `Carryover from ${academicYear} ${term}`,
+        handledBy: userId,
+      });
+    }
+    nextTermIndex++;
+  }
+
+  return txn;
+}
+
+
 exports.reviewProof = async (req, res) => {
   try {
     const { proofId, action } = req.params;
 
     const proof = await PaymentProof.findById(proofId)
       .populate("studentId")
-      .populate("parentId"); // for notifying parent
+      .populate("parentId");
     if (!proof) return res.status(404).json({ message: "Proof not found" });
     if (proof.status !== "pending")
       return res.status(400).json({ message: "Proof already reviewed" });
 
     const student = proof.studentId;
     const parent = proof.parentId;
+    const io = req.app.get("io");
 
-    const io = req.app.get("io"); // socket.io instance
-
-    let message;
-    let status;
-    let payload;
+    let message, status, payload;
 
     if (action === "reject") {
       proof.status = "rejected";
@@ -159,33 +258,36 @@ exports.reviewProof = async (req, res) => {
         body: `${student.firstName} ${student.lastName} — proof was rejected. Please review and resubmit.`,
         url: "/dashboard/fees/my-proofs",
       };
-
-      subscriptions.forEach((sub) => {
-        webpush
-          .sendNotification(sub.subscription, JSON.stringify(payload))
-          .catch((err) => console.error("Push failed:", err));
-      });
+      subscriptions.forEach((sub) =>
+        webpush.sendNotification(sub.subscription, JSON.stringify(payload)).catch(console.error)
+      );
 
       return res.json({ message: "Proof rejected", proof });
     }
 
     if (action === "confirm" || action === "approve") {
-      // Record payment
+      // ✅ Use same logic as recordTransaction
       const school = await School.findById(student.school).lean();
       const academicYear = school?.currentAcademicYear || "2025/2026";
       const term = school?.currentTerm || "Term 1";
 
-      const feeTxn = await FeeTransaction.create({
-        student: student._id,
-        school: student.school,
-        academicYear,
-        term,
-        amount: proof.amount,
-        type: "payment",
-        method: proof.method,
-        note: `Confirmed via proof txn ${proof.txnCode}`,
-        handledBy: req.user.userId,
-      });
+      // Build a fake req.body to reuse recordTransaction logic
+      const fakeReq = {
+        body: {
+          studentId: student._id,
+          academicYear,
+          term,
+          amount: proof.amount,
+          type: "payment",
+          method: proof.method,
+          note: `Confirmed via proof txn ${proof.txnCode}`,
+        },
+        user: req.user,
+      };
+
+      // Call recordTransaction logic internally
+      // Extracted to a helper function for reuse
+      const txn = await recordTransactionInternal(fakeReq);
 
       proof.status = "confirmed";
       await proof.save();
@@ -208,17 +310,14 @@ exports.reviewProof = async (req, res) => {
         body: `${student.firstName} ${student.lastName} — KSh ${proof.amount} confirmed.`,
         url: "/dashboard/fees/my-proofs",
       };
-
-      subscriptions.forEach((sub) => {
-        webpush
-          .sendNotification(sub.subscription, JSON.stringify(payload))
-          .catch((err) => console.error("Push failed:", err));
-      });
+      subscriptions.forEach((sub) =>
+        webpush.sendNotification(sub.subscription, JSON.stringify(payload)).catch(console.error)
+      );
 
       return res.json({
         message: "Proof confirmed, payment recorded",
         proof,
-        feeTxn,
+        feeTxn: txn,
       });
     }
 
@@ -228,6 +327,7 @@ exports.reviewProof = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
 
 
 // ---------------------

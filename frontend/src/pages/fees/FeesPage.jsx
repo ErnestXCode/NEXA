@@ -4,7 +4,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "../../api/axios";
 import { useNavigate } from "react-router-dom";
 
-
 import {
   PieChart,
   Pie,
@@ -30,8 +29,6 @@ const FeesPage = () => {
   const [academicYear, setAcademicYear] = useState("2025/2026");
   const navigate = useNavigate();
 
-
-
   // local state for new fee rule form
   const [newRule, setNewRule] = useState({
     academicYear,
@@ -45,7 +42,9 @@ const FeesPage = () => {
   const { data: schoolSummary, isLoading: loadingSummary } = useQuery({
     queryKey: ["schoolSummary", undefined, academicYear],
     queryFn: () =>
-      fetcher(`/fees/schools/${undefined}/summary?academicYear=${academicYear}`),
+      fetcher(
+        `/fees/schools/${undefined}/summary?academicYear=${academicYear}`
+      ),
   });
 
   const { data: schoolData } = useQuery({
@@ -55,8 +54,6 @@ const FeesPage = () => {
       return res.data;
     },
   });
-
-
 
   const availableClasses = schoolData?.classLevels?.map((c) => c.name) || [];
 
@@ -445,35 +442,21 @@ const FeesPage = () => {
       </section>
 
       {/* Filters (Term + Class) */}
+      {/* Universal Term Filter */}
       <section className="bg-gray-900/80 p-4 rounded-lg border border-gray-800 shadow-md sticky top-0 z-10">
-        <div className="flex flex-wrap gap-6">
-          <div>
-            <label className="block text-gray-400 text-sm mb-1">Term</label>
-            <select
-              value={selectedTerm}
-              onChange={(e) => setSelectedTerm(e.target.value)}
-              className="bg-gray-800 border border-gray-700 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
-            >
-              <option>Term 1</option>
-              <option>Term 2</option>
-              <option>Term 3</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-gray-400 text-sm mb-1">Class</label>
-            <select
-              value={selectedClass}
-              onChange={(e) => setSelectedClass(e.target.value)}
-              className="bg-gray-800 border border-gray-700 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
-            >
-              <option value="All">All Classes</option>
-              {availableClasses.map((cls) => (
-                <option key={cls} value={cls}>
-                  {cls}
-                </option>
-              ))}
-            </select>
-          </div>
+        <div>
+          <label className="block text-gray-400 text-sm mb-1">
+            Term (for school term summary and class term summary only)
+          </label>
+          <select
+            value={selectedTerm}
+            onChange={(e) => setSelectedTerm(e.target.value)}
+            className="w-full bg-gray-800 border border-gray-700 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+          >
+            <option>Term 1</option>
+            <option>Term 2</option>
+            <option>Term 3</option>
+          </select>
         </div>
       </section>
 
@@ -484,11 +467,32 @@ const FeesPage = () => {
           data={schoolTermSummary}
           loading={loadingSchoolTerm}
         />
-        <SummarySection
-          title={`📚 ${selectedClass} - ${selectedTerm}`}
-          data={classTermSummary}
-          loading={loadingClassTerm}
-        />
+
+        <div>
+          {/* Specific Class Filter */}
+          <div className="mb-3 bg-gray-900/80 p-3 rounded-lg border border-gray-800 shadow-md">
+            <label className="block text-gray-400 text-xs mb-1">
+              Class (for Class Term Summary only)
+            </label>
+            <select
+              value={selectedClass}
+              onChange={(e) => setSelectedClass(e.target.value)}
+              className="bg-gray-800 border border-gray-700 px-3 py-2 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-600"
+            >
+              {availableClasses.map((cls) => (
+                <option key={cls} value={cls}>
+                  {cls}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <SummarySection
+            title={`📚 ${selectedClass} - ${selectedTerm}`}
+            data={classTermSummary}
+            loading={loadingClassTerm}
+          />
+        </div>
       </div>
 
       {/* Charts */}
@@ -589,125 +593,127 @@ const FeesPage = () => {
         </ChartCard>
       </div>
       {/* Class Fees Table */}
-      {/* Class Fees Table */}
-      {/* Class Fees Table */}
-     <ChartCard title="🏫 Class Fees Summary">
-  {loadingClass ? (
-    <p className="text-gray-400 animate-pulse">Loading class summary...</p>
-  ) : classSummary && Object.keys(classSummary).length > 0 ? (
-    <div className="overflow-x-auto rounded-2xl border border-gray-800 shadow-md">
-      <table className="min-w-full border-collapse text-gray-200">
-        <thead>
-          <tr className="bg-gray-900/70 backdrop-blur-sm text-gray-300 text-sm uppercase tracking-wider">
-            <th className="p-3 text-left border-b border-gray-700">Class</th>
-            {["Term 1", "Term 2", "Term 3"].map((term, i) => (
-              <th
-                key={term}
-                className={`p-3 text-center border-b border-gray-700 ${
-                  i === 0
-                    ? "text-blue-400"
-                    : i === 1
-                    ? "text-amber-400"
-                    : "text-emerald-400"
-                }`}
-              >
-                {term}
-                <div className="text-xs text-gray-500 font-normal">
-                  Paid / Outstanding
-                </div>
-              </th>
-            ))}
-          </tr>
-        </thead>
-
-        <tbody className="divide-y divide-gray-800">
-          {Object.keys(classSummary)
-            .sort((a, b) => {
-              // Sort PP then Grades
-              if (a.startsWith("PP") && b.startsWith("PP")) {
-                return (
-                  parseInt(a.replace(/\D/g, ""), 10) -
-                  parseInt(b.replace(/\D/g, ""), 10)
-                );
-              }
-              if (a.startsWith("PP")) return -1;
-              if (b.startsWith("PP")) return 1;
-
-              const numA = parseInt(a.replace(/\D/g, ""), 10);
-              const numB = parseInt(b.replace(/\D/g, ""), 10);
-              if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
-
-              return a.localeCompare(b);
-            })
-            .map((cls) => (
-              <tr
-                key={cls}
-                className="hover:bg-gray-800/50 transition-colors duration-200"
-              >
-                {/* Class name */}
-                <td className="p-3 font-semibold text-gray-100 border-r border-gray-800">
-                  {cls}
-                </td>
-
-                {/* Each Term */}
-                {["Term 1", "Term 2", "Term 3"].map((term, i) => {
-                  const stats = classSummary[cls][term] || {
-                    paid: 0,
-                    outstanding: 0,
-                  };
-
-                  // Themed colors
-                  const badgeColor =
-                    i === 0
-                      ? "bg-blue-900/40 text-blue-300 border border-blue-800"
-                      : i === 1
-                      ? "bg-amber-900/40 text-amber-300 border border-amber-800"
-                      : "bg-emerald-900/40 text-emerald-300 border border-emerald-800";
-
-                  return (
-                    <td
+    
+      <ChartCard title="🏫 Class Fees Summary">
+        {loadingClass ? (
+          <p className="text-gray-400 animate-pulse">
+            Loading class summary...
+          </p>
+        ) : classSummary && Object.keys(classSummary).length > 0 ? (
+          <div className="overflow-x-auto rounded-2xl border border-gray-800 shadow-md">
+            <table className="min-w-full border-collapse text-gray-200">
+              <thead>
+                <tr className="bg-gray-900/70 backdrop-blur-sm text-gray-300 text-sm uppercase tracking-wider">
+                  <th className="p-3 text-left border-b border-gray-700">
+                    Class
+                  </th>
+                  {["Term 1", "Term 2", "Term 3"].map((term, i) => (
+                    <th
                       key={term}
-                      className="p-3 text-center border-r border-gray-800"
+                      className={`p-3 text-center border-b border-gray-700 ${
+                        i === 0
+                          ? "text-blue-400"
+                          : i === 1
+                          ? "text-amber-400"
+                          : "text-emerald-400"
+                      }`}
                     >
-                      <div className="flex flex-col items-center gap-2">
-                        <span
-                          className={`text-xs font-medium px-3 py-1 rounded-full ${badgeColor}`}
-                        >
-                           Paid:{" "}
-                          <span className="font-semibold text-gray-100">
-                            {stats.paid
-                              ? `KES ${stats.paid.toLocaleString()}`
-                              : "KES 0"}
-                          </span>
-                        </span>
-
-                        <span
-                          className={`text-xs font-medium px-3 py-1 rounded-full ${badgeColor.replace(
-                            "/40",
-                            "/20"
-                          )} opacity-90 text-gray-400`}
-                        >
-                           Outstanding:{" "}
-                          <span className="font-semibold text-gray-200">
-                            {stats.outstanding
-                              ? `KES ${stats.outstanding.toLocaleString()}`
-                              : "KES 0"}
-                          </span>
-                        </span>
+                      {term}
+                      <div className="text-xs text-gray-500 font-normal">
+                        Paid / Outstanding
                       </div>
-                    </td>
-                  );
-                })}
-              </tr>
-            ))}
-        </tbody>
-      </table>
-    </div>
-  ) : (
-    <p className="text-gray-400">No class summary data available.</p>
-  )}
-</ChartCard>
+                    </th>
+                  ))}
+                </tr>
+              </thead>
 
+              <tbody className="divide-y divide-gray-800">
+                {Object.keys(classSummary)
+                  .sort((a, b) => {
+                    // Sort PP then Grades
+                    if (a.startsWith("PP") && b.startsWith("PP")) {
+                      return (
+                        parseInt(a.replace(/\D/g, ""), 10) -
+                        parseInt(b.replace(/\D/g, ""), 10)
+                      );
+                    }
+                    if (a.startsWith("PP")) return -1;
+                    if (b.startsWith("PP")) return 1;
+
+                    const numA = parseInt(a.replace(/\D/g, ""), 10);
+                    const numB = parseInt(b.replace(/\D/g, ""), 10);
+                    if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+
+                    return a.localeCompare(b);
+                  })
+                  .map((cls) => (
+                    <tr
+                      key={cls}
+                      className="hover:bg-gray-800/50 transition-colors duration-200"
+                    >
+                      {/* Class name */}
+                      <td className="p-3 font-semibold text-gray-100 border-r border-gray-800">
+                        {cls}
+                      </td>
+
+                      {/* Each Term */}
+                      {["Term 1", "Term 2", "Term 3"].map((term, i) => {
+                        const stats = classSummary[cls][term] || {
+                          paid: 0,
+                          outstanding: 0,
+                        };
+
+                        // Themed colors
+                        const badgeColor =
+                          i === 0
+                            ? "bg-blue-900/40 text-blue-300 border border-blue-800"
+                            : i === 1
+                            ? "bg-amber-900/40 text-amber-300 border border-amber-800"
+                            : "bg-emerald-900/40 text-emerald-300 border border-emerald-800";
+
+                        return (
+                          <td
+                            key={term}
+                            className="p-3 text-center border-r border-gray-800"
+                          >
+                            <div className="flex flex-col items-center gap-2">
+                              <span
+                                className={`text-xs font-medium px-3 py-1 rounded-full ${badgeColor}`}
+                              >
+                                Paid:{" "}
+                                <span className="font-semibold text-gray-100">
+                                  {stats.paid
+                                    ? `KES ${stats.paid.toLocaleString()}`
+                                    : "KES 0"}
+                                </span>
+                              </span>
+
+                              <span
+                                className={`text-xs font-medium px-3 py-1 rounded-full ${badgeColor.replace(
+                                  "/40",
+                                  "/20"
+                                )} opacity-90 text-gray-400`}
+                              >
+                                Outstanding:{" "}
+                                <span className="font-semibold text-gray-200">
+                                  {stats.outstanding
+                                    ? `KES ${stats.outstanding.toLocaleString()}`
+                                    : "KES 0"}
+                                </span>
+                              </span>
+                            </div>
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p className="text-gray-400">No class summary data available.</p>
+        )}
+      </ChartCard>
 
       {/* Debtors */}
       {/* Debtors */}
@@ -845,7 +851,9 @@ const FeesPage = () => {
                   {debtors.debtors.map((d, idx) => (
                     <tr
                       key={d.studentId}
-                      onClick={() => navigate(`/dashboard/debtors/${d.studentId}`)}
+                      onClick={() =>
+                        navigate(`/dashboard/debtors/${d.studentId}`)
+                      }
                       className="hover:bg-gray-800/50 transition duration-150"
                     >
                       {/* Name */}

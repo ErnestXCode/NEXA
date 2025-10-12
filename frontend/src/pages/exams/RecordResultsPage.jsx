@@ -271,7 +271,7 @@ const RecordResultsPage = () => {
               onChange={(e) => setSelectedSubject(e.target.value)}
               className="p-2 rounded bg-gray-800 text-white border border-gray-700 focus:ring-2 focus:ring-blue-500 focus:outline-none transition"
             >
-              <option value="">All Subjects (Admin Mode)</option>
+              <option value="">All Subjects</option>
               {(subjectsByClass[selectedClass] || []).map((subj) => (
                 <option key={subj} value={subj}>
                   {subj}

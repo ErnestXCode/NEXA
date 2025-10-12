@@ -96,27 +96,7 @@ const StudentEditPage = () => {
             onChange={handleChange}
             className="w-full p-2 rounded bg-gray-800 text-white text-sm"
           />
-          <input
-            placeholder="Stream"
-            name="stream"
-            value={student.stream || ""}
-            onChange={handleChange}
-            className="w-full p-2 rounded bg-gray-800 text-white text-sm"
-          />
-          <input
-            placeholder="Guardian Name"
-            name="guardianName"
-            value={student.guardianName}
-            onChange={handleChange}
-            className="w-full p-2 rounded bg-gray-800 text-white text-sm"
-          />
-          <input
-            placeholder="Guardian Phone"
-            name="guardianPhone"
-            value={student.guardianPhone}
-            onChange={handleChange}
-            className="w-full p-2 rounded bg-gray-800 text-white text-sm"
-          />
+    
 
           <button
             type="submit"

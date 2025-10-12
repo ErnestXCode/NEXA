@@ -144,7 +144,7 @@ const AttendanceDashboardClassTeacher = () => {
       <AttendanceDetails />
 
       {/* Attendance Trend */}
-      <div className="bg-gray-950 shadow-xl rounded-2xl p-6">
+      {/* <div className="bg-gray-950 shadow-xl rounded-2xl p-6">
         <h2 className="text-xl font-semibold mb-4 border-b border-gray-900 pb-2">Attendance Trend</h2>
         <ResponsiveContainer width="100%" height={300}>
           <LineChart data={rangeStats}>
@@ -158,7 +158,7 @@ const AttendanceDashboardClassTeacher = () => {
             <Line type="monotone" dataKey="late" stroke="#FFC107" />
           </LineChart>
         </ResponsiveContainer>
-      </div>
+      </div> */}
 
       {/* Chronic Absentees */}
       <div className="bg-gray-950 shadow-xl rounded-2xl p-6">

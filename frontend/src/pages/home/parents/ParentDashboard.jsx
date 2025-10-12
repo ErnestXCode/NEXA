@@ -4,6 +4,7 @@ import { NavLink } from "react-router-dom";
 import api from "../../../api/axios";
 import useUnreadMessages from "../../../hooks/useUnreadMessages";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import CustomSelect from '../../../components/layout/CustomSelect'
 
 const ParentDashboard = () => {
   const [children, setChildren] = useState([]);
@@ -12,6 +13,11 @@ const ParentDashboard = () => {
   const [childExams, setChildExams] = useState([]);
   const [selectedExamId, setSelectedExamId] = useState(null);
   const [feeBalances, setFeeBalances] = useState(null);
+  const [showAllProofs, setShowAllProofs] = useState({
+    pending: false,
+    confirmed: false,
+    rejected: false,
+  });
 
   const [proof, setProof] = useState({
     amount: "",
@@ -21,7 +27,7 @@ const ParentDashboard = () => {
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState(null);
 
-  const queryClient = useQueryClient()
+  const queryClient = useQueryClient();
 
   const submitProof = async () => {
     if (!selectedChild) return;
@@ -72,22 +78,22 @@ const ParentDashboard = () => {
   };
 
   const {
-      data: schoolData,
-      isLoading,
-      isError,
-    } = useQuery({
-      queryKey: ["school", "me"],
-      queryFn: async () => {
-        const res = await api.get(`/schools/me`);
-        return res.data;
-      },
-    });
-  
-    const [school, setSchool] = useState(null);
-  
-    useEffect(() => {
-      if (schoolData) setSchool(schoolData);
-    }, [schoolData]);
+    data: schoolData,
+    isLoading,
+    isError,
+  } = useQuery({
+    queryKey: ["school", "me"],
+    queryFn: async () => {
+      const res = await api.get(`/schools/me`);
+      return res.data;
+    },
+  });
+
+  const [school, setSchool] = useState(null);
+
+  useEffect(() => {
+    if (schoolData) setSchool(schoolData);
+  }, [schoolData]);
 
   const fetchChildExams = async (studentId) => {
     try {
@@ -132,9 +138,7 @@ const ParentDashboard = () => {
 
   const fetchFeeBalances = async (studentId) => {
     try {
-      const res = await api.get(
-        `/fees/outstanding/${studentId}`
-      );
+      const res = await api.get(`/fees/outstanding/${studentId}`);
       setFeeBalances(res.data.balances || {});
     } catch (err) {
       console.error("Error fetching fee balances:", err);
@@ -254,57 +258,55 @@ const ParentDashboard = () => {
             </div>
           )}
 
-        {/* Payment Options */}
-{school?.paymentOptions?.length > 0 && (
-  <div className="bg-gradient-to-r from-gray-900 to-gray-800 p-6 rounded-2xl shadow-md text-center">
-    <h2 className="text-xl sm:text-2xl font-bold mb-4">Pay Fees</h2>
-    <p className="text-gray-400 mb-6">
-      Choose one of the school’s official payment methods:
-    </p>
+          {/* Payment Options */}
+          {school?.paymentOptions?.length > 0 && (
+            <div className="bg-gradient-to-r from-gray-900 to-gray-800 p-6 rounded-2xl shadow-md text-center">
+              <h2 className="text-xl sm:text-2xl font-bold mb-4">Pay Fees</h2>
+              <p className="text-gray-400 mb-6">
+                Choose one of the school’s official payment methods:
+              </p>
 
-    <div
-      className={`grid gap-4 ${
-        school.paymentOptions.length === 1
-          ? "mx-auto max-w-sm sm:max-w-md md:max-w-lg" // scales with screen
-          : "sm:grid-cols-2"
-      }`}
-    >
-      {school.paymentOptions.map((opt, idx) => (
-        <div
-          key={idx}
-          className="bg-gray-950 p-6 rounded-xl shadow text-left"
-        >
-          <p className="font-semibold text-blue-400 text-lg mb-2">
-            {opt.type === "mpesa_paybill" && "M-Pesa Paybill"}
-            {opt.type === "mpesa_till" && "M-Pesa Till"}
-            {opt.type === "phone" && "Phone Number"}
-            {opt.type === "bank" && "Bank Account"}
-          </p>
+              <div
+                className={`grid gap-4 ${
+                  school.paymentOptions.length === 1
+                    ? "mx-auto max-w-sm sm:max-w-md md:max-w-lg" // scales with screen
+                    : "sm:grid-cols-2"
+                }`}
+              >
+                {school.paymentOptions.map((opt, idx) => (
+                  <div
+                    key={idx}
+                    className="bg-gray-950 p-6 rounded-xl shadow text-left"
+                  >
+                    <p className="font-semibold text-blue-400 text-lg mb-2">
+                      {opt.type === "mpesa_paybill" && "M-Pesa Paybill"}
+                      {opt.type === "mpesa_till" && "M-Pesa Till"}
+                      {opt.type === "phone" && "Phone Number"}
+                      {opt.type === "bank" && "Bank Account"}
+                    </p>
 
-          <p className="text-gray-300 text-base mb-2">
-            <span className="font-bold">{opt.account}</span>
-          </p>
+                    <p className="text-gray-300 text-base mb-2">
+                      <span className="font-bold">{opt.account}</span>
+                    </p>
 
-          {opt.instructions && (
-            <ul className="list-disc list-inside text-gray-400 text-sm space-y-1">
-              {opt.instructions
-                .split("\n")
-                .filter(line => line.trim() !== "")
-                .map((line, i) => (
-                  <li key={i}>{line}</li>
+                    {opt.instructions && (
+                      <ul className="list-disc list-inside text-gray-400 text-sm space-y-1">
+                        {opt.instructions
+                          .split("\n")
+                          .filter((line) => line.trim() !== "")
+                          .map((line, i) => (
+                            <li key={i}>{line}</li>
+                          ))}
+                      </ul>
+                    )}
+                  </div>
                 ))}
-            </ul>
+              </div>
+            </div>
           )}
-        </div>
-      ))}
-    </div>
-  </div>
-)}
-
-
 
           {/* My Proofs Section */}
-          <div className="bg-gray-900 p-6 rounded-2xl shadow-md mt-6">
+          {/* <div className="bg-gray-900 p-6 rounded-2xl shadow-md mt-6">
             <h2 className="text-xl font-bold mb-4 text-white">
               My Payment Proofs
             </h2>
@@ -359,6 +361,93 @@ const ParentDashboard = () => {
                 )}
               </div>
             ))}
+          </div> */}
+
+          {/* My Proofs Section */}
+          <div className="bg-gray-900 p-6 rounded-2xl shadow-md mt-6">
+            <h2 className="text-xl font-bold mb-4 text-white">
+              My Payment Proofs
+            </h2>
+
+            {/* Track which categories are expanded */}
+            {["pending", "confirmed", "rejected"].map((status) => {
+              const proofs = myProofs[status] || [];
+              const isExpanded = showAllProofs[status] || false;
+
+              // Decide which proofs to show
+              const proofsToShow = isExpanded ? proofs : proofs.slice(0, 2);
+
+              return (
+                <div key={status} className="mb-4">
+                  <h3
+                    className={`font-semibold capitalize mb-2 ${
+                      status === "pending"
+                        ? "text-yellow-400"
+                        : status === "confirmed"
+                        ? "text-green-400"
+                        : "text-red-400"
+                    }`}
+                  >
+                    {status}
+                  </h3>
+
+                  {proofs.length === 0 ? (
+                    <p className="text-gray-400 text-sm">No {status} proofs</p>
+                  ) : (
+                    <>
+                      <ul className="space-y-2">
+                        {proofsToShow.map((p) => (
+                          <li
+                            key={p._id}
+                            className="p-3 rounded bg-gray-800 border border-gray-700 flex justify-between"
+                          >
+                            <div>
+                              <p className="text-sm text-gray-200">
+                                {p.studentId?.firstName} {p.studentId?.lastName}{" "}
+                                ({p.studentId?.classLevel})
+                              </p>
+                              <p className="text-xs text-gray-400">
+                                {p.method.toUpperCase()} – KSh {p.amount}
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                Txn: {p.txnCode}
+                              </p>
+                            </div>
+                            <span
+                              className={`text-xs font-bold uppercase ${
+                                p.status === "pending"
+                                  ? "text-yellow-400"
+                                  : p.status === "confirmed"
+                                  ? "text-green-400"
+                                  : "text-red-400"
+                              }`}
+                            >
+                              {p.status}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+
+                      {proofs.length > 2 && (
+                        <button
+                          onClick={() =>
+                            setShowAllProofs((prev) => ({
+                              ...prev,
+                              [status]: !prev[status],
+                            }))
+                          }
+                          className="mt-2 px-4 py-1 rounded-full bg-gray-700 text-white text-sm font-semibold shadow-md hover:scale-105 hover:shadow-lg transition-transform duration-200"
+                        >
+                          {isExpanded
+                            ? "Show Less"
+                            : `Show All (${proofs.length})`}
+                        </button>
+                      )}
+                    </>
+                  )}
+                </div>
+              );
+            })}
           </div>
 
           {/* Submit Payment Proof */}
@@ -383,15 +472,17 @@ const ParentDashboard = () => {
                 onChange={(e) => setProof({ ...proof, amount: e.target.value })}
                 className="w-full p-2 rounded bg-gray-800 text-white border border-gray-700"
               />
-              <select
-                value={proof.method}
-                onChange={(e) => setProof({ ...proof, method: e.target.value })}
-                className="w-full p-2 rounded bg-gray-800 text-white border border-gray-700"
-              >
-                <option value="mpesa">M-Pesa</option>
-                <option value="bank">Bank</option>
-                <option value="cash">Cash</option>
-              </select>
+              <CustomSelect
+  value={proof.method}
+  onChange={(val) => setProof({ ...proof, method: val })}
+  placeholder="Select Payment Method"
+  options={[
+    { value: "mpesa", label: "M-Pesa" },
+    { value: "bank", label: "Bank" },
+    { value: "cash", label: "Cash" },
+  ]}
+/>
+
               <button
                 onClick={submitProof}
                 disabled={submitting}
@@ -439,96 +530,104 @@ const ParentDashboard = () => {
           )}
 
           {/* Exams Section */}
-{/* Exams Section */}
-{childExams.length > 0 && (
-  <div className="bg-gradient-to-r from-gray-900 to-gray-800 p-6 rounded-2xl shadow-md">
-    <h2 className="text-xl sm:text-2xl font-bold mb-4 border-b border-gray-700 pb-2">
-      Exam Results
-    </h2>
+          {/* Exams Section */}
+          {childExams.length > 0 && (
+            <div className="bg-gradient-to-r from-gray-900 to-gray-800 p-6 rounded-2xl shadow-md">
+              <h2 className="text-xl sm:text-2xl font-bold mb-4 border-b border-gray-700 pb-2">
+                Exam Results
+              </h2>
 
-    {/* Dropdown to pick exam */}
-    <div className="mb-4">
-      <select
-        value={selectedExamId}
-        onChange={(e) => setSelectedExamId(e.target.value)}
-        className="w-full p-2 rounded bg-gray-800 text-white border border-gray-700"
-      >
-        <option value="">Select Exam</option>
-        {childExams.map((exam) => (
-          <option key={exam.examId} value={exam.examId}>
-            {exam.examName} – {exam.term}
-          </option>
-        ))}
-      </select>
-    </div>
+              {/* Dropdown to pick exam */}
+              <div className="mb-4">
+                <select
+                  value={selectedExamId}
+                  onChange={(e) => setSelectedExamId(e.target.value)}
+                  className="w-full p-2 rounded bg-gray-800 text-white border border-gray-700"
+                >
+                  <option value="">Select Exam</option>
+                  {childExams.map((exam) => (
+                    <option key={exam.examId} value={exam.examId}>
+                      {exam.examName} – {exam.term}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-    {/* Show chosen exam */}
-    {(() => {
-      const examToShow =
-        selectedExamId &&
-        childExams.find((exam) => exam.examId === selectedExamId);
+              {/* Show chosen exam */}
+              {(() => {
+                const examToShow =
+                  selectedExamId &&
+                  childExams.find((exam) => exam.examId === selectedExamId);
 
-      if (!examToShow) return null;
+                if (!examToShow) return null;
 
-      return (
-        <div className="space-y-4">
-          {/* Exam meta */}
-          <div className="bg-gray-950 p-4 rounded-xl shadow">
-            <p className="text-gray-300 text-sm">
-              <span className="font-semibold">Exam:</span> {examToShow.examName}
-            </p>
-            <p className="text-gray-300 text-sm">
-              <span className="font-semibold">Term:</span> {examToShow.term}
-            </p>
-            <p className="text-gray-300 text-sm">
-              <span className="font-semibold">Date:</span>{" "}
-              {new Date(examToShow.date).toLocaleDateString()}
-            </p>
-          </div>
+                return (
+                  <div className="space-y-4">
+                    {/* Exam meta */}
+                    <div className="bg-gray-950 p-4 rounded-xl shadow">
+                      <p className="text-gray-300 text-sm">
+                        <span className="font-semibold">Exam:</span>{" "}
+                        {examToShow.examName}
+                      </p>
+                      <p className="text-gray-300 text-sm">
+                        <span className="font-semibold">Term:</span>{" "}
+                        {examToShow.term}
+                      </p>
+                      <p className="text-gray-300 text-sm">
+                        <span className="font-semibold">Date:</span>{" "}
+                        {new Date(examToShow.date).toLocaleDateString()}
+                      </p>
+                    </div>
 
-          {/* Subjects table */}
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm text-gray-300 border border-gray-700 rounded-lg">
-              <thead className="bg-gray-800 text-gray-200">
-                <tr>
-                  <th className="px-4 py-2 text-left">Subject</th>
-                  <th className="px-4 py-2 text-right">Score</th>
-                  <th className="px-4 py-2 text-right">Grade</th>
-                  <th className="px-4 py-2 text-right">Remark</th>
-                </tr>
-              </thead>
-              <tbody>
-                {examToShow.subjects.map((subj, idx) => (
-                  <tr
-                    key={idx}
-                    className={
-                      idx % 2 === 0 ? "bg-gray-950/40" : "bg-gray-900/40"
-                    }
-                  >
-                    <td className="px-4 py-2">{subj.name}</td>
-                    <td className="px-4 py-2 text-right">{subj.score}</td>
-                    <td className="px-4 py-2 text-right">{subj.grade}</td>
-                    <td className="px-4 py-2 text-right">{subj.remark}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                    {/* Subjects table */}
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm text-gray-300 border border-gray-700 rounded-lg">
+                        <thead className="bg-gray-800 text-gray-200">
+                          <tr>
+                            <th className="px-4 py-2 text-left">Subject</th>
+                            <th className="px-4 py-2 text-right">Score</th>
+                            <th className="px-4 py-2 text-right">Grade</th>
+                            <th className="px-4 py-2 text-right">Remark</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {examToShow.subjects.map((subj, idx) => (
+                            <tr
+                              key={idx}
+                              className={
+                                idx % 2 === 0
+                                  ? "bg-gray-950/40"
+                                  : "bg-gray-900/40"
+                              }
+                            >
+                              <td className="px-4 py-2">{subj.name}</td>
+                              <td className="px-4 py-2 text-right">
+                                {subj.score}
+                              </td>
+                              <td className="px-4 py-2 text-right">
+                                {subj.grade}
+                              </td>
+                              <td className="px-4 py-2 text-right">
+                                {subj.remark}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
 
-          {/* Totals */}
-          <div className="bg-gray-950 p-4 rounded-xl shadow flex justify-between text-sm">
-            <span>Total: {examToShow.total}</span>
-            <span>Average: {examToShow.average}</span>
-            {/* <span>Grade: {examToShow.grade}</span>
+                    {/* Totals */}
+                    <div className="bg-gray-950 p-4 rounded-xl shadow flex justify-between text-sm">
+                      <span>Total: {examToShow.total}</span>
+                      <span>Average: {examToShow.average}</span>
+                      {/* <span>Grade: {examToShow.grade}</span>
             <span>Remark: {examToShow.remark}</span> */}
-          </div>
-        </div>
-      );
-    })()}
-  </div>
-)}
-
-
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+          )}
         </div>
       )}
     </div>

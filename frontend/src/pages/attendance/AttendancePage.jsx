@@ -6,10 +6,11 @@ import {
   deleteAttendanceRecord,
 } from "../../utils/indexedDB";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 
 const AttendancePage = () => {
-  const [students, setStudents] = useState([]);
-  const [filteredStudents, setFilteredStudents] = useState([]);
+  // const [students, setStudents] = useState([]);
+  // const [filteredStudents, setFilteredStudents] = useState([]);
   const [classLevels, setClassLevels] = useState([]);
   const [selectedClass, setSelectedClass] = useState("");
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
@@ -21,6 +22,7 @@ const AttendancePage = () => {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [terms] = useState(["Term 1", "Term 2", "Term 3"]);
   const [selectedTerm, setSelectedTerm] = useState("Term 1");
+  const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
   const navigate = useNavigate();
 
@@ -54,49 +56,69 @@ const AttendancePage = () => {
   }, []);
 
   // --- Fetch students for selected date, year, and term ---
-  useEffect(() => {
-    const fetchStudents = async () => {
-      try {
-        const res = await api.get("/attendance", {
-          params: { date, academicYear: selectedYear, term: selectedTerm },
-        });
-        const allStudents = res.data;
-        setStudents(allStudents);
+  // useEffect(() => {
+  //   const fetchStudents = async () => {
+  //     try {
+  //       const res = await api.get("/attendance", {
+  //         params: { date, academicYear: selectedYear, term: selectedTerm },
+  //       });
+  //       const allStudents = res.data;
+  //       setStudents(allStudents);
 
-        const levels = [...new Set(allStudents.map((s) => s.classLevel))];
-        setClassLevels(levels);
+  //       const levels = [...new Set(allStudents.map((s) => s.classLevel))];
+  //       setClassLevels(levels);
 
-        const defaultClass = levels.length === 1 ? levels[0] : "";
-        setSelectedClass(defaultClass);
+  //       const defaultClass = levels.length === 1 ? levels[0] : "";
+  //       setSelectedClass(defaultClass);
 
-        const initialRecords = Object.fromEntries(
-          allStudents.map((s) => [
-            s._id.toString(),
-            {
-              status: s.attendance?.status || "present",
-              reason: s.attendance?.reason || "",
-            },
-          ])
-        );
-        setRecords(initialRecords);
-      } catch (err) {
-        console.error("Error fetching students", err);
-      }
-    };
+  //       const initialRecords = Object.fromEntries(
+  //         allStudents.map((s) => [
+  //           s._id.toString(),
+  //           {
+  //             status: s.attendance?.status || "present",
+  //             reason: s.attendance?.reason || "",
+  //           },
+  //         ])
+  //       );
+  //       setRecords(initialRecords);
+  //     } catch (err) {
+  //       console.error("Error fetching students", err);
+  //     }
+  //   };
 
-    fetchStudents();
-  }, [date, selectedYear, selectedTerm]);
+  //   fetchStudents();
+  // }, [date, selectedYear, selectedTerm]);
+
+  const { data: students = [], isLoading } = useQuery({
+    queryKey: ["attendance-students", date, selectedYear, selectedTerm],
+    queryFn: async () => {
+      const res = await api.get("/attendance", {
+        params: { date, academicYear: selectedYear, term: selectedTerm },
+      });
+      return res.data;
+    },
+    onSuccess: (allStudents) => {
+      const levels = [...new Set(allStudents.map((s) => s.classLevel))];
+      setClassLevels(levels);
+      setSelectedClass(levels.length === 1 ? levels[0] : "");
+
+      const initialRecords = Object.fromEntries(
+        allStudents.map((s) => [
+          s._id.toString(),
+          {
+            status: s.attendance?.status || "present",
+            reason: s.attendance?.reason || "",
+          },
+        ])
+      );
+      setRecords(initialRecords);
+    },
+  });
 
   // --- Filter students by class ---
-  useEffect(() => {
-    if (selectedClass) {
-      setFilteredStudents(
-        students.filter((s) => s.classLevel === selectedClass)
-      );
-    } else {
-      setFilteredStudents(students);
-    }
-  }, [students, selectedClass]);
+  const filteredStudents = selectedClass
+    ? students.filter((s) => s.classLevel === selectedClass)
+    : students;
 
   const handleChange = (studentId, field, value) => {
     setRecords((prev) => ({
@@ -107,46 +129,49 @@ const AttendancePage = () => {
 
   // --- Submit attendance with optimistic feedback & offline support ---
   const handleSubmit = async () => {
-  const payload = {
-    classLevel: selectedClass || students[0]?.classLevel || "Unknown",
-    date,
-    term: selectedTerm,
-    academicYear: selectedYear,
-    records: Object.entries(records).map(([studentId, data]) => ({
-      studentId,
-      status: data.status || "present",
-      reason: data.reason || "",
-    })),
-    notifyParents,
-  };
+    const payload = {
+      classLevel: selectedClass || students[0]?.classLevel || "Unknown",
+      date,
+      term: selectedTerm,
+      academicYear: selectedYear,
+      records: Object.entries(records).map(([studentId, data]) => ({
+        studentId,
+        status: data.status || "present",
+        reason: data.reason || "",
+      })),
+      notifyParents,
+    };
 
-  setFeedbackMessage(
-    navigator.onLine
-      ? "Saving attendance..."
-      : "You are offline. Attendance will sync when back online."
-  );
+    setFeedbackMessage(
+      navigator.onLine
+        ? "Saving attendance..."
+        : "You are offline. Attendance will sync when back online."
+    );
 
-  if (!navigator.onLine) {
-    await saveAttendanceLocally(payload);
-    setUnsyncedCount((await getAllAttendanceRecords()).length);
-    return navigate("/dashboard", { replace: true });
-  }
-
-  try {
-    await api.post("/attendance", payload);
-    setFeedbackMessage("Attendance saved successfully ✅");
-    setTimeout(() => {
+    if (!navigator.onLine) {
+      await saveAttendanceLocally(payload);
+      setUnsyncedCount((await getAllAttendanceRecords()).length);
+      await sleep(1000); // <- pauses here properly
       navigate("/dashboard", { replace: true });
-    }, 800);
-  } catch (err) {
-    console.error("Error saving attendance", err);
-    await saveAttendanceLocally(payload);
-    setUnsyncedCount((await getAllAttendanceRecords()).length);
-    setFeedbackMessage("Saved offline. Will sync later.");
-    navigate("/dashboard", { replace: true });
-  }
-};
+      return;
+    }
 
+    try {
+      await api.post("/attendance", payload);
+      setFeedbackMessage("Attendance saved successfully ✅");
+      setTimeout(() => {
+        navigate("/dashboard", { replace: true });
+      }, 800);
+    } catch (err) {
+      console.error("Error saving attendance", err);
+      await saveAttendanceLocally(payload);
+      setUnsyncedCount((await getAllAttendanceRecords()).length);
+      setFeedbackMessage("Saved offline. Will sync later.");
+      setTimeout(() => {
+        navigate("/dashboard", { replace: true });
+      }, 800);
+    }
+  };
 
   return (
     <main className="flex flex-col overflow-y-hidden bg-gray-950 text-white relative">
