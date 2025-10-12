@@ -6,6 +6,7 @@ const AttendanceDetails = ({ days = 7 }) => {
   const [loading, setLoading] = useState(true);
   const [editingRecord, setEditingRecord] = useState(null);
   const [newReason, setNewReason] = useState("");
+  const [expandedDates, setExpandedDates] = useState([]);
 
   const currentYear = new Date().getFullYear();
   const [academicYear, setAcademicYear] = useState(
@@ -43,11 +44,9 @@ const AttendanceDetails = ({ days = 7 }) => {
 
   const saveReason = async () => {
     try {
-      const res = await api.patch(`/attendance/${editingRecord._id}`, {
+      await api.patch(`/attendance/${editingRecord._id}`, {
         reason: newReason,
       });
-
-      // Update local state
       setRecords((prev) =>
         prev.map((r) =>
           r._id === editingRecord._id ? { ...r, reason: newReason } : r
@@ -59,6 +58,22 @@ const AttendanceDetails = ({ days = 7 }) => {
     }
   };
 
+  // Group by date
+  const groupedRecords = records.reduce((acc, rec) => {
+    const dateKey = new Date(rec.date).toISOString().split("T")[0];
+    if (!acc[dateKey]) acc[dateKey] = [];
+    acc[dateKey].push(rec);
+    return acc;
+  }, {});
+
+  const toggleDate = (date) => {
+    setExpandedDates((prev) =>
+      prev.includes(date)
+        ? prev.filter((d) => d !== date)
+        : [...prev, date]
+    );
+  };
+
   if (loading) return <p>Loading attendance details...</p>;
 
   return (
@@ -66,57 +81,68 @@ const AttendanceDetails = ({ days = 7 }) => {
       <h2 className="text-xl font-semibold mb-4 border-b border-gray-900 pb-2">
         Absentees & Late Students (Last {days} days)
       </h2>
-      <div className="overflow-x-auto">
-        <table className="min-w-full border border-gray-800 text-white">
-          <thead>
-            <tr className="bg-gray-900 text-left">
-              <th className="px-4 py-2">Student Name</th>
-              <th className="px-4 py-2">Class</th>
-              <th className="px-4 py-2">Date</th>
-              <th className="px-4 py-2">Status</th>
-              <th className="px-4 py-2">Reason</th>
-              <th className="px-4 py-2">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {records.length === 0 ? (
-              <tr>
-                <td colSpan="6" className="text-center py-4 text-gray-400">
-                  No records found
-                </td>
-              </tr>
-            ) : (
-              records.map((rec) => (
-                <tr key={rec._id} className="border-t border-gray-800">
-                  <td className="px-4 py-2">{rec.studentName}</td>
-                  <td className="px-4 py-2">{rec.classLevel}</td>
-                  <td className="px-4 py-2">
-                    {new Date(rec.date).toLocaleDateString()}
-                  </td>
-                  <td
-                    className={`px-4 py-2 font-semibold ${
-                      rec.status === "absent"
-                        ? "text-red-500"
-                        : "text-yellow-400"
-                    }`}
-                  >
-                    {rec.status}
-                  </td>
-                  <td className="px-4 py-2">{rec.reason || "-"}</td>
-                  <td className="px-4 py-2">
-                    <button
-                      className="bg-blue-500 px-2 py-1 rounded hover:bg-blue-600"
-                      onClick={() => openModal(rec)}
-                    >
-                      Edit
-                    </button>
-                  </td>
-                </tr>
-              ))
+
+      {Object.keys(groupedRecords).length === 0 && (
+        <p className="text-gray-400 text-center py-4">No records found</p>
+      )}
+
+      {Object.entries(groupedRecords)
+        .sort(([a], [b]) => new Date(b) - new Date(a))
+        .map(([date, records]) => (
+          <div key={date} className="border border-gray-800 rounded-lg mb-3">
+            <button
+              onClick={() => toggleDate(date)}
+              className="w-full text-left px-4 py-3 bg-gray-900 flex justify-between items-center"
+            >
+              <span className="font-medium">{new Date(date).toDateString()}</span>
+              <span className="text-gray-400">
+                {records.length} record{records.length > 1 ? "s" : ""}
+              </span>
+            </button>
+
+            {expandedDates.includes(date) && (
+              <div className="overflow-x-auto">
+                <table className="min-w-full border-t border-gray-800 text-white">
+                  <thead className="bg-gray-800 text-gray-300">
+                    <tr>
+                      <th className="px-4 py-2 text-left">Student Name</th>
+                      <th className="px-4 py-2 text-left">Class</th>
+                      <th className="px-4 py-2 text-left">Status</th>
+                      <th className="px-4 py-2 text-left">Reason</th>
+                      <th className="px-4 py-2 text-left">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {records.map((rec) => (
+                      <tr key={rec._id} className="border-t border-gray-800">
+                        <td className="px-4 py-2">{rec.studentName}</td>
+                        <td className="px-4 py-2">{rec.classLevel}</td>
+                        <td
+                          className={`px-4 py-2 font-semibold ${
+                            rec.status === "absent"
+                              ? "text-red-500"
+                              : "text-yellow-400"
+                          }`}
+                        >
+                          {rec.status}
+                        </td>
+                        <td className="px-4 py-2">{rec.reason || "-"}</td>
+                        <td className="px-4 py-2">
+                          <button
+                            className="bg-blue-500 px-2 py-1 rounded hover:bg-blue-600"
+                            onClick={() => openModal(rec)}
+                          >
+                            Edit
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
-          </tbody>
-        </table>
-      </div>
+          </div>
+        ))}
 
       {/* Modal */}
       {editingRecord && (

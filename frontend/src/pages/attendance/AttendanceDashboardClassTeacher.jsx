@@ -28,8 +28,9 @@ const AttendanceDashboardClassTeacher = () => {
 
   // filters
   const [academicYears, setAcademicYears] = useState([]);
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
-  const [terms] = useState(["Term 1", "Term 2", "Term 3"]);
+ const currentYear = new Date().getFullYear();
+const [selectedYear, setSelectedYear] = useState(`${currentYear}/${currentYear + 1}`);
+ const [terms] = useState(["Term 1", "Term 2", "Term 3"]);
   const [selectedTerm, setSelectedTerm] = useState("Term 1");
 
   const [startDate, setStartDate] = useState(
@@ -46,8 +47,13 @@ useEffect(() => {
     return `${startYear}/${startYear + 1}`;
   });
   setAcademicYears(years);
-  setSelectedYear(years[0]); // default to current academic year
+  setSelectedYear(years[0]);
 }, []);
+
+useEffect(() => {
+  if (academicYears.length > 0) fetchData();
+}, [startDate, endDate, selectedYear, selectedTerm, academicYears]);
+
 
 
   const fetchData = async () => {
@@ -57,6 +63,7 @@ useEffect(() => {
       const rangeRes = await api.get("/attendance/range", {
         params: { startDate, endDate, academicYear: selectedYear, term: selectedTerm },
       });
+      console.log(rangeRes)
       const chartData = rangeRes.data.map((d) => ({
         date: d._id,
         present: d.present,
@@ -152,7 +159,7 @@ useEffect(() => {
       <AttendanceDetails />
 
       {/* Attendance Trend */}
-      {/* <div className="bg-gray-950 shadow-xl rounded-2xl p-6">
+      <div className="bg-gray-950 shadow-xl rounded-2xl p-6">
         <h2 className="text-xl font-semibold mb-4 border-b border-gray-900 pb-2">Attendance Trend</h2>
         <ResponsiveContainer width="100%" height={300}>
           <LineChart data={rangeStats}>
@@ -166,7 +173,7 @@ useEffect(() => {
             <Line type="monotone" dataKey="late" stroke="#FFC107" />
           </LineChart>
         </ResponsiveContainer>
-      </div> */}
+      </div>
 
       {/* Chronic Absentees */}
       <div className="bg-gray-950 shadow-xl rounded-2xl p-6">

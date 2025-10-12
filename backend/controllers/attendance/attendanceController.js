@@ -6,6 +6,7 @@ const notificationService = require("../../services/notificationService");
 const School = require("../../models/School");
 const pushSubscription = require("../../models/pushSubscription");
 const webpush = require("web-push");
+const mongoose = require('mongoose')
 
 // Helper to set current academic year if not provided
 const getAcademicYear = (year) => year || School.currentAcademicYear();
@@ -280,24 +281,42 @@ exports.getAttendanceDetails = async (req, res) => {
 // --- Get stats by date range ---
 exports.getStatsByRange = async (req, res) => {
   try {
-    console.log("hit range");
-    const { startDate, endDate, academicYear, term } = req.query;
+    console.log("=== HIT /attendance/range ===");
 
-    console.log(req.query);
+    const { startDate, endDate, academicYear, term } = req.query;
+    console.log("🔹 Raw query params:", req.query);
 
     if (!startDate || !endDate || !academicYear || !term) {
+      console.warn("⚠️ Missing query params");
       return res.status(400).json({ error: "Missing required query params" });
     }
 
+    // Normalize dates to capture entire days
+    const start = new Date(startDate);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(endDate);
+    end.setHours(23, 59, 59, 999);
+
+    console.log("📅 Computed date range:", { start, end });
+
+    // Check a random record from the same school
+    const sample = await Attendance.findOne({ school: req.user.school })
+      .select("date academicYear term status school")
+      .sort({ date: -1 });
+
+    console.log("🧾 Sample record from DB:", sample);
+
+    const matchStage = {
+      date: { $gte: start, $lte: end },
+      academicYear,
+      term,
+      school: new mongoose.Types.ObjectId(req.user.school),
+    };
+
+    console.log("🧩 Aggregation match filter:", matchStage);
+
     const records = await Attendance.aggregate([
-      {
-        $match: {
-          date: { $gte: new Date(startDate), $lte: new Date(endDate) },
-          academicYear: academicYear, // ✅ keep as string
-          term,
-          school: req.user.school,
-        },
-      },
+      { $match: matchStage },
       {
         $group: {
           _id: { $dateToString: { format: "%Y-%m-%d", date: "$date" } },
@@ -309,20 +328,23 @@ exports.getStatsByRange = async (req, res) => {
       { $sort: { _id: 1 } },
     ]);
 
-    console.log("records", records);
+    console.log("📊 Aggregation result count:", records.length);
+    if (records.length === 0) console.warn("⚠️ No records matched the filter");
+
     res.json(records);
   } catch (err) {
-    console.error("Error in /attendance/range", err);
+    console.error("❌ Error in /attendance/range:", err);
     res.status(500).json({ error: "Server error" });
   }
 };
+
 
 // --- Get chronic absentees ---
 exports.getAbsenteeListRange = async (req, res) => {
   try {
     console.log("hit absentees");
     const { days = 7, academicYear, term } = req.query;
-    console.log(req.query);
+    // console.log(req.query);
 
     if (!academicYear || !term) {
       return res.status(400).json({ error: "Missing required query params" });
@@ -350,7 +372,7 @@ exports.getAbsenteeListRange = async (req, res) => {
       { $limit: 10 },
     ]);
 
-    console.log("absentees", absentees);
+    // console.log("absentees", absentees);
 
     const withStudents = await Student.populate(absentees, {
       path: "_id",
