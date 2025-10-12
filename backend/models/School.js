@@ -150,6 +150,17 @@ schoolSchema.statics.defaultCBCSubjectsByClass = function () {
   return [
     {
       fromClass: "PP1",
+      toClass: "PP1",
+      subjects: [
+        "Language Activities",
+        "Mathematical Activities",
+        "Christian Religious Education",
+        "Islamic Religious Education",
+        "Environmental Activities",
+      ],
+    },
+    {
+      fromClass: "PP2",
       toClass: "PP2",
       subjects: [
         "Language Activities",
@@ -173,7 +184,7 @@ schoolSchema.statics.defaultCBCSubjectsByClass = function () {
     },
     {
       fromClass: "Grade 4",
-      toClass: "Grade 6",
+      toClass: "Grade 4",
       subjects: [
         "English",
         "Kiswahili",
@@ -188,7 +199,38 @@ schoolSchema.statics.defaultCBCSubjectsByClass = function () {
       ],
     },
     {
+      fromClass: "Grade 5",
+      toClass: "Grade 6",
+      subjects: [
+        "English",
+        "Kiswahili",
+        "Mathematics",
+        "Social Studies",
+        "Science & Technology",
+        "Agriculture",
+        "Christian Religious Education",
+        "Islamic Religious Education",
+        "Arabic",
+      ],
+    },
+    {
       fromClass: "Grade 7",
+      toClass: "Grade 8",
+      subjects: [
+        "English",
+        "Kiswahili",
+        "Mathematics",
+        "Integrated Science",
+        "Social Studies",
+        "Agriculture",
+        "Pre-Technical Studies",
+        "Christian Religious Education",
+        "Islamic Religious Education",
+        "Arabic",
+      ],
+    },
+    {
+      fromClass: "Grade 9",
       toClass: "Grade 9",
       subjects: [
         "English",
@@ -201,6 +243,7 @@ schoolSchema.statics.defaultCBCSubjectsByClass = function () {
         "Christian Religious Education",
         "Islamic Religious Education",
         "Arabic",
+        "French",
       ],
     },
   ];
