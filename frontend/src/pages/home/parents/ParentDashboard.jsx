@@ -4,7 +4,7 @@ import { NavLink } from "react-router-dom";
 import api from "../../../api/axios";
 import useUnreadMessages from "../../../hooks/useUnreadMessages";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import CustomSelect from '../../../components/layout/CustomSelect'
+import CustomSelect from "../../../components/layout/CustomSelect";
 
 const ParentDashboard = () => {
   const [children, setChildren] = useState([]);
@@ -473,15 +473,15 @@ const ParentDashboard = () => {
                 className="w-full p-2 rounded bg-gray-800 text-white border border-gray-700"
               />
               <CustomSelect
-  value={proof.method}
-  onChange={(val) => setProof({ ...proof, method: val })}
-  placeholder="Select Payment Method"
-  options={[
-    { value: "mpesa", label: "M-Pesa" },
-    { value: "bank", label: "Bank" },
-    { value: "cash", label: "Cash" },
-  ]}
-/>
+                value={proof.method}
+                onChange={(val) => setProof({ ...proof, method: val })}
+                placeholder="Select Payment Method"
+                options={[
+                  { value: "mpesa", label: "M-Pesa" },
+                  { value: "bank", label: "Bank" },
+                  { value: "cash", label: "Cash" },
+                ]}
+              />
 
               <button
                 onClick={submitProof}
@@ -539,7 +539,7 @@ const ParentDashboard = () => {
 
               {/* Dropdown to pick exam */}
               <div className="mb-4">
-                <select
+                {/* <select
                   value={selectedExamId}
                   onChange={(e) => setSelectedExamId(e.target.value)}
                   className="w-full p-2 rounded bg-gray-800 text-white border border-gray-700"
@@ -550,7 +550,17 @@ const ParentDashboard = () => {
                       {exam.examName} – {exam.term}
                     </option>
                   ))}
-                </select>
+                </select> */}
+
+                <CustomSelect
+                  value={selectedExamId}
+                  onChange={setSelectedExamId}
+                  placeholder="Select Exam"
+                  options={childExams.map((exam) => ({
+                    value: exam.examId,
+                    label: `${exam.examName} – ${exam.term}`,
+                  }))}
+                />
               </div>
 
               {/* Show chosen exam */}

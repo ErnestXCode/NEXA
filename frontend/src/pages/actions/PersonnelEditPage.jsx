@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import api from "../../api/axios";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import CustomSelect from "../../components/layout/CustomSelect";
 
 const PersonnelEditPage = () => {
   const { id } = useParams();
@@ -9,7 +10,11 @@ const PersonnelEditPage = () => {
   const queryClient = useQueryClient();
 
   // Fetch personnel
-  const { data: personnelData, isLoading, isError } = useQuery({
+  const {
+    data: personnelData,
+    isLoading,
+    isError,
+  } = useQuery({
     queryKey: ["personnel", id],
     queryFn: async () => {
       const res = await api.get(`/personel/id/${id}`);
@@ -127,7 +132,7 @@ const PersonnelEditPage = () => {
             className="w-full p-2 rounded bg-gray-800 text-white text-sm"
           />
 
-          <select
+          {/* <select
             name="role"
             value={personnel.role}
             onChange={handleChange}
@@ -138,7 +143,19 @@ const PersonnelEditPage = () => {
             </option>
             <option value="teacher">Teacher</option>
             <option value="bursar">Bursar</option>
-          </select>
+          </select> */}
+
+          <CustomSelect
+            value={personnel.role}
+            onChange={(val) =>
+              handleChange({ target: { name: "role", value: val } })
+            }
+            placeholder="Select Role"
+            options={[
+              { value: "teacher", label: "Teacher" },
+              { value: "bursar", label: "Bursar" },
+            ]}
+          />
 
           {/* Teacher-specific fields */}
           {personnel.role === "teacher" && (
@@ -163,7 +180,7 @@ const PersonnelEditPage = () => {
                 ))}
 
                 {/* Dropdown for adding subjects */}
-                <select
+                {/* <select
                   onChange={(e) => {
                     if (!e.target.value) return;
                     handleAddSubject(e.target.value);
@@ -179,7 +196,15 @@ const PersonnelEditPage = () => {
                         {s}
                       </option>
                     ))}
-                </select>
+                </select> */}
+                <CustomSelect
+                  value="" // always reset after adding
+                  onChange={(val) => handleAddSubject(val)}
+                  placeholder="Select subject..."
+                  options={schoolData.subjects
+                    .filter((s) => !personnel.subjects.includes(s))
+                    .map((s) => ({ value: s, label: s }))}
+                />
               </div>
 
               {/* Class Teacher */}
@@ -194,19 +219,19 @@ const PersonnelEditPage = () => {
               </label>
 
               {personnel.isClassTeacher && (
-                <select
-                  name="classLevel"
+                <CustomSelect
                   value={personnel.classLevel || ""}
-                  onChange={handleChange}
-                  className="w-full p-2 rounded bg-gray-800 text-white text-sm"
-                >
-                  <option value="">Select Class Level</option>
-                  {schoolData.classLevels?.map((level) => (
-                    <option key={level.name} value={level.name}>
-                      {level.name}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(val) =>
+                    handleChange({ target: { name: "classLevel", value: val } })
+                  }
+                  placeholder="Select Class Level"
+                  options={
+                    schoolData.classLevels?.map((level) => ({
+                      value: level.name,
+                      label: level.name,
+                    })) || []
+                  }
+                />
               )}
             </>
           )}

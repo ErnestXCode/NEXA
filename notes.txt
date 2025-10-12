@@ -10,17 +10,10 @@ sockets to run tanstack for refecthing
 
 two simultaneous requests to ignore latter if same thing 
 
-
-
 show no data available if no data in any page , also show if connection is not there and have a button to reload 
 
-student edit classlevel is not a dropdown , and middle name is for some reason above the other names
-
-select option looks ugly for phones make them custom to the app and make em consistent among all phones
 
 square on nexa notification to be detailed something image 
-
-
 
 the next year carryover should check fo feerules of next class...or maybe they should remain as excess till the new year comes in
 
