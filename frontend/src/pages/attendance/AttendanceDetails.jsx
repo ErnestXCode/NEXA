@@ -7,8 +7,11 @@ const AttendanceDetails = ({ days = 7 }) => {
   const [editingRecord, setEditingRecord] = useState(null);
   const [newReason, setNewReason] = useState("");
 
-  const academicYear = "2025";
-  const term = "Term 1";
+  const currentYear = new Date().getFullYear();
+  const [academicYear, setAcademicYear] = useState(
+    `${currentYear}/${currentYear + 1}`
+  );
+  const [term, setTerm] = useState("Term 1");
 
   const fetchData = async () => {
     setLoading(true);

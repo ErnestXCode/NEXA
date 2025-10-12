@@ -38,10 +38,17 @@ const AttendanceDashboardClassTeacher = () => {
   const [endDate, setEndDate] = useState(new Date().toISOString().slice(0, 10));
 
   // populate academic years
-  useEffect(() => {
-    const currentYear = new Date().getFullYear();
-    setAcademicYears([currentYear, currentYear - 1, currentYear - 2]);
-  }, []);
+// populate academic years
+useEffect(() => {
+  const currentYear = new Date().getFullYear();
+  const years = [0, 1, 2].map((i) => {
+    const startYear = currentYear - i;
+    return `${startYear}/${startYear + 1}`;
+  });
+  setAcademicYears(years);
+  setSelectedYear(years[0]); // default to current academic year
+}, []);
+
 
   const fetchData = async () => {
     try {
@@ -121,15 +128,16 @@ const AttendanceDashboardClassTeacher = () => {
             <option key={t} value={t}>{t}</option>
           ))}
         </select>
-        <select
-          value={selectedYear}
-          onChange={(e) => setSelectedYear(Number(e.target.value))}
-          className="p-2 rounded bg-gray-900 text-white"
-        >
-          {academicYears.map((y) => (
-            <option key={y} value={y}>{y}</option>
-          ))}
-        </select>
+       <select
+  value={selectedYear}
+  onChange={(e) => setSelectedYear(e.target.value)}
+  className="p-2 rounded bg-gray-900 text-white"
+>
+  {academicYears.map((y) => (
+    <option key={y} value={y}>{y}</option>
+  ))}
+</select>
+
       </div>
 
       {/* Summary cards */}

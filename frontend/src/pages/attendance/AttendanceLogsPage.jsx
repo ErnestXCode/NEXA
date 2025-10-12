@@ -3,16 +3,18 @@ import api from "../../api/axios";
 
 const AttendanceLogsPage = () => {
   const [logs, setLogs] = useState([]);
-  const [filters, setFilters] = useState({
-    date: "",
-    academicYear: new Date().getFullYear(),
-    term: "Term 1",
-    classLevel: "",
-    status: "",
-    search: "",
-    page: 1,
-    limit: 50,
-  });
+  const currentYear = new Date().getFullYear();
+const [filters, setFilters] = useState({
+  date: "",
+  academicYear: `${currentYear}/${currentYear + 1}`, // same format from the start
+  term: "Term 1",
+  classLevel: "",
+  status: "",
+  search: "",
+  page: 1,
+  limit: 50,
+});
+
   const [total, setTotal] = useState(0);
   const [expandedGroups, setExpandedGroups] = useState({});
 
@@ -21,9 +23,16 @@ const AttendanceLogsPage = () => {
   const [classLevels, setClassLevels] = useState([]);
 
   useEffect(() => {
-    const currentYear = new Date().getFullYear();
-    setAcademicYears([currentYear, currentYear - 1, currentYear - 2]);
-  }, []);
+  const currentYear = new Date().getFullYear();
+  const years = [0, 1, 2].map((i) => {
+    const startYear = currentYear - i;
+    return `${startYear}/${startYear + 1}`;
+  });
+  setAcademicYears(years);
+  // ✅ setFilters only once at initialization, not after first fetch
+  setFilters((prev) => ({ ...prev, academicYear: `${currentYear}/${currentYear + 1}` }));
+}, []);
+
 
   const fetchLogs = async () => {
     try {
@@ -62,34 +71,65 @@ const AttendanceLogsPage = () => {
         <input
           type="date"
           value={filters.date}
-          onChange={(e) => setFilters((prev) => ({ ...prev, date: e.target.value, page: 1 }))}
+          onChange={(e) =>
+            setFilters((prev) => ({ ...prev, date: e.target.value, page: 1 }))
+          }
           className="p-2 rounded bg-gray-800 text-white"
         />
         <select
           value={filters.academicYear}
-          onChange={(e) => setFilters((prev) => ({ ...prev, academicYear: e.target.value, page: 1 }))}
+          onChange={(e) =>
+            setFilters((prev) => ({
+              ...prev,
+              academicYear: e.target.value,
+              page: 1,
+            }))
+          }
           className="p-2 rounded bg-gray-800 text-white"
         >
-          {academicYears.map((y) => <option key={y} value={y}>{y}</option>)}
+          {academicYears.map((y) => (
+            <option key={y} value={y}>
+              {y}
+            </option>
+          ))}
         </select>
+
         <select
           value={filters.term}
-          onChange={(e) => setFilters((prev) => ({ ...prev, term: e.target.value, page: 1 }))}
+          onChange={(e) =>
+            setFilters((prev) => ({ ...prev, term: e.target.value, page: 1 }))
+          }
           className="p-2 rounded bg-gray-800 text-white"
         >
-          {terms.map((t) => <option key={t} value={t}>{t}</option>)}
+          {terms.map((t) => (
+            <option key={t} value={t}>
+              {t}
+            </option>
+          ))}
         </select>
         <select
           value={filters.classLevel}
-          onChange={(e) => setFilters((prev) => ({ ...prev, classLevel: e.target.value, page: 1 }))}
+          onChange={(e) =>
+            setFilters((prev) => ({
+              ...prev,
+              classLevel: e.target.value,
+              page: 1,
+            }))
+          }
           className="p-2 rounded bg-gray-800 text-white"
         >
           <option value="">All Classes</option>
-          {classLevels.map((c) => <option key={c} value={c}>{c}</option>)}
+          {classLevels.map((c) => (
+            <option key={c} value={c}>
+              {c}
+            </option>
+          ))}
         </select>
         <select
           value={filters.status}
-          onChange={(e) => setFilters((prev) => ({ ...prev, status: e.target.value, page: 1 }))}
+          onChange={(e) =>
+            setFilters((prev) => ({ ...prev, status: e.target.value, page: 1 }))
+          }
           className="p-2 rounded bg-gray-800 text-white"
         >
           <option value="">All Statuses</option>
@@ -101,7 +141,9 @@ const AttendanceLogsPage = () => {
           type="text"
           placeholder="Search student..."
           value={filters.search}
-          onChange={(e) => setFilters((prev) => ({ ...prev, search: e.target.value, page: 1 }))}
+          onChange={(e) =>
+            setFilters((prev) => ({ ...prev, search: e.target.value, page: 1 }))
+          }
           className="p-2 rounded bg-gray-800 text-white"
         />
       </div>
@@ -118,9 +160,13 @@ const AttendanceLogsPage = () => {
                 className="w-full text-left p-3 flex justify-between items-center hover:bg-gray-800 transition-colors"
               >
                 <span>
-                  <strong>{meta.classLevel}</strong> - {new Date(meta.date).toLocaleDateString()} | Marked by: {meta.markedBy?.name || "N/A"}
+                  <strong>{meta.classLevel}</strong> -{" "}
+                  {new Date(meta.date).toLocaleDateString()} | Marked by:{" "}
+                  {meta.markedBy?.name || "N/A"}
                 </span>
-                <span>{records.length} student{records.length > 1 ? "s" : ""}</span>
+                <span>
+                  {records.length} student{records.length > 1 ? "s" : ""}
+                </span>
               </button>
               {isExpanded && (
                 <table className="w-full text-sm border-collapse text-left">
@@ -134,7 +180,9 @@ const AttendanceLogsPage = () => {
                   <tbody>
                     {records.map((r) => (
                       <tr key={r._id} className="hover:bg-gray-800">
-                        <td className="p-2">{r.student?.firstName} {r.student?.lastName}</td>
+                        <td className="p-2">
+                          {r.student?.firstName} {r.student?.lastName}
+                        </td>
                         <td className="p-2">{r.status}</td>
                         <td className="p-2">{r.reason || "-"}</td>
                       </tr>
@@ -154,15 +202,21 @@ const AttendanceLogsPage = () => {
       <div className="mt-4 flex justify-between items-center">
         <button
           disabled={filters.page <= 1}
-          onClick={() => setFilters((prev) => ({ ...prev, page: prev.page - 1 }))}
+          onClick={() =>
+            setFilters((prev) => ({ ...prev, page: prev.page - 1 }))
+          }
           className="px-3 py-1 rounded bg-gray-700 disabled:opacity-50"
         >
           Previous
         </button>
-        <span>Page {filters.page} of {Math.ceil(total / filters.limit)}</span>
+        <span>
+          Page {filters.page} of {Math.ceil(total / filters.limit)}
+        </span>
         <button
           disabled={filters.page >= Math.ceil(total / filters.limit)}
-          onClick={() => setFilters((prev) => ({ ...prev, page: prev.page + 1 }))}
+          onClick={() =>
+            setFilters((prev) => ({ ...prev, page: prev.page + 1 }))
+          }
           className="px-3 py-1 rounded bg-gray-700 disabled:opacity-50"
         >
           Next

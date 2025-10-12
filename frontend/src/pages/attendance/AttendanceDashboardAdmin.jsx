@@ -23,7 +23,9 @@ const ClassCard = ({ cls }) => {
 
   return (
     <div className="bg-gray-950 p-5 rounded-2xl shadow-xl hover:shadow-2xl transition-shadow duration-300">
-      <h3 className="text-xl font-bold mb-3 border-b border-gray-800 pb-2">{cls._id}</h3>
+      <h3 className="text-xl font-bold mb-3 border-b border-gray-800 pb-2">
+        {cls._id}
+      </h3>
       <div className="grid grid-cols-2 gap-4 mb-4 text-sm text-gray-300">
         <div>
           <p className="font-medium">Marked Days:</p>
@@ -32,7 +34,9 @@ const ClassCard = ({ cls }) => {
         <div>
           <p className="font-medium">Last Marked:</p>
           <p className="text-white font-semibold">
-            {cls.lastMarked ? new Date(cls.lastMarked).toLocaleDateString() : "—"}
+            {cls.lastMarked
+              ? new Date(cls.lastMarked).toLocaleDateString()
+              : "—"}
           </p>
         </div>
         <div>
@@ -49,15 +53,21 @@ const ClassCard = ({ cls }) => {
       <div className="flex justify-between gap-2 mt-2">
         <div className="flex-1 bg-green-800 p-3 rounded-lg flex flex-col items-center">
           <p className="text-sm font-medium">Present</p>
-          <p className="text-white font-bold text-lg">{cls.present} ({presentPct}%)</p>
+          <p className="text-white font-bold text-lg">
+            {cls.present} ({presentPct}%)
+          </p>
         </div>
         <div className="flex-1 bg-red-800 p-3 rounded-lg flex flex-col items-center">
           <p className="text-sm font-medium">Absent</p>
-          <p className="text-white font-bold text-lg">{cls.absent} ({absentPct}%)</p>
+          <p className="text-white font-bold text-lg">
+            {cls.absent} ({absentPct}%)
+          </p>
         </div>
         <div className="flex-1 bg-yellow-700 p-3 rounded-lg flex flex-col items-center">
           <p className="text-sm font-medium">Late</p>
-          <p className="text-white font-bold text-lg">{cls.late} ({latePct}%)</p>
+          <p className="text-white font-bold text-lg">
+            {cls.late} ({latePct}%)
+          </p>
         </div>
       </div>
     </div>
@@ -74,23 +84,34 @@ const AttendanceDashboardAdmin = () => {
   const [endDate, setEndDate] = useState(new Date().toISOString().slice(0, 10));
 
   // 👇 Use actual values from context, Redux, or API if available
-  const academicYear = "2025";
-  const term = "Term 1";
-
-  const fetchClassStats = async () => {
-    try {
-      const res = await api.get("/attendance/class-stats", {
-        params: { startDate, endDate, academicYear, term },
-      });
-      setClassStats(res.data);
-    } catch (err) {
-      console.error("Failed to fetch class stats", err);
-    }
-  };
+  const [academicYears, setAcademicYears] = useState([]);
+  const [selectedYear, setSelectedYear] = useState("");
 
   useEffect(() => {
-    fetchClassStats();
-  }, [startDate, endDate]);
+    const currentYear = new Date().getFullYear();
+    const years = [0, 1, 2].map((i) => {
+      const startYear = currentYear - i;
+      return `${startYear}/${startYear + 1}`;
+    });
+    setAcademicYears(years);
+    setSelectedYear(years[0]); // default to current academic year
+  }, []);
+
+const fetchClassStats = async () => {
+  try {
+    const res = await api.get("/attendance/class-stats", {
+      params: { startDate, endDate, academicYear: selectedYear },
+    });
+    setClassStats(res.data);
+    console.log(res)
+  } catch (err) {
+    console.error("Failed to fetch class stats", err);
+  }
+};
+
+  useEffect(() => {
+  fetchClassStats();
+}, [startDate, endDate, selectedYear]); // include selectedYear
 
   // Prepare data for charts
   const comparisonData = classStats.map((cls) => ({
@@ -130,6 +151,17 @@ const AttendanceDashboardAdmin = () => {
             className="ml-2 p-2 rounded bg-gray-900 text-white"
           />
         </label>
+        <select
+          value={selectedYear}
+          onChange={(e) => setSelectedYear(e.target.value)}
+          className="p-2 rounded bg-gray-900 text-white"
+        >
+          {academicYears.map((y) => (
+            <option key={y} value={y}>
+              {y}
+            </option>
+          ))}
+        </select>
       </div>
 
       {/* Class-level cards */}
@@ -141,7 +173,9 @@ const AttendanceDashboardAdmin = () => {
 
       {/* Comparison chart (Line + Bar) */}
       <div className="bg-gray-950 shadow-xl rounded-2xl p-6 mt-6">
-        <h2 className="text-xl font-semibold mb-4 border-b border-gray-900 pb-2">Class Comparison</h2>
+        <h2 className="text-xl font-semibold mb-4 border-b border-gray-900 pb-2">
+          Class Comparison
+        </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Line Chart */}
           <ResponsiveContainer width="100%" height={300}>

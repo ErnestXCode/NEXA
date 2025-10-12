@@ -29,9 +29,16 @@ const AttendancePage = () => {
   // --- Populate recent academic years ---
   useEffect(() => {
     const currentYear = new Date().getFullYear();
-    setAcademicYears([currentYear, currentYear - 1, currentYear - 2]);
+    const years = [0, 1, 2].map((i) => {
+      const startYear = currentYear - i;
+      return `${startYear}/${startYear + 1}`;
+    });
+    setAcademicYears(years);
+    setSelectedYear(years[0]); // default to current academic year
   }, []);
 
+  // --- Populate recent academic years ---
+  
   // --- Sync offline attendance ---
   const syncOfflineData = async () => {
     const offlineRecords = await getAllAttendanceRecords();
@@ -129,18 +136,18 @@ const AttendancePage = () => {
 
   // --- Submit attendance with optimistic feedback & offline support ---
   const handleSubmit = async () => {
-    const payload = {
-      classLevel: selectedClass || students[0]?.classLevel || "Unknown",
-      date,
-      term: selectedTerm,
-      academicYear: selectedYear,
-      records: Object.entries(records).map(([studentId, data]) => ({
-        studentId,
-        status: data.status || "present",
-        reason: data.reason || "",
-      })),
-      notifyParents,
-    };
+     const payload = {
+    classLevel: selectedClass || students[0]?.classLevel,
+    date,
+    term: selectedTerm,
+    academicYear: selectedYear,
+    records: students.map((s) => ({
+      studentId: s._id.toString(),
+      status: records[s._id.toString()]?.status || "present",
+      reason: records[s._id.toString()]?.reason || "",
+    })),
+    notifyParents,
+  };
 
     setFeedbackMessage(
       navigator.onLine
@@ -223,7 +230,7 @@ const AttendancePage = () => {
             </select>
             <select
               value={selectedYear}
-              onChange={(e) => setSelectedYear(Number(e.target.value))}
+              onChange={(e) => setSelectedYear(e.target.value)}
               className="p-2 rounded-lg bg-gray-800 border border-gray-700 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               {academicYears.map((y) => (
