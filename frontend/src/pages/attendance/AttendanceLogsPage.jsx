@@ -1,19 +1,21 @@
 import React, { useState, useEffect } from "react";
 import api from "../../api/axios";
+import CustomSelect from "../../components/layout/CustomSelect";
 
 const AttendanceLogsPage = () => {
   const [logs, setLogs] = useState([]);
   const currentYear = new Date().getFullYear();
-const [filters, setFilters] = useState({
-  date: "",
-  academicYear: `${currentYear}/${currentYear + 1}`, // same format from the start
-  term: "Term 1",
-  classLevel: "",
-  status: "",
-  search: "",
-  page: 1,
-  limit: 50,
-});
+
+  const [filters, setFilters] = useState({
+    date: "",
+    academicYear: `${currentYear}/${currentYear + 1}`,
+    term: "Term 1",
+    classLevel: "",
+    status: "",
+    search: "",
+    page: 1,
+    limit: 50,
+  });
 
   const [total, setTotal] = useState(0);
   const [expandedGroups, setExpandedGroups] = useState({});
@@ -23,16 +25,17 @@ const [filters, setFilters] = useState({
   const [classLevels, setClassLevels] = useState([]);
 
   useEffect(() => {
-  const currentYear = new Date().getFullYear();
-  const years = [0, 1, 2].map((i) => {
-    const startYear = currentYear - i;
-    return `${startYear}/${startYear + 1}`;
-  });
-  setAcademicYears(years);
-  // ✅ setFilters only once at initialization, not after first fetch
-  setFilters((prev) => ({ ...prev, academicYear: `${currentYear}/${currentYear + 1}` }));
-}, []);
-
+    const currentYear = new Date().getFullYear();
+    const years = [0, 1, 2].map((i) => {
+      const startYear = currentYear - i;
+      return `${startYear}/${startYear + 1}`;
+    });
+    setAcademicYears(years);
+    setFilters((prev) => ({
+      ...prev,
+      academicYear: `${currentYear}/${currentYear + 1}`,
+    }));
+  }, []);
 
   const fetchLogs = async () => {
     try {
@@ -50,7 +53,6 @@ const [filters, setFilters] = useState({
     fetchLogs();
   }, [filters]);
 
-  // Group logs by date + classLevel + markedBy
   const groupedLogs = logs.reduce((acc, log) => {
     const key = `${log.date}-${log.classLevel}-${log.markedBy?.name || "N/A"}`;
     if (!acc[key]) acc[key] = { meta: log, records: [] };
@@ -61,6 +63,20 @@ const [filters, setFilters] = useState({
   const toggleGroup = (key) => {
     setExpandedGroups((prev) => ({ ...prev, [key]: !prev[key] }));
   };
+
+  // Transform data for CustomSelect
+  const yearOptions = academicYears.map((y) => ({ value: y, label: y }));
+  const termOptions = terms.map((t) => ({ value: t, label: t }));
+  const classOptions = [
+    { value: "", label: "All Classes" },
+    ...classLevels.map((c) => ({ value: c, label: c })),
+  ];
+  const statusOptions = [
+    { value: "", label: "All Statuses" },
+    { value: "present", label: "Present" },
+    { value: "absent", label: "Absent" },
+    { value: "late", label: "Late" },
+  ];
 
   return (
     <main className="p-4 bg-gray-950 text-white min-h-screen">
@@ -76,67 +92,51 @@ const [filters, setFilters] = useState({
           }
           className="p-2 rounded bg-gray-800 text-white"
         />
-        <select
-          value={filters.academicYear}
-          onChange={(e) =>
-            setFilters((prev) => ({
-              ...prev,
-              academicYear: e.target.value,
-              page: 1,
-            }))
-          }
-          className="p-2 rounded bg-gray-800 text-white"
-        >
-          {academicYears.map((y) => (
-            <option key={y} value={y}>
-              {y}
-            </option>
-          ))}
-        </select>
 
-        <select
-          value={filters.term}
-          onChange={(e) =>
-            setFilters((prev) => ({ ...prev, term: e.target.value, page: 1 }))
-          }
-          className="p-2 rounded bg-gray-800 text-white"
-        >
-          {terms.map((t) => (
-            <option key={t} value={t}>
-              {t}
-            </option>
-          ))}
-        </select>
-        <select
-          value={filters.classLevel}
-          onChange={(e) =>
-            setFilters((prev) => ({
-              ...prev,
-              classLevel: e.target.value,
-              page: 1,
-            }))
-          }
-          className="p-2 rounded bg-gray-800 text-white"
-        >
-          <option value="">All Classes</option>
-          {classLevels.map((c) => (
-            <option key={c} value={c}>
-              {c}
-            </option>
-          ))}
-        </select>
-        <select
-          value={filters.status}
-          onChange={(e) =>
-            setFilters((prev) => ({ ...prev, status: e.target.value, page: 1 }))
-          }
-          className="p-2 rounded bg-gray-800 text-white"
-        >
-          <option value="">All Statuses</option>
-          <option value="present">Present</option>
-          <option value="absent">Absent</option>
-          <option value="late">Late</option>
-        </select>
+        <div className="w-40">
+          <CustomSelect
+            options={yearOptions}
+            value={filters.academicYear}
+            onChange={(val) =>
+              setFilters((prev) => ({ ...prev, academicYear: val, page: 1 }))
+            }
+            placeholder="Select Year"
+          />
+        </div>
+
+        <div className="w-36">
+          <CustomSelect
+            options={termOptions}
+            value={filters.term}
+            onChange={(val) =>
+              setFilters((prev) => ({ ...prev, term: val, page: 1 }))
+            }
+            placeholder="Select Term"
+          />
+        </div>
+
+        <div className="w-40">
+          <CustomSelect
+            options={classOptions}
+            value={filters.classLevel}
+            onChange={(val) =>
+              setFilters((prev) => ({ ...prev, classLevel: val, page: 1 }))
+            }
+            placeholder="Class Level"
+          />
+        </div>
+
+        <div className="w-44">
+          <CustomSelect
+            options={statusOptions}
+            value={filters.status}
+            onChange={(val) =>
+              setFilters((prev) => ({ ...prev, status: val, page: 1 }))
+            }
+            placeholder="Status"
+          />
+        </div>
+
         <input
           type="text"
           placeholder="Search student..."
@@ -160,7 +160,7 @@ const [filters, setFilters] = useState({
                 className="w-full text-left p-3 flex justify-between items-center hover:bg-gray-800 transition-colors"
               >
                 <span>
-                  <strong>{meta.classLevel}</strong> -{" "}
+                  <strong>{meta.classLevel}</strong> –{" "}
                   {new Date(meta.date).toLocaleDateString()} | Marked by:{" "}
                   {meta.markedBy?.name || "N/A"}
                 </span>

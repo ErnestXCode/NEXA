@@ -342,9 +342,8 @@ exports.getStatsByRange = async (req, res) => {
 // --- Get chronic absentees ---
 exports.getAbsenteeListRange = async (req, res) => {
   try {
-    console.log("hit absentees");
-    const { days = 7, academicYear, term } = req.query;
-    // console.log(req.query);
+    console.log("▶️ Hit /attendance/absentees");
+    const { days = 30, academicYear, term } = req.query; // default now 30 days
 
     if (!academicYear || !term) {
       return res.status(400).json({ error: "Missing required query params" });
@@ -357,7 +356,7 @@ exports.getAbsenteeListRange = async (req, res) => {
       {
         $match: {
           date: { $gte: sinceDate },
-          academicYear: academicYear, // ✅ keep as string
+          academicYear,
           term,
           status: "absent",
         },
@@ -368,31 +367,39 @@ exports.getAbsenteeListRange = async (req, res) => {
           count: { $sum: 1 },
         },
       },
+      // only show those with 15 or more absences in 30 days
+      {
+        $match: {
+          count: { $gte: 15 },
+        },
+      },
       { $sort: { count: -1 } },
-      { $limit: 10 },
     ]);
-
-    // console.log("absentees", absentees);
 
     const withStudents = await Student.populate(absentees, {
       path: "_id",
       select: "firstName lastName classLevel",
     });
 
-    res.json(
-      withStudents.map((a) => ({
-        _id: a._id._id,
-        firstName: a._id.firstName,
-        lastName: a._id.lastName,
-        classLevel: a._id.classLevel,
-        count: a.count,
-      }))
-    );
+    const result = withStudents.map((a) => ({
+      _id: a._id._id,
+      firstName: a._id.firstName,
+      lastName: a._id.lastName,
+      classLevel: a._id.classLevel,
+      count: a.count,
+    }));
+
+    console.log(`Found ${result.length} chronic absentees (≥15 in ${days} days)`);
+    if (result.length > 0) console.log("Sample:", result[0]);
+
+    res.json(result);
   } catch (err) {
-    console.error("Error in /attendance/absentees", err);
+    console.error("❌ Error in /attendance/absentees", err);
     res.status(500).json({ error: "Server error" });
   }
 };
+
+
 
 // --- Get class-level stats (admin dashboard) ---
 exports.getClassStats = async (req, res) => {
