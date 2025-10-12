@@ -19,6 +19,8 @@ the next year carryover should check fo feerules of next class...or maybe they s
 
 fees history page for parents
 
+attendance is using 2025 instead of 2025/2026
+
 add streams to classes  
 
 make it so , if the school has paybil, they have an option to use it to automate fees that way im not going losses all i have to is to check---can do same with bank apis as well, that way theres both manual and automated options, if the school does use some api, the parent flow of confirming payment should not show , they just pay paybill and stuff is just automated , but if no paybill or bank api you can show the parent admin fee confirmation flow.

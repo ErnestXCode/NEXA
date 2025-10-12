@@ -252,15 +252,15 @@ const StudentForm = ({ onNext }) => {
 
         {/* Bulk upload */}
         <div className="col-span-2">
+          <label className="block text-gray-300 text-sm mb-1">
+            Or upload CSV / Excel for bulk
+          </label>
           <p className="text-gray-400 text-sm mb-1">
             Expected columns for CSV / Excel: <br />
             <strong>
               firstName,middleName, lastName, gender, dateOfBirth, classLevel
             </strong>
           </p>
-          <label className="block text-gray-300 text-sm mb-1">
-            Or upload CSV / Excel for bulk
-          </label>
           <button
   type="button"
   onClick={downloadStudentTemplate}

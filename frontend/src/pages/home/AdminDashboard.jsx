@@ -476,7 +476,7 @@ const AdminDashboard = () => {
         ].map((chart, i) => (
           <div
             key={i}
-            className="bg-gray-900/70 backdrop-blur-sm p-4 rounded-2xl shadow-lg border border-gray-800"
+            className="bg-gray-950/70 backdrop-blur-sm p-4 rounded-2xl shadow-lg border border-gray-800"
           >
             <h3 className="text-lg font-semibold mb-2">{chart.title}</h3>
             {chart.content}
@@ -485,14 +485,14 @@ const AdminDashboard = () => {
       </div>
 
       {/* ================= Recent Activities ================= */}
-      <section className="bg-gray-900 p-6 rounded-2xl shadow-lg border border-gray-800">
+      <section className="bg-gray-950 p-6 rounded-2xl shadow-lg border border-gray-800">
         <h2 className="text-xl font-bold mb-4">Recent Activity</h2>
         <ul className="space-y-3 text-sm">
           {recentActivities.length > 0 ? (
             recentActivities.map((act) => (
               <li
                 key={act._id}
-                className="p-3 bg-gray-850 rounded flex justify-between items-center border border-gray-800 hover:bg-gray-800 transition"
+                className="p-3 bg-gray-900 rounded flex justify-between items-center border border-gray-800 hover:bg-gray-800 transition"
               >
                 <span>{act.description}</span>
                 <span className="text-gray-400 text-xs">

@@ -111,7 +111,6 @@ app.use("/api/schools", require("./routes/schools"));
 app.use("/api/students", require("./routes/students"));
 app.use("/api/communication", require("./routes/communication"));
 app.use("/api/activity", require("./routes/activity"));
-app.use("/api/term", require("./routes/term"));
 app.use("/api/reports", require("./routes/report"));
 app.use("/api/push", require("./routes/push"));
 app.use("/api/reviews", require("./routes/review"));

@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const User = require("../../../models/User");
 const Student = require("../../../models/Student");
-const Term = require("../../../models/Term");
+
 const Fee = require("../../../models/FeeTransaction");
 const School = require("../../../models/School");
 const Attendance = require("../../../models/Attendance");
