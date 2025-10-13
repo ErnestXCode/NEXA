@@ -40,23 +40,23 @@ const Navigation = () => {
   return (
     <nav className="p-4 flex justify-between items-center bg-gray-900 text-white sticky top-0 z-20">
       <h1 className="font-semibold md:text-lg text-sm">
-    <NavLink end to="/dashboard">
-      NEXA | Hello, {currentUser?.name?.split(" ")[0]}
-    </NavLink>
-  </h1>
+        <NavLink end to="/dashboard">
+          NEXA | Hello, {currentUser?.name?.split(" ")[0]}
+        </NavLink>
+      </h1>
 
-  <div className="flex items-center gap-3">
-    <div className="w-8 h-8 md:w-10 md:h-10 bg-black rounded-full flex items-center justify-center font-semibold text-xs md:text-base">
-  {currentUser?.name?.charAt(0).toUpperCase()}
-</div>
+      <div className="flex items-center gap-3">
+        <div className="w-8 h-8 md:w-10 md:h-10 bg-black rounded-full flex items-center justify-center font-semibold text-xs md:text-base">
+          {currentUser?.name?.charAt(0).toUpperCase()}
+        </div>
 
-    <button
-      onClick={() => setSidenav(true)}
-      className="px-3 md:px-4 py-2 rounded-lg border border-gray-700 bg-gray-800/70 hover:bg-gray-700 transition font-medium text-white text-sm md:text-base"
-    >
-      ☰ Menu
-    </button>
-  </div>
+        <button
+          onClick={() => setSidenav(true)}
+          className="px-3 md:px-4 py-2 rounded-lg border border-gray-700 bg-gray-800/70 hover:bg-gray-700 transition font-medium text-white text-sm md:text-base"
+        >
+          ☰ Menu
+        </button>
+      </div>
 
       {sidenav && (
         <div className="fixed inset-0 z-40 flex" onClick={handleCloseSidenav}>
@@ -157,6 +157,7 @@ const Navigation = () => {
                     >
                       Add Teacher/Bursar
                     </NavLink>
+
                     <NavLink
                       end
                       onClick={handleCloseSidenav}
@@ -185,7 +186,7 @@ const Navigation = () => {
                       to="/dashboard/teachers"
                       className={navLinkClasses}
                     >
-                      All Teachers
+                      View Teachers
                     </NavLink>
                     <NavLink
                       end
@@ -193,7 +194,7 @@ const Navigation = () => {
                       to="/dashboard/bursars"
                       className={navLinkClasses}
                     >
-                      All Bursars
+                      View Bursars
                     </NavLink>
                     <NavLink
                       end
@@ -201,7 +202,7 @@ const Navigation = () => {
                       to="/dashboard/students"
                       className={navLinkClasses}
                     >
-                      All Students
+                      View Students
                     </NavLink>
                     <NavLink
                       end
@@ -209,7 +210,7 @@ const Navigation = () => {
                       to="/dashboard/parents"
                       className={navLinkClasses}
                     >
-                      All Parents
+                      View Parents
                     </NavLink>
                     {role === "superadmin" && (
                       <NavLink
@@ -218,7 +219,7 @@ const Navigation = () => {
                         to="/dashboard/schools"
                         className={navLinkClasses}
                       >
-                        All Schools
+                        View Schools
                       </NavLink>
                     )}
                   </div>

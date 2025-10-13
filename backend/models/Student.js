@@ -21,8 +21,6 @@ const studentSchema = new mongoose.Schema(
     subjects: [{ type: String }],
     guardian: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
 
-  
-
     // 📚 Exam results
     examResults: [
       {
@@ -47,7 +45,6 @@ const studentSchema = new mongoose.Schema(
       },
     ],
 
-
     status: {
       type: String,
       enum: ["active", "suspended", "graduated", "transferred"],
@@ -62,16 +59,32 @@ const studentSchema = new mongoose.Schema(
 --------------------------------*/
 
 // Get expected fee for a student for a term
+const CBC_CLASS_ORDER = [
+  "PP1",
+  "PP2",
+  "Grade 1",
+  "Grade 2",
+  "Grade 3",
+  "Grade 4",
+  "Grade 5",
+  "Grade 6",
+  "Grade 7",
+  "Grade 8",
+  "Grade 9",
+  "Grade 10",
+  "Grade 11",
+  "Grade 12",
+];
+
 studentSchema.methods.getExpectedFee = async function (academicYear, term) {
   const school = await School.findById(this.school).lean();
   if (!school) return 0;
 
-  const allClasses = school.classLevels.map((c) => c.name);
-  const studentIndex = allClasses.indexOf(this.classLevel);
+  const studentIndex = CBC_CLASS_ORDER.indexOf(this.classLevel);
 
   const rule = school.feeRules.find((r) => {
-    const fromIndex = allClasses.indexOf(r.fromClass);
-    const toIndex = allClasses.indexOf(r.toClass);
+    const fromIndex = CBC_CLASS_ORDER.indexOf(r.fromClass);
+    const toIndex = CBC_CLASS_ORDER.indexOf(r.toClass); 
     return (
       r.academicYear === academicYear &&
       r.term === term &&
@@ -80,7 +93,7 @@ studentSchema.methods.getExpectedFee = async function (academicYear, term) {
     );
   });
 
-  return rule ? rule.amount : 0;
+  return rule ? rule.amount : 0; 
 };
 
 // Compute balance with carryover
@@ -93,7 +106,11 @@ studentSchema.methods.computeBalances = async function (academicYear) {
     const expected = await this.getExpectedFee(academicYear, term);
 
     // Sum transactions instead of using amtPaidTermX
-    const txns = await FeeTransaction.find({ student: this._id, academicYear, term });
+    const txns = await FeeTransaction.find({
+      student: this._id,
+      academicYear,
+      term,
+    });
     const paid = txns.reduce((sum, t) => sum + t.amount, 0);
 
     let balance = expected - (paid + carryOver);
