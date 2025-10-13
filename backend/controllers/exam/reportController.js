@@ -10,8 +10,8 @@ const School = require("../../models/School");
 function drawResultsTable(doc, er, school) {
   const startX = 50;
   let y = doc.y + 10;
-  const colWidths = [160, 70, 120, 175]; // total = 515
-  // Subject, Marks, Performance Level, Remark
+  const colWidths = [160, 70, 120, 175]; // total = 525
+  const tableWidth = colWidths.reduce((a, b) => a + b, 0);
 
   // --- Table headers
   doc.font("Helvetica-Bold").fontSize(12);
@@ -28,15 +28,15 @@ function drawResultsTable(doc, er, school) {
   // --- Table rows
   doc.font("Helvetica").fontSize(11);
 
+  const rowTop = y;
   er.subjects.forEach((s, i) => {
     const rowData = [
       s.name,
       s.score?.toString() || "-",
-      s.grade || "-", // renamed
+      s.grade || "-",
       s.remark || "",
     ];
 
-    // Find max height needed for this row (based on wrapped text)
     const heights = rowData.map((text, j) =>
       doc.heightOfString(text, { width: colWidths[j] - 10 })
     );
@@ -45,24 +45,12 @@ function drawResultsTable(doc, er, school) {
     // Alternate row background
     if (i % 2 === 0) {
       doc
-        .rect(
-          startX,
-          y,
-          colWidths.reduce((a, b) => a + b, 0),
-          rowHeight
-        )
+        .rect(startX, y, tableWidth, rowHeight)
         .fill("#f2f2f2")
         .stroke();
       doc.fillColor("black");
     } else {
-      doc
-        .rect(
-          startX,
-          y,
-          colWidths.reduce((a, b) => a + b, 0),
-          rowHeight
-        )
-        .stroke();
+      doc.rect(startX, y, tableWidth, rowHeight).stroke();
     }
 
     // Draw text in each column
@@ -70,7 +58,7 @@ function drawResultsTable(doc, er, school) {
     rowData.forEach((text, j) => {
       doc.text(text, colX + 5, y + 5, {
         width: colWidths[j] - 10,
-        align: j === 1 || j === 2 ? "center" : "left", // center Marks + Performance Level
+        align: j === 1 || j === 2 ? "center" : "left",
       });
       colX += colWidths[j];
     });
@@ -78,8 +66,24 @@ function drawResultsTable(doc, er, school) {
     y += rowHeight;
   });
 
+  // --- Draw continuous vertical lines for columns (✨ KEY ADDITION)
+  let lineX = startX;
+  doc.lineWidth(1).strokeColor("#000");
+  for (let i = 0; i <= colWidths.length; i++) {
+    const columnX = lineX;
+    doc
+      .moveTo(columnX, rowTop - 25) // start at header top
+      .lineTo(columnX, y) // go to bottom of last row
+      .stroke();
+    lineX += colWidths[i] || 0;
+  }
+
+  // Draw bottom border line (to close the table neatly)
+  doc.moveTo(startX, y).lineTo(startX + tableWidth, y).stroke();
+
   doc.moveDown(2);
 }
+
 
 /**
  * Draw summary table for totals, average, grade

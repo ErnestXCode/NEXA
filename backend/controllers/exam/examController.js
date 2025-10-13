@@ -135,7 +135,11 @@ const recordResult = async (req, res) => {
       const average =
         cleanSubjects.length > 0 ? total / cleanSubjects.length : 0;
 
+      
+
       const examResultObj = {
+        total, 
+        average,
         exam: exam._id,
         term: exam.term,
         academicYear: exam.academicYear,
