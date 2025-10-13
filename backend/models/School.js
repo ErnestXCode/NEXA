@@ -82,6 +82,7 @@ const schoolSchema = new mongoose.Schema(
     },
 
     feeRules: [feeRuleSchema],
+    
     subjectsByClass: {
       type: [subjectsRuleSchema],
       default: () => School.defaultCBCSubjectsByClass(),
