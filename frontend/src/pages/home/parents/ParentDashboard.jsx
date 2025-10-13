@@ -168,7 +168,7 @@ const ParentDashboard = () => {
       {/* 🔹 Messages NavLink */}
       <NavLink
         to="/dashboard/communication"
-        className="relative block bg-gradient-to-r from-indigo-700 via-purple-700 to-pink-700 shadow-md rounded-2xl p-6 transition transform hover:scale-105 hover:shadow-xl hover:from-indigo-600 hover:via-purple-600 hover:to-pink-600 duration-300"
+        className="relative block bg-gradient-to-r from-indigo-700 via-purple-700 to-pink-700 shadow-md rounded-2xl p-6 transition transform hover:scale-101 hover:shadow-xl hover:from-indigo-600 hover:via-purple-600 hover:to-pink-600 duration-300"
       >
         <h2 className="text-white text-2xl font-bold mb-2">Messages</h2>
         <p className="text-gray-200 text-sm">Check school communications</p>
