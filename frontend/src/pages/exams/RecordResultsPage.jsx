@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import api from "../../api/axios";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "../../redux/slices/authSlice";
+import CustomSelect from "../../components/layout/CustomSelect";
 
 const RecordResultsPage = () => {
   const [exams, setExams] = useState([]);
@@ -219,23 +220,20 @@ const RecordResultsPage = () => {
                 No exams yet for {academicYear}
               </div>
             ) : (
-              <select
+              <CustomSelect
+                placeholder="Select Exam"
                 value={examId}
-                onChange={(e) => {
-                  setExamId(e.target.value);
+                onChange={(val) => {
+                  setExamId(val);
                   setSelectedClass("");
                   setSelectedSubject("");
                   setResults({});
                 }}
-                className="p-2 rounded bg-gray-800 text-white border border-gray-700 focus:ring-2 focus:ring-blue-500 focus:outline-none transition"
-              >
-                <option value="">Select Exam</option>
-                {exams.map((e) => (
-                  <option key={e._id} value={e._id}>
-                    {e.name} - {e.term} - {e.academicYear}
-                  </option>
-                ))}
-              </select>
+                options={exams.map((e) => ({
+                  value: e._id,
+                  label: `${e.name} - ${e.term} - ${e.academicYear}`,
+                }))}
+              />
             ))}
         </div>
 
@@ -243,22 +241,19 @@ const RecordResultsPage = () => {
         {examId && (
           <div className="flex flex-col">
             <label className="mb-1 text-sm text-gray-400">Class</label>
-            <select
+            <CustomSelect
+              placeholder="Select Class"
               value={selectedClass}
-              onChange={(e) => {
-                setSelectedClass(e.target.value);
+              onChange={(val) => {
+                setSelectedClass(val);
                 setSelectedSubject("");
                 setResults({});
               }}
-              className="p-2 rounded bg-gray-800 text-white border border-gray-700 focus:ring-2 focus:ring-blue-500 focus:outline-none transition"
-            >
-              <option value="">Select Class</option>
-              {classLevels.map((level) => (
-                <option key={level} value={level}>
-                  {level}
-                </option>
-              ))}
-            </select>
+              options={classLevels.map((level) => ({
+                value: level,
+                label: level,
+              }))}
+            />
           </div>
         )}
 
@@ -266,18 +261,15 @@ const RecordResultsPage = () => {
         {examId && selectedClass && (
           <div className="flex flex-col">
             <label className="mb-1 text-sm text-gray-400">Subject</label>
-            <select
+            <CustomSelect
+              placeholder="All Subjects"
               value={selectedSubject}
-              onChange={(e) => setSelectedSubject(e.target.value)}
-              className="p-2 rounded bg-gray-800 text-white border border-gray-700 focus:ring-2 focus:ring-blue-500 focus:outline-none transition"
-            >
-              <option value="">All Subjects</option>
-              {(subjectsByClass[selectedClass] || []).map((subj) => (
-                <option key={subj} value={subj}>
-                  {subj}
-                </option>
-              ))}
-            </select>
+              onChange={(val) => setSelectedSubject(val)}
+              options={(subjectsByClass[selectedClass] || []).map((subj) => ({
+                value: subj,
+                label: subj,
+              }))}
+            />
           </div>
         )}
       </div>
