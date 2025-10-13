@@ -854,7 +854,7 @@ const FeesPage = () => {
                       onClick={() =>
                         navigate(`/dashboard/debtors/${d.studentId}`)
                       }
-                      className="hover:bg-gray-800/50 transition duration-150"
+                      className="hover:bg-gray-800/50 cursor-pointer transition duration-150"
                     >
                       {/* Name */}
                       <td className="p-3 font-semibold text-gray-100">

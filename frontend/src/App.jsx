@@ -53,7 +53,7 @@ const HomeRedirect = () => {
 
   // Wait until PersistLogin has finished loading
   if (accessToken === undefined)
-    return <Home />; // or a spinner
+    return <p className="p-6 text-gray-400">Loading...</p>; // or a spinner
 
   return accessToken ? <Navigate to="/dashboard" replace /> : <Home />;
 };
