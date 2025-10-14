@@ -51,9 +51,7 @@ const Feedback = () => {
       .finally(() => setSending(false));
   };
 
-  useEffect(() => {
-    nameRef.current?.focus();
-  }, []);
+  
 
   return (
     <div className="flex items-center justify-center min-h-screen p-6 bg-gradient-to-br from-gray-900 via-gray-950 to-black">

@@ -14,7 +14,6 @@ const MetricCard = ({ title, value, pct, bgColor }) => (
   </div>
 );
 
-
 const AttendanceDashboardClassTeacher = () => {
   const [rangeStats, setRangeStats] = useState([]);
   const [absentees, setAbsentees] = useState([]);
@@ -113,67 +112,95 @@ const AttendanceDashboardClassTeacher = () => {
 
   return (
     <div className="p-6 space-y-6">
-     <div className="bg-gray-950/80 border border-gray-800 backdrop-blur-sm rounded-2xl p-4 shadow-lg flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-4 sm:gap-3">
-  {/* Date Filters */}
-  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
-    <label className="text-sm text-gray-400 min-w-[50px]">Start</label>
-    <input
-      type="date"
-      value={startDate}
-      onChange={(e) => setStartDate(e.target.value)}
-      className="flex-1 sm:w-44 p-2 rounded-lg bg-gray-900 text-white border border-gray-700 focus:ring-2 focus:ring-emerald-500 focus:outline-none transition"
-    />
-  </div>
+      <div className="bg-gray-950/80 border border-gray-800 backdrop-blur-sm rounded-2xl p-4 shadow-lg flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-4 sm:gap-3">
+        {/* Date Filters */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
+          <label className="text-sm text-gray-400 min-w-[50px]">Start</label>
+          <input
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            className="flex-1 sm:w-44 p-2 rounded-lg bg-gray-900 text-white border border-gray-700 focus:ring-2 focus:ring-emerald-500 focus:outline-none transition"
+          />
+        </div>
 
-  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
-    <label className="text-sm text-gray-400 min-w-[50px]">End</label>
-    <input
-      type="date"
-      value={endDate}
-      onChange={(e) => setEndDate(e.target.value)}
-      className="flex-1 sm:w-44 p-2 rounded-lg bg-gray-900 text-white border border-gray-700 focus:ring-2 focus:ring-emerald-500 focus:outline-none transition"
-    />
-  </div>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
+          <label className="text-sm text-gray-400 min-w-[50px]">End</label>
+          <input
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            className="flex-1 sm:w-44 p-2 rounded-lg bg-gray-900 text-white border border-gray-700 focus:ring-2 focus:ring-emerald-500 focus:outline-none transition"
+          />
+        </div>
 
-  {/* Term Select */}
-  <div className="w-full sm:w-40">
-    <CustomSelect
-      options={terms.map((t) => ({ label: t, value: t }))}
-      value={selectedTerm}
-      onChange={setSelectedTerm}
-      placeholder="Select Term"
-    />
-  </div>
+        {/* Term Select */}
+        <div className="w-full sm:w-40">
+          <CustomSelect
+            options={terms.map((t) => ({ label: t, value: t }))}
+            value={selectedTerm}
+            onChange={setSelectedTerm}
+            placeholder="Select Term"
+          />
+        </div>
 
-  {/* Year Select */}
-  <div className="w-full sm:w-44">
-    <CustomSelect
-      options={academicYears.map((y) => ({ label: y, value: y }))}
-      value={selectedYear}
-      onChange={setSelectedYear}
-      placeholder="Select Year"
-    />
-  </div>
+        {/* Year Select */}
+        <div className="w-full sm:w-44">
+          <CustomSelect
+            options={academicYears.map((y) => ({ label: y, value: y }))}
+            value={selectedYear}
+            onChange={setSelectedYear}
+            placeholder="Select Year"
+          />
+        </div>
 
-  {/* Refresh Button */}
-  <div className="w-full sm:w-auto sm:ml-auto">
-    <button
-      onClick={fetchData}
-      className="w-full sm:w-auto px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 transition text-white text-sm font-medium shadow-md"
-    >
-      Refresh
-    </button>
-  </div>
-</div>
-
+        {/* Refresh Button */}
+        <div className="w-full sm:w-auto sm:ml-auto">
+          <button
+            onClick={fetchData}
+            className="w-full sm:w-auto px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 transition text-white text-sm font-medium shadow-md"
+          >
+            Refresh
+          </button>
+        </div>
+      </div>
 
       {/* Summary cards */}
+<div className="mb-3">
+    <p className="text-sm text-gray-400 text-center sm:text-left">
+      Attendance Summary (
+      {new Date(startDate).toLocaleDateString("en-GB")} –{" "}
+      {new Date(endDate).toLocaleDateString("en-GB")}) for {selectedTerm},{" "}
+      {selectedYear}
+    </p>
+  </div>
+      
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-6">
-  <MetricCard title="Present" value={totalPresent} pct={presentPct} bgColor="bg-green-800/70" />
-  <MetricCard title="Absent" value={totalAbsent} pct={absentPct} bgColor="bg-red-800/70" />
-  <MetricCard title="Late" value={totalLate} pct={latePct} bgColor="bg-yellow-700/70" />
-  <MetricCard title="Total Records" value={totalStudents} bgColor="bg-gray-800/70" />
-</div>
+        
+        <MetricCard
+          title="Present"
+          value={totalPresent}
+          pct={presentPct}
+          bgColor="bg-green-800/70"
+        />
+        <MetricCard
+          title="Absent"
+          value={totalAbsent}
+          pct={absentPct}
+          bgColor="bg-red-800/70"
+        />
+        <MetricCard
+          title="Late"
+          value={totalLate}
+          pct={latePct}
+          bgColor="bg-yellow-700/70"
+        />
+        <MetricCard
+          title="Total Records"
+          value={totalStudents}
+          bgColor="bg-gray-800/70"
+        />
+      </div>
 
       {/* Detailed records */}
       <AttendanceDetails />
