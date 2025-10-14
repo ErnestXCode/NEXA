@@ -6,7 +6,7 @@ remove choose dates option for live production
 
 badge is not persistent in dashboard, as in it clears when navigating
 
-sockets to run tanstack for refecthing
+sockets to run tanstack for refecthing, or refresh button
 
 two simultaneous requests to ignore latter if same thing 
 
@@ -19,7 +19,6 @@ the next year carryover should check fo feerules of next class...or maybe they s
 
 fees history page for parents
 
-attendance is using 2025 instead of 2025/2026
 
 add streams to classes  
 

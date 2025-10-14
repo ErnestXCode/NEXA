@@ -97,7 +97,7 @@ const AttendancePage = () => {
   // }, [date, selectedYear, selectedTerm]);
 
   const { data: students = [], isLoading } = useQuery({
-    queryKey: ["attendance-students", date, selectedYear, selectedTerm],
+    queryKey: ["attendance-students"],
     queryFn: async () => {
       const res = await api.get("/attendance", {
         params: { date, academicYear: selectedYear, term: selectedTerm },

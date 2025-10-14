@@ -32,7 +32,7 @@ const AddFeePage = () => {
       firstName: "",
       lastName: "",
       classLevel: "",
-      openingBalance: 0,
+      openingPaid: 0,
       searchMatches: [],
       studentId: "",
     },
@@ -121,7 +121,7 @@ const AddFeePage = () => {
           term: bulkTerm,
           students: bulkStudents.map((s) => ({
             studentId: s.studentId,
-            openingBalance: s.openingBalance,
+            openingPaid: s.openingPaid,
             term: s.term || bulkTerm,
           })),
         }
@@ -212,40 +212,39 @@ const AddFeePage = () => {
   const addBulkRow = () => {
     setBulkStudents([
       ...bulkStudents,
-      { firstName: "", lastName: "", classLevel: "", openingBalance: 0 },
+      { firstName: "", lastName: "", classLevel: "", openingPaid: 0 },
     ]);
   };
 
-  const submitBulkFees = () => {
-    const validRows = bulkStudents.filter((s) => s.studentId);
+  const handleDownloadTemplate = () => {
+  const sampleData = [
+    {
+      firstName: "John",
+      lastName: "Doe",
+      classLevel: "Grade 3",
+      openingPaid: 1000,
+      term: "Term 1",
+      academicYear: defaultAcademicYear,
+    },
+    {
+      firstName: "Jane",
+      lastName: "Smith",
+      classLevel: "Grade 4",
+      openingPaid: 1500,
+      term: "Term 1",
+      academicYear: defaultAcademicYear,
+    },
+  ];
 
-    if (validRows.length === 0) {
-      return setModal({
-        isOpen: true,
-        title: "Validation Error",
-        message: "No valid students to submit.",
-        type: "error",
-      });
-    }
+  const worksheet = XLSX.utils.json_to_sheet(sampleData);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Template");
 
-    const isCSVUpload = bulkStudents.some((s) => s.error || !s.studentId); // or a better flag if you track CSV separately
+  XLSX.writeFile(workbook, "FeeOnboardingTemplate.xlsx");
+};
 
-    onboardMutation.mutate({
-      academicYear: bulkYear,
-      term: bulkTerm,
-      students: bulkStudents.map((s) => ({
-        // if CSV, we don't have studentId guaranteed
-        studentId: s.studentId,
-        firstName: s.firstName,
-        lastName: s.lastName,
-        classLevel: s.classLevel,
-        openingBalance: s.openingBalance,
-        term: s.term || bulkTerm,
-        academicYear: s.academicYear || bulkYear,
-      })),
-      viaCSV: isCSVUpload, // ⚡ add this flag
-    });
-  };
+
+
 
   const processBulkFile = (rows) => {
     const matchedStudents = rows.map((row) => {
@@ -265,7 +264,7 @@ const AddFeePage = () => {
         firstName: student.firstName,
         lastName: student.lastName,
         classLevel: student.classLevel,
-        openingBalance: Number(row.openingBalance || row.amount || 0),
+        openingPaid: Number(row.openingPaid || row.amount || 0),
         term: row.term || "Term 1",
         academicYear: row.academicYear || defaultAcademicYear,
       };
@@ -419,7 +418,7 @@ const AddFeePage = () => {
         {/* --- Fee assignment --- */}
         <div className="p-6 bg-gray-900 rounded-md shadow-md flex flex-col space-y-6">
           <h2 className="text-2xl font-bold text-center border-b border-gray-800 pb-2">
-            Fee Assignment
+            Paid Fees For New Students
           </h2>
 
           {/* Year & Term */}
@@ -522,11 +521,11 @@ const AddFeePage = () => {
                   <input
                     type="number"
                     placeholder="Opening Balance"
-                    value={s.openingBalance}
+                    value={s.openingPaid}
                     onChange={(e) =>
                       handleBulkChange(
                         i,
-                        "openingBalance",
+                        "openingPaid",
                         parseFloat(e.target.value) || 0
                       )
                     }
@@ -570,6 +569,13 @@ const AddFeePage = () => {
             <h3 className="text-lg font-semibold border-b border-gray-700 pb-2">
               📂 Bulk Upload via Excel / CSV
             </h3>
+              <button
+    onClick={handleDownloadTemplate}
+    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition w-full"
+  >
+     Download Example Template (Excel)
+  </button>
+
             <input
               type="file"
               accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel"
@@ -586,7 +592,7 @@ const AddFeePage = () => {
                     firstName: s.firstName,
                     lastName: s.lastName,
                     classLevel: s.classLevel,
-                    openingBalance: s.openingBalance,
+                    openingPaid: s.openingPaid,
                     term: s.term || bulkTerm,
                     academicYear: s.academicYear || bulkYear,
                   })),

@@ -19,6 +19,7 @@ import {
   LineChart,
   Line,
 } from "recharts";
+import LoadingWithFacts from "../../components/layout/LoadingWithFacts";
 
 const darkTheme = {
   grid: "#1f2937", // darker bluish-gray
@@ -148,7 +149,7 @@ const AdminDashboard = () => {
     parentsQuery.isLoading ||
     activityQuery.isLoading
   ) {
-    return <p className="p-6 text-gray-400">Loading dashboard...</p>;
+    return <LoadingWithFacts />;
   }
 
   if (

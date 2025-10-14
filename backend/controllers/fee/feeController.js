@@ -904,13 +904,13 @@ exports.onboardStudents = async (req, res) => {
           continue;
         }
 
-        if (s.openingBalance && s.openingBalance !== 0) {
+        if (s.openingPaid && s.openingPaid !== 0) {
           transactions.push({
             student: student._id,
             school: schoolId,
             academicYear,
             term: s.term || term,
-            amount: s.openingBalance,
+            amount: s.openingPaid,
             type: "opening",
             method: "system",
             note: "Imported opening balance",
@@ -934,13 +934,13 @@ exports.onboardStudents = async (req, res) => {
       for (const s of students) {
         if (!foundSet.has(s.studentId)) continue;
 
-        if (s.openingBalance && s.openingBalance !== 0) {
+        if (s.openingPaid && s.openingPaid !== 0) {
           transactions.push({
             student: s.studentId,
             school: schoolId,
             academicYear,
             term: s.term || term,
-            amount: s.openingBalance,
+            amount: s.openingPaid,
             type: "opening",
             method: "system",
             note: "Imported opening balance",

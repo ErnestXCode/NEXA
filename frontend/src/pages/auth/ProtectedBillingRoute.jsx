@@ -1,10 +1,11 @@
 import { Navigate, Outlet } from "react-router-dom";
 import { useSelector } from "react-redux";
+import LoadingWithFacts from "../../components/layout/LoadingWithFacts";
 
 const ProtectedBillingRoute = () => {
   const { accessToken , user } = useSelector((state) => state.auth);
     if (accessToken === undefined || !user) {
-    return <p className="p-6 text-gray-400">Loading...</p>;
+    return <LoadingWithFacts />;
   }
 
   // If pilot school, skip all checks
