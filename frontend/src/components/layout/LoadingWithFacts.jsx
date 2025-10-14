@@ -2,14 +2,15 @@
 import { useEffect, useState } from "react";
 
 const facts = [
-  "Honey never spoils.",
-  "Bananas are berries, but strawberries aren't.",
-  "Wombat poop is cube-shaped.",
-  "Octopuses have three hearts.",
-  "A group of flamingos is called a 'flamboyance'.",
-  "Sloths can hold their breath longer than dolphins.",
-  "There's a species of jellyfish that is immortal.",
+  "Nexa can save you hours on attendance tracking each week!",
+  "Did you know? You can record exam results in bulk with Nexa.",
+  "Nexa remembers every student's fees history—no more manual tracking!",
+  "Quick tip: Use the communication module to send instant messages to parents.",
+  "Schools using Nexa have fewer missed payments thanks to automated reminders.",
+  "Fun fact: Nexa was designed to handle all your small-school admin in one place.",
+  "You can audit results and credits with just a few clicks in Nexa!",
 ];
+
 
 export default function LoadingWithFacts({ interval = 3000 }) {
   const [factIndex, setFactIndex] = useState(0);

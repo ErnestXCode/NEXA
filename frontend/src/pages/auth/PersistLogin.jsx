@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { setCredentials } from "../../redux/slices/authSlice";
 import api from "../../api/axios";
 import Navigation from "../../components/layout/Navigation";
+import LoadingWithFacts from "../../components/layout/LoadingWithFacts";
 
 const PersistLogin = ({hideNav}) => {
   const dispatch = useDispatch();
@@ -41,7 +42,7 @@ const PersistLogin = ({hideNav}) => {
     };
   }, [accessToken, dispatch]);
 
-  if (loading) return <p className="p-6 text-gray-400">Loading...</p>;;
+  if (loading) return <LoadingWithFacts />;
 
   return (
     <>
