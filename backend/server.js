@@ -127,11 +127,13 @@ app.get("/api/ping", (req, res) => {
   });
 });
 
-// 🔹 Connect to MongoDB first
-connectDB().then(() => {
+// ✅ Connect to MongoDB immediately (start waking up the cluster early)
+const dbReady = connectDB().then(() => {
   console.log("MongoDB connected");
-  // Add near the top, after `const Student = require(...)`
+});
 
+
+dbReady.then(() => {
   // CBC class promotion map
   const classPromotionMap = {
     PP1: "PP2",
@@ -145,11 +147,9 @@ connectDB().then(() => {
     "Grade 7": "Grade 8", // final grade
   };
 
-  // Cron job: runs Jan 1st, 00:00   test it out with smaller time frame later
   cron.schedule("0 0 1 1 *", async () => {
     try {
       console.log("Running yearly student promotion...");
-
       const students = await Student.find({});
       let promotedCount = 0;
 
@@ -162,14 +162,13 @@ connectDB().then(() => {
         }
       }
 
-      console.log(
-        `Promoted ${promotedCount} students to next class for new year`
-      );
+      console.log(`Promoted ${promotedCount} students to next class for new year`);
     } catch (err) {
       console.error("Error promoting students:", err);
     }
   });
 });
+
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {

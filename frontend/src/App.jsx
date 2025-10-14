@@ -44,16 +44,18 @@ import FeeAuditPage from "./pages/fees/FeeAuditPage";
 import CreditAuditPage from "./pages/fees/CreditAuditPage";
 import ResetPassword from "./pages/auth/ResetPassword";
 import DebtorHistoryPage from "./pages/fees/DebtorHistoryPage";
-
+import LoadingWithFacts from "./components/layout/LoadingWithFacts";
+import { useEffect } from "react";
 
 const HomeRedirect = () => {
   const { accessToken } = useSelector((state) => state.auth);
 
-  console.log("accessToken", accessToken);
+  useEffect(() => {
+    fetch(`${import.meta.env.VITE_BACKEND_URL}/api/ping`).catch(() => {});
+  }, []);
 
   // Wait until PersistLogin has finished loading
-  if (accessToken === undefined)
-    return <p className="p-6 text-gray-400">Loading...</p>; // or a spinner
+  if (accessToken === undefined) return <LoadingWithFacts />; // or a spinner
 
   return accessToken ? <Navigate to="/dashboard" replace /> : <Home />;
 };
@@ -97,7 +99,10 @@ function App() {
                 <Route path="fees/add" element={<AddFeePage />} />
                 <Route path="fees/logs" element={<FeeAuditPage />} />
                 <Route path="fees/credit" element={<CreditAuditPage />} />
-                <Route path="debtors/:studentId" element={<DebtorHistoryPage />} />
+                <Route
+                  path="debtors/:studentId"
+                  element={<DebtorHistoryPage />}
+                />
 
                 <Route path="attendance" element={<AttendanceDashboard />} />
                 <Route path="attendance/mark" element={<AttendancePage />} />
