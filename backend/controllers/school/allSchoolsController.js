@@ -42,27 +42,54 @@ const createSchool = async (req, res) => {
   }
 };
 
+const CLASS_ORDER = [
+  "PP1",
+  "PP2",
+  "Grade 1",
+  "Grade 2",
+  "Grade 3",
+  "Grade 4",
+  "Grade 5",
+  "Grade 6",
+  "Grade 7",
+  "Grade 8",
+  "Grade 9",
+  "Grade 10",
+];
+
+function sortClassesByOrder(classLevels) {
+  return classLevels.sort((a, b) => {
+    const idxA = CLASS_ORDER.indexOf(a.name);
+    const idxB = CLASS_ORDER.indexOf(b.name);
+
+    // Classes not in CLASS_ORDER go to the end, alphabetically
+    if (idxA === -1 && idxB === -1) return a.name.localeCompare(b.name);
+    if (idxA === -1) return 1;
+    if (idxB === -1) return -1;
+    return idxA - idxB;
+  });
+}
+
+
 // Update school info (by id)
 const updateSchool = async (req, res) => {
   try {
     let updatedData = req.body;
 
-    // If subjects were updated, remove any from subjectsByClass that are no longer in global subjects
+    // Ensure subjects stay valid
     if (updatedData.subjects) {
-      updatedData.subjectsByClass = (updatedData.subjectsByClass || []).map(rule => {
-        return {
-          ...rule,
-          subjects: (rule.subjects || []).filter(s => updatedData.subjects.includes(s))
-        };
-      });
+      updatedData.subjectsByClass = (updatedData.subjectsByClass || []).map(rule => ({
+        ...rule,
+        subjects: (rule.subjects || []).filter(s => updatedData.subjects.includes(s)),
+      }));
     }
 
-    const updated = await School.findByIdAndUpdate(
-      req.params.id,
-      updatedData,
-      { new: true }
-    );
+    // Auto-sort class levels to follow proper CBC order
+    if (updatedData.classLevels) {
+      updatedData.classLevels = sortClassesByOrder(updatedData.classLevels);
+    }
 
+    const updated = await School.findByIdAndUpdate(req.params.id, updatedData, { new: true });
     if (!updated) return res.status(404).json({ msg: "School not found" });
 
     res.status(200).json({ msg: "School updated" });
@@ -70,6 +97,7 @@ const updateSchool = async (req, res) => {
     res.status(500).json({ msg: "Error updating school", error: err.message });
   }
 };
+
 
 
 // Delete school

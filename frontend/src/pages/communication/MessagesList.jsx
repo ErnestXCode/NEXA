@@ -123,9 +123,10 @@ const MessagesList = () => {
                       }`}
                     >
                       {!isOwn && (
-                        <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white bg-gradient-to-br from-blue-500 to-purple-500 shadow-md flex-shrink-0">
-                          {msg.sender?.name?.[0]?.toUpperCase() || "U"}
-                        </div>
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center font-semibold text-white text-sm bg-gradient-to-br from-blue-500 to-purple-500 shadow-md flex-shrink-0">
+  {msg.sender?.name?.[0]?.toUpperCase() || "U"}
+</div>
+
                       )}
 
                       <div className="max-w-[80%] relative flex flex-col">

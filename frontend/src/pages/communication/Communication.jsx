@@ -88,9 +88,10 @@ const Communication = () => {
 {activeTab === "chat" && (
   <div className="flex flex-col md:flex-row flex-1 gap-6">
     {/* Messages List */}
-    <div className="flex-1 flex flex-col bg-gray-900 rounded-2xl shadow-lg overflow-hidden">
-      <MessagesList />
-    </div>
+    <div className="flex-1 flex flex-col bg-gray-900 rounded-2xl shadow-lg overflow-hidden pb-24 md:pb-0">
+  <MessagesList />
+</div>
+
 
     {/* Send Message Form (hidden for parents) */}
     {currentUser?.role !== "parent" && (

@@ -5,14 +5,15 @@ import CustomSelect from "../../components/layout/CustomSelect";
 
 const MetricCard = ({ title, value, pct, bgColor }) => (
   <div
-    className={`${bgColor} p-5 rounded-2xl shadow-xl flex flex-col items-center`}
+    className={`${bgColor} p-3 sm:p-5 rounded-xl shadow-sm flex flex-col items-center text-center sm:text-left transition-colors`}
   >
-    <p className="text-sm font-medium">{title}</p>
-    <p className="text-2xl font-bold mt-2">
+    <p className="text-xs sm:text-sm font-medium text-gray-300">{title}</p>
+    <p className="text-lg sm:text-2xl font-bold mt-1 sm:mt-2 text-white">
       {value} {pct !== undefined ? `(${pct}%)` : ""}
     </p>
   </div>
 );
+
 
 const AttendanceDashboardClassTeacher = () => {
   const [rangeStats, setRangeStats] = useState([]);
@@ -167,31 +168,12 @@ const AttendanceDashboardClassTeacher = () => {
 
 
       {/* Summary cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-6">
-        <MetricCard
-          title="Present"
-          value={totalPresent}
-          pct={presentPct}
-          bgColor="bg-green-800"
-        />
-        <MetricCard
-          title="Absent"
-          value={totalAbsent}
-          pct={absentPct}
-          bgColor="bg-red-800"
-        />
-        <MetricCard
-          title="Late"
-          value={totalLate}
-          pct={latePct}
-          bgColor="bg-yellow-700"
-        />
-        <MetricCard
-          title="Total Records"
-          value={totalStudents}
-          bgColor="bg-gray-800"
-        />
-      </div>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-6">
+  <MetricCard title="Present" value={totalPresent} pct={presentPct} bgColor="bg-green-800/70" />
+  <MetricCard title="Absent" value={totalAbsent} pct={absentPct} bgColor="bg-red-800/70" />
+  <MetricCard title="Late" value={totalLate} pct={latePct} bgColor="bg-yellow-700/70" />
+  <MetricCard title="Total Records" value={totalStudents} bgColor="bg-gray-800/70" />
+</div>
 
       {/* Detailed records */}
       <AttendanceDetails />
