@@ -53,9 +53,12 @@ exports.recordTransaction = async (req, res) => {
 
     while (excess > 0) {
       // ✅ reached beyond Term 3 → move to next year
+    
       if (nextTermIndex >= terms.length) {
         const [startY, endY] = currentYear.split("/").map(Number);
         const nextYear = `${startY + 1}/${endY + 1}`;
+      console.log('-----------------------------------', 'we have next year', nextYear)
+
 
         // Log a transaction in the *next year* for traceability
         await FeeTransaction.create({
@@ -86,8 +89,15 @@ exports.recordTransaction = async (req, res) => {
 
       // ✅ next term within the same year
       const nextTerm = terms[nextTermIndex];
+      
+
       const nextExpected = await student.getExpectedFee(currentYear, nextTerm);
+      
+
       if (!nextExpected || nextExpected <= 0) break;
+
+    
+
 
       const nextPaid = await FeeTransaction.aggregate([
         {
@@ -99,11 +109,18 @@ exports.recordTransaction = async (req, res) => {
         },
         { $group: { _id: null, total: { $sum: "$amount" } } },
       ]);
+
+      console.log('-----------------------------------', 'we have nextPaid', nextPaid)
+
+
       const nextAlreadyPaid = nextPaid[0]?.total || 0;
       const nextRoom = Math.max(0, nextExpected - nextAlreadyPaid);
 
       const applied = Math.min(excess, nextRoom);
       excess -= applied;
+
+      console.log('-----------------------------------', 'we have applied', applied)
+
 
       if (applied > 0) {
         await FeeTransaction.create({
@@ -454,12 +471,7 @@ exports.getSchoolSummary = async (req, res) => {
     for (const student of students) {
       let carryOver = 0;
       for (const term of terms) {
-        const expected =
-          expectedMap[student.classLevel]?.[term] ||
-          school.feeExpectations.find(
-            (f) => f.academicYear === academicYear && f.term === term
-          )?.amount ||
-          0;
+        const expected = expectedMap[student.classLevel]?.[term] || 0;
 
         const paid = txnMap[`${student._id}_${term}`] || 0;
         const balance = Math.max(0, expected - (paid + carryOver));
@@ -691,12 +703,7 @@ exports.getClassSummary = async (req, res) => {
       let carryOver = 0;
 
       for (const term of terms) {
-        const expected =
-          expectedMap[classLevel]?.[term] ||
-          school.feeExpectations.find(
-            (f) => f.academicYear === academicYear && f.term === term
-          )?.amount ||
-          0;
+        const expected = expectedMap[student.classLevel]?.[term] || 0;
 
         const paid = txnMap[`${student._id}_${term}`] || 0;
         const balance = Math.max(0, expected - (paid + carryOver));
@@ -992,6 +999,41 @@ exports.deleteFeeRule = async (req, res) => {
   }
 };
 
+exports.updateFeeRule = async (req, res) => {
+  try {
+    const schoolId = req.user.school;
+    const { ruleId } = req.params;
+    const updatedData = req.body;
+
+    const school = await School.findById(schoolId);
+    if (!school) return res.status(404).json({ message: "School not found" });
+
+    // Find the rule by ID
+    const ruleIndex = school.feeRules.findIndex(
+      (rule) => rule._id.toString() === ruleId
+    );
+    if (ruleIndex === -1)
+      return res.status(404).json({ message: "Fee rule not found" });
+
+    // Update only provided fields
+    school.feeRules[ruleIndex] = {
+      ...school.feeRules[ruleIndex]._doc,
+      ...updatedData,
+    };
+
+    await school.save();
+
+    res.json({
+      message: "Fee rule updated successfully",
+      feeRules: school.feeRules,
+    });
+  } catch (err) {
+    console.error("updateFeeRule error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+
 exports.getStudentLogs = async (req, res) => {
   try {
     const { studentId } = req.params;
@@ -1033,7 +1075,7 @@ exports.getStudentFeeHistory = async (req, res) => {
         .json({ message: "Student not found or not in your school" });
     }
 
-    console.log('student---------', student)
+    console.log("student---------", student);
 
     // Fetch all transactions for that student — all years, all terms
     const transactions = await FeeTransaction.find({
@@ -1044,7 +1086,7 @@ exports.getStudentFeeHistory = async (req, res) => {
       .sort({ createdAt: -1 }) // most recent first
       .lean();
 
-      console.log('trans------', transactions)
+    console.log("trans------", transactions);
 
     // Compute totals for quick overview
     const totalPaid = transactions
@@ -1080,4 +1122,3 @@ exports.getStudentFeeHistory = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
-

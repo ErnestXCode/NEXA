@@ -76,6 +76,7 @@ const CBC_CLASS_ORDER = [
   "Grade 12",
 ];
 
+
 studentSchema.methods.getExpectedFee = async function (academicYear, term) {
   const school = await School.findById(this.school).lean();
   if (!school) return 0;
@@ -84,7 +85,7 @@ studentSchema.methods.getExpectedFee = async function (academicYear, term) {
 
   const rule = school.feeRules.find((r) => {
     const fromIndex = CBC_CLASS_ORDER.indexOf(r.fromClass);
-    const toIndex = CBC_CLASS_ORDER.indexOf(r.toClass); 
+    const toIndex = CBC_CLASS_ORDER.indexOf(r.toClass);
     return (
       r.academicYear === academicYear &&
       r.term === term &&
@@ -93,7 +94,8 @@ studentSchema.methods.getExpectedFee = async function (academicYear, term) {
     );
   });
 
-  return rule ? rule.amount : 0; 
+
+  return rule ? rule.amount : 0;
 };
 
 // Compute balance with carryover

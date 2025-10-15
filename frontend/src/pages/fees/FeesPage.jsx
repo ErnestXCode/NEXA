@@ -28,6 +28,27 @@ const FeesPage = () => {
   const queryClient = useQueryClient();
   const [academicYear, setAcademicYear] = useState("2025/2026");
   const navigate = useNavigate();
+  const [editingRule, setEditingRule] = useState(null);
+
+  const handleUpdateRule = async () => {
+  if (!editingRule) return;
+
+  try {
+    await api.put(`/fees/fee-rules/${editingRule._id}`, editingRule);
+    queryClient.invalidateQueries(["feeRules", undefined]);
+    setEditingRule(null); // exit edit mode
+  } catch (err) {
+    console.error("Failed to update rule", err);
+  }
+};
+
+
+
+  const currentYear = new Date().getFullYear();
+const academicYearOptions = Array.from({ length: 5 }, (_, i) => {
+  const startYear = currentYear - 2 + i;
+  return `${startYear}/${startYear + 1}`;
+});
 
   // local state for new fee rule form
   const [newRule, setNewRule] = useState({
@@ -191,19 +212,27 @@ const FeesPage = () => {
       <h1 className="text-3xl font-extrabold">💰 Fees Dashboard</h1>
 
       {/* Academic Year first */}
-      <section className="bg-gray-900/80 p-4 rounded-lg border border-gray-800 shadow-md sticky top-0 z-10">
-        <div>
-          <label className="block text-gray-400 text-sm mb-1">
-            Academic Year
-          </label>
-          <input
-            type="text"
-            value={academicYear}
-            onChange={(e) => setAcademicYear(e.target.value)}
-            className="bg-gray-800 border border-gray-700 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
-          />
-        </div>
-      </section>
+     <section className="bg-gray-900/80 p-4 rounded-lg border border-gray-800 shadow-md sticky top-0 z-10">
+  <div>
+    <label className="block text-gray-400 text-sm mb-1">
+      Academic Year
+    </label>
+    <select
+      value={academicYear}
+      onChange={(e) => {
+        setAcademicYear(e.target.value);
+        setNewRule({ ...newRule, academicYear: e.target.value }); // update default for new rules
+      }}
+      className="w-full bg-gray-800 border border-gray-700 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+    >
+      {academicYearOptions.map((year) => (
+        <option key={year} value={year}>
+          {year}
+        </option>
+      ))}
+    </select>
+  </div>
+</section>
 
       <ChartCard title="🏫 School Fees Distribution">
         <div className="flex flex-col lg:flex-row gap-6 items-start">
@@ -353,33 +382,140 @@ const FeesPage = () => {
                   <th className="p-2 border border-gray-700">From Class</th>
                   <th className="p-2 border border-gray-700">To Class</th>
                   <th className="p-2 border border-gray-700">Amount</th>
+                  <th className="p-2 border border-gray-700">Actions</th>
                 </tr>
               </thead>
-              <tbody>
-                {feeRules?.map((r) => (
-                  <tr key={r._id} className="text-center hover:bg-gray-800/40">
-                    <td className="border border-gray-700 p-2">
-                      {r.academicYear}
-                    </td>
-                    <td className="border border-gray-700 p-2">{r.term}</td>
-                    <td className="border border-gray-700 p-2">
-                      {r.fromClass}
-                    </td>
-                    <td className="border border-gray-700 p-2">{r.toClass}</td>
-                    <td className="border border-gray-700 p-2">
-                      KES {r.amount}
-                    </td>
-                    <td className="border border-gray-700 p-2">
-                      <button
-                        onClick={() => handleDeleteRule(r._id)}
-                        className="text-red-500 hover:text-red-400"
-                      >
-                        ❌ Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
+             <tbody>
+  {feeRules?.map((r) => (
+    <tr key={r._id} className="text-center hover:bg-gray-800/40">
+      <td className="border border-gray-700 p-2">
+        {editingRule?._id === r._id ? (
+          <input
+            type="text"
+            value={editingRule.academicYear}
+            onChange={(e) =>
+              setEditingRule({ ...editingRule, academicYear: e.target.value })
+            }
+            className="bg-gray-800 border border-gray-700 p-1 rounded w-full"
+          />
+        ) : (
+          r.academicYear
+        )}
+      </td>
+
+      <td className="border border-gray-700 p-2">
+        {editingRule?._id === r._id ? (
+          <select
+            value={editingRule.term}
+            onChange={(e) =>
+              setEditingRule({ ...editingRule, term: e.target.value })
+            }
+            className="bg-gray-800 border border-gray-700 p-1 rounded w-full"
+          >
+            <option>Term 1</option>
+            <option>Term 2</option>
+            <option>Term 3</option>
+          </select>
+        ) : (
+          r.term
+        )}
+      </td>
+
+      <td className="border border-gray-700 p-2">
+        {editingRule?._id === r._id ? (
+          <select
+            value={editingRule.fromClass}
+            onChange={(e) =>
+              setEditingRule({ ...editingRule, fromClass: e.target.value })
+            }
+            className="bg-gray-800 border border-gray-700 p-1 rounded w-full"
+          >
+            {availableClasses.map((cls) => (
+              <option key={cls} value={cls}>
+                {cls}
+              </option>
+            ))}
+          </select>
+        ) : (
+          r.fromClass
+        )}
+      </td>
+
+      <td className="border border-gray-700 p-2">
+        {editingRule?._id === r._id ? (
+          <select
+            value={editingRule.toClass}
+            onChange={(e) =>
+              setEditingRule({ ...editingRule, toClass: e.target.value })
+            }
+            className="bg-gray-800 border border-gray-700 p-1 rounded w-full"
+          >
+            {availableClasses.map((cls) => (
+              <option key={cls} value={cls}>
+                {cls}
+              </option>
+            ))}
+          </select>
+        ) : (
+          r.toClass
+        )}
+      </td>
+
+      <td className="border border-gray-700 p-2">
+        {editingRule?._id === r._id ? (
+          <input
+            type="number"
+            value={editingRule.amount}
+            onChange={(e) =>
+              setEditingRule({ ...editingRule, amount: e.target.value })
+            }
+            className="bg-gray-800 border border-gray-700 p-1 rounded w-full"
+          />
+        ) : (
+          `KES ${r.amount}`
+        )}
+      </td>
+
+     <td className="border border-gray-700 p-2">
+  <div className="flex justify-center gap-2">
+    {editingRule?._id === r._id ? (
+      <>
+        <button
+          onClick={handleUpdateRule}
+          className="px-3 py-1 text-sm bg-green-600 hover:bg-green-500 text-white rounded-full shadow-sm transition-all"
+        >
+          Save
+        </button>
+        <button
+          onClick={() => setEditingRule(null)}
+          className="px-3 py-1 text-sm bg-gray-600 hover:bg-gray-500 text-white rounded-full shadow-sm transition-all"
+        >
+          Cancel
+        </button>
+      </>
+    ) : (
+      <>
+        <button
+          onClick={() => setEditingRule(r)}
+          className="px-3 py-1 text-sm bg-blue-600 hover:bg-blue-500 text-white rounded-full shadow-sm transition-all"
+        >
+          Edit
+        </button>
+        <button
+          onClick={() => handleDeleteRule(r._id)}
+          className="px-3 py-1 text-sm bg-red-600 hover:bg-red-500 text-white rounded-full shadow-sm transition-all"
+        >
+          Delete
+        </button>
+      </>
+    )}
+  </div>
+</td>
+
+    </tr>
+  ))}
+</tbody>
+
             </table>
           </div>
         )}

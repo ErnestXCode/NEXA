@@ -52,9 +52,9 @@ const Contact = () => {
       .finally(() => setSending(false));
   };
 
-  useEffect(() => {
-    nameRef.current?.focus();
-  }, []);
+  // useEffect(() => {
+  //   nameRef.current?.focus();
+  // }, []);
   return (
     <>
       {/* Navbar (same as Home/Features/Pricing) */}

@@ -126,100 +126,13 @@ const Home = () => {
       </section>
 
       {/* App Modules Preview */}
-      <section className="py-24 bg-gray-950 px-6 border-t border-gray-800">
+      <section className="py-24 bg-gray-950 px-6 border-t border-gray-800 overflow-hidden">
         <div className="max-w-6xl mx-auto text-center">
           <h2 className="text-3xl font-semibold mb-14 text-white">
             Explore What Nexa Can Do
           </h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-            {/* Communication */}
-            <div className="p-6 bg-gray-900 rounded-2xl border border-gray-800 hover:border-gray-700 transition-colors shadow">
-              <div className="w-full h-56 bg-gray-800 rounded-xl mb-5 flex items-center justify-center text-gray-500 text-sm">
-                Communication Area / Messages Screenshot
-              </div>
-              <h3 className="text-xl font-semibold text-white mb-2">
-                Communication Hub
-              </h3>
-              <p className="text-gray-400">
-                Real-time chat between teachers, parents, and administrators —
-                all in one secure space. Stay updated with messages and
-                announcements instantly.
-              </p>
-            </div>
-
-            {/* Attendance */}
-            <div className="p-6 bg-gray-900 rounded-2xl border border-gray-800 hover:border-gray-700 transition-colors shadow">
-              <div className="w-full h-56 bg-gray-800 rounded-xl mb-5 flex items-center justify-center text-gray-500 text-sm">
-                Attendance Dashboard Screenshot
-              </div>
-              <h3 className="text-xl font-semibold text-white mb-2">
-                Smart Attendance
-              </h3>
-              <p className="text-gray-400">
-                Mark and track attendance with ease. Class teachers can record
-                daily logs, and admins can view real-time summaries and trends.
-              </p>
-            </div>
-
-            {/* Exams */}
-            <div className="p-6 bg-gray-900 rounded-2xl border border-gray-800 hover:border-gray-700 transition-colors shadow">
-              <div className="w-full h-56 bg-gray-800 rounded-xl mb-5 flex items-center justify-center text-gray-500 text-sm">
-                Exams or Report Card Screenshot
-              </div>
-              <h3 className="text-xl font-semibold text-white mb-2">
-                Exams & Reports
-              </h3>
-              <p className="text-gray-400">
-                Manage exams, record results, and generate beautiful report
-                cards. Nexa simplifies academic records for teachers and school
-                heads alike.
-              </p>
-            </div>
-
-            {/* Fees / Billing */}
-            <div className="p-6 bg-gray-900 rounded-2xl border border-gray-800 hover:border-gray-700 transition-colors shadow">
-              <div className="w-full h-56 bg-gray-800 rounded-xl mb-5 flex items-center justify-center text-gray-500 text-sm">
-                Fees / Billing Screenshot
-              </div>
-              <h3 className="text-xl font-semibold text-white mb-2">
-                Billing & Fees
-              </h3>
-              <p className="text-gray-400">
-                Record payments, manage balances, and view transparent
-                transaction logs. Secure and accessible — perfect for bursars
-                and admins.
-              </p>
-            </div>
-
-            {/* Reviews */}
-            <div className="p-6 bg-gray-900 rounded-2xl border border-gray-800 hover:border-gray-700 transition-colors shadow">
-              <div className="w-full h-56 bg-gray-800 rounded-xl mb-5 flex items-center justify-center text-gray-500 text-sm">
-                Review Section Screenshot
-              </div>
-              <h3 className="text-xl font-semibold text-white mb-2">
-                Reviews & Feedback
-              </h3>
-              <p className="text-gray-400">
-                Encourage feedback from parents and staff. Insights gathered
-                help improve the experience for everyone involved.
-              </p>
-            </div>
-
-            {/* Settings */}
-            <div className="p-6 bg-gray-900 rounded-2xl border border-gray-800 hover:border-gray-700 transition-colors shadow">
-              <div className="w-full h-56 bg-gray-800 rounded-xl mb-5 flex items-center justify-center text-gray-500 text-sm">
-                Settings / Admin Panel Screenshot
-              </div>
-              <h3 className="text-xl font-semibold text-white mb-2">
-                System Control
-              </h3>
-              <p className="text-gray-400">
-                Fine-tune your school system with admin tools. Manage roles,
-                users, and permissions effortlessly from the settings dashboard.
-              </p>
-            </div>
-          </div>
+          <FeatureSlider />
         </div>
       </section>
 
@@ -308,3 +221,111 @@ const Home = () => {
 };
 
 export default Home;
+
+const FeatureSlider = () => {
+  const features = [
+    { title: "Communication Hub", desc: "Real-time chat between teachers, parents, and admins — all in one secure space.", img: "Communication Screenshot" },
+    { title: "Smart Attendance", desc: "Mark and track attendance effortlessly. View real-time summaries and trends.", img: "Attendance Dashboard Screenshot" },
+    { title: "Exams & Reports", desc: "Manage exams, record results, and generate beautiful report cards with ease.", img: "Exams Screenshot" },
+    { title: "Billing & Fees", desc: "Record payments, manage balances, and view transparent transaction logs.", img: "Fees / Billing Screenshot" },
+    { title: "Reviews & Feedback", desc: "Gather valuable insights from parents and staff to improve the experience.", img: "Review Section Screenshot" },
+    { title: "System Control", desc: "Fine-tune your system with powerful admin tools for roles and permissions.", img: "Settings / Admin Panel Screenshot" },
+  ];
+
+  const [index, setIndex] = useState(0);
+
+  // Auto-slide every 4s
+  useEffect(() => {
+    const interval = setInterval(() => handleNext(), 4000);
+    return () => clearInterval(interval);
+  });
+
+  // Responsive item count
+  const [itemsPerView, setItemsPerView] = useState(window.innerWidth < 768 ? 1 : 3);
+  useEffect(() => {
+    const handleResize = () => setItemsPerView(window.innerWidth < 768 ? 1 : 3);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const handleNext = () => setIndex((prev) => (prev + 1) % features.length);
+  const handlePrev = () => setIndex((prev) => (prev - 1 + features.length) % features.length);
+
+  // Swipe handling for mobile
+  const [touchStart, setTouchStart] = useState(null);
+  const [touchEnd, setTouchEnd] = useState(null);
+
+  const minSwipeDistance = 50;
+
+  const onTouchStart = (e) => setTouchStart(e.targetTouches[0].clientX);
+  const onTouchMove = (e) => setTouchEnd(e.targetTouches[0].clientX);
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    if (distance > minSwipeDistance) handleNext(); // swipe left
+    if (distance < -minSwipeDistance) handlePrev(); // swipe right
+    setTouchStart(null);
+    setTouchEnd(null);
+  };
+
+  // Determine visible slides
+  const visible = [];
+  for (let i = 0; i < itemsPerView; i++) {
+    visible.push(features[(index + i) % features.length]);
+  }
+
+  return (
+    <div className="relative flex items-center justify-center w-full">
+      {/* Left Arrow - desktop only */}
+      <button
+        onClick={handlePrev}
+        className="hidden md:flex absolute -left-10 lg:-left-16 xl:-left-24 p-3 bg-gray-800 bg-opacity-80 hover:bg-opacity-100 rounded-full text-white text-2xl shadow-lg transition-transform hover:scale-110"
+      >
+        ‹
+      </button>
+
+      {/* Slider with touch events */}
+      <div
+        className="flex overflow-hidden justify-center gap-8 w-full max-w-6xl transition-transform duration-700 ease-out"
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+      >
+        {visible.map((f, i) => (
+          <div
+            key={i}
+            className="min-w-[90%] md:min-w-[30%] bg-gray-900 p-6 rounded-2xl border border-gray-800 hover:border-gray-700 shadow transition-transform transform hover:scale-[1.02]"
+          >
+            <div className="w-full h-48 bg-gray-800 rounded-xl mb-5 flex items-center justify-center text-gray-500 text-sm">
+              {f.img}
+            </div>
+            <h3 className="text-xl font-semibold text-white mb-2">{f.title}</h3>
+            <p className="text-gray-400">{f.desc}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Right Arrow - desktop only */}
+      <button
+        onClick={handleNext}
+        className="hidden md:flex absolute -right-10 lg:-right-16 xl:-right-24 p-3 bg-gray-800 bg-opacity-80 hover:bg-opacity-100 rounded-full text-white text-2xl shadow-lg transition-transform hover:scale-110"
+      >
+        ›
+      </button>
+
+      {/* Dots */}
+      <div className="flex justify-center mt-8 gap-2 absolute bottom-[-3rem] left-1/2 -translate-x-1/2">
+        {features.map((_, i) => (
+          <button
+            key={i}
+            onClick={() => setIndex(i)}
+            className={`w-3 h-3 rounded-full transition-all ${
+              i === index ? "bg-white scale-110" : "bg-gray-600"
+            }`}
+          />
+        ))}
+      </div>
+    </div>
+  );
+};
+

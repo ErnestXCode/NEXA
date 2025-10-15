@@ -28,6 +28,8 @@ const DebtorHistoryPage = () => {
   const transactions = data?.transactions || [];
   const totals = data?.totals || {};
 
+  const totalPaid = (totals.paid || 0) + (totals.adjustments || 0);
+
   return (
     <div className="min-h-screen bg-gray-950 text-gray-100 p-6 space-y-6">
       <button
@@ -48,11 +50,11 @@ const DebtorHistoryPage = () => {
       </div>
 
       {/* Totals Summary */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="bg-gray-900 p-4 rounded-xl border border-gray-800 text-center">
           <p className="text-gray-400 text-sm">Total Paid</p>
           <p className="text-green-400 text-xl font-semibold">
-            KES {totals.paid?.toLocaleString() || 0}
+            KES {totalPaid.toLocaleString()}
           </p>
         </div>
         <div className="bg-gray-900 p-4 rounded-xl border border-gray-800 text-center">
@@ -61,12 +63,12 @@ const DebtorHistoryPage = () => {
             KES {totals.adjustments?.toLocaleString() || 0}
           </p>
         </div>
-        <div className="bg-gray-900 p-4 rounded-xl border border-gray-800 text-center">
+        {/* <div className="bg-gray-900 p-4 rounded-xl border border-gray-800 text-center">
           <p className="text-gray-400 text-sm">Fines</p>
           <p className="text-red-400 text-xl font-semibold">
             KES {totals.fines?.toLocaleString() || 0}
           </p>
-        </div>
+        </div> */}
       </div>
 
       {/* Transactions */}
@@ -83,8 +85,12 @@ const DebtorHistoryPage = () => {
               <tr className="bg-gray-800 text-gray-300 text-sm uppercase tracking-wider">
                 <th className="p-3 text-left border-b border-gray-700">Date</th>
                 <th className="p-3 text-left border-b border-gray-700">Type</th>
-                <th className="p-3 text-left border-b border-gray-700">Amount</th>
-                <th className="p-3 text-left border-b border-gray-700">Handled By</th>
+                <th className="p-3 text-left border-b border-gray-700">
+                  Amount
+                </th>
+                <th className="p-3 text-left border-b border-gray-700">
+                  Handled By
+                </th>
               </tr>
             </thead>
             <tbody>

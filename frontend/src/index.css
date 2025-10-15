@@ -26,3 +26,29 @@
 .modal-enter {
   animation: fadeIn 0.2s ease-out;
 }
+
+
+@keyframes spin-slow {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes spin-fast {
+  to {
+    transform: rotate(-360deg);
+  }
+}
+@keyframes fade {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 3s linear infinite;
+}
+.animate-spin-fast {
+  animation: spin-fast 1.5s linear infinite;
+}
+.animate-fade {
+  animation: fade 3s ease-in-out infinite;
+}

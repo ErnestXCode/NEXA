@@ -18,6 +18,7 @@ const {
   deleteFeeRule,
   getAllTransactions,
   getStudentFeeHistory,
+  updateFeeRule,
 } = require("../controllers/fee/feeController");
 
 const {
@@ -49,6 +50,7 @@ router.get(
 // 🏫 Update school fee rules
 router.post("/schools/:schoolId/feerules", verifyJWT, setFeeRules);
 
+router.put("/fee-rules/:ruleId", verifyJWT, updateFeeRule);
 router.delete("/fee-rules/:ruleId", verifyJWT, deleteFeeRule);
 
 // 🏫 Whole school summary

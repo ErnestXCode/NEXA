@@ -130,7 +130,7 @@ const ExamsPage = () => {
   {/* Submit Button */}
   <button
     type="submit"
-    className="w-full py-3.5 mt-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 rounded-xl font-semibold transition-all text-white text-lg shadow-md hover:shadow-blue-500/30 focus:ring-4 focus:ring-blue-500/40"
+    className="w-full py-3.5 mt-4 bg-blue-600 rounded-xl font-semibold transition-all text-white text-lg shadow-md hover:shadow-blue-500/30 focus:ring-4 focus:ring-blue-500/40"
   >
     Create Exam
   </button>
