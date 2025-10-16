@@ -20,6 +20,7 @@ const {
   getStudentFeeHistory,
   updateFeeRule,
   getStudentsByClass,
+  getStudentSummary,
 } = require("../controllers/fee/feeController");
 
 const {
@@ -47,6 +48,9 @@ router.get(
   verifyJWT,
   getStudentFeeHistory
 );
+
+router.get("/students/:studentId/summary", verifyJWT, getStudentSummary);
+
 
 // 🏫 Update school fee rules
 router.post("/schools/:schoolId/feerules", verifyJWT, setFeeRules);

@@ -5,6 +5,7 @@ import useUnreadMessages from "../../../hooks/useUnreadMessages";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import CustomSelect from "../../../components/layout/CustomSelect";
 import { NavLink, useNavigate } from "react-router-dom";
+import StudentFeeSummary from "../../fees/StudentFeeSummary";
 
 const ParentDashboard = () => {
   const [children, setChildren] = useState([]);
@@ -12,7 +13,6 @@ const ParentDashboard = () => {
   const [attendanceSummary, setAttendanceSummary] = useState(null);
   const [childExams, setChildExams] = useState([]);
   const [selectedExamId, setSelectedExamId] = useState(null);
-  const [feeBalances, setFeeBalances] = useState(null);
   const [showAllProofs, setShowAllProofs] = useState({
     pending: false,
     confirmed: false,
@@ -137,15 +137,15 @@ const ParentDashboard = () => {
     }
   }, [selectedChild, submitting]); // refresh after new proof
 
-  const fetchFeeBalances = async (studentId) => {
-    try {
-      const res = await api.get(`/fees/outstanding/${studentId}`);
-      setFeeBalances(res.data.balances || {});
-    } catch (err) {
-      console.error("Error fetching fee balances:", err);
-      setFeeBalances(null);
-    }
-  };
+  // const fetchFeeBalances = async (studentId) => {
+  //   try {
+  //     const res = await api.get(`/fees/outstanding/${studentId}`);
+  //     setFeeBalances(res.data.balances || {});
+  //   } catch (err) {
+  //     console.error("Error fetching fee balances:", err);
+  //     setFeeBalances(null);
+  //   }
+  // };
 
   useEffect(() => {
     fetchDashboard();
@@ -155,11 +155,11 @@ const ParentDashboard = () => {
     if (selectedChild) {
       fetchAttendanceSummary(selectedChild._id);
       fetchChildExams(selectedChild._id);
-      fetchFeeBalances(selectedChild._id);
+      // fetchFeeBalances(selectedChild._id);
     } else {
       setAttendanceSummary(null);
       setChildExams([]);
-      setFeeBalances(null);
+      // setFeeBalances(null);
       setSelectedExamId(null);
     }
   }, [selectedChild]);
@@ -220,43 +220,8 @@ const ParentDashboard = () => {
             </div>
           </div>
           {/* ✅ New Outstanding Fees Block (from /fees/outstanding) */}
-          {/* {feeBalances && (
-            <div className="bg-gray-900 p-6 rounded-2xl shadow-md">
-              <h2 className="text-xl font-bold mb-4 text-white">
-                Outstanding Balances –{" "}
-                <span className="text-gray-400 text-sm">
-                  {selectedChild.firstName} {selectedChild.lastName}
-                </span>
-              </h2>
-              <ul className="space-y-2 text-sm">
-                {["Term 1", "Term 2", "Term 3"].map((term) => (
-                  <li
-                    key={term}
-                    className="flex justify-between border-b border-gray-800 pb-1"
-                  >
-                    <span>{term}</span>
-                    <span
-                      className={`font-semibold ${
-                        (feeBalances[term] ?? 0) === 0
-                          ? "text-green-400"
-                          : feeBalances[term] > 0
-                          ? "text-red-400"
-                          : "text-yellow-400"
-                      }`}
-                    >
-                      KSh {feeBalances[term] ?? 0}
-                    </span>
-                  </li>
-                ))}
-                {feeBalances.rollover && (
-                  <li className="flex justify-between pt-2 text-yellow-300">
-                    <span>Rollover to {feeBalances.rollover.academicYear}</span>
-                    <span>KSh {feeBalances.rollover.amount}</span>
-                  </li>
-                )}
-              </ul>
-            </div>
-          )} */}
+          {selectedChild && <StudentFeeSummary studentId={selectedChild._id} />}
+
           {/* Payment Options */}
           {school?.paymentOptions?.length > 0 && (
             <div className="bg-gradient-to-r from-gray-900 to-gray-800 p-6 rounded-2xl shadow-md text-center">
