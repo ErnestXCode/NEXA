@@ -8,6 +8,8 @@ badge is not persistent in dashboard, as in it clears when navigating
 
 sockets to run tanstack for refecthing, or refresh button
 
+lazy load ny roles
+
 two simultaneous requests to ignore latter if same thing 
 
 show no data available if no data in any page , also show if connection is not there and have a button to reload 

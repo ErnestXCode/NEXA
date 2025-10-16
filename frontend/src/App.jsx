@@ -1,4 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import React, { Suspense, useEffect } from "react";
+import { useSelector } from "react-redux";
+
 import Register from "./pages/auth/Register";
 import Login from "./pages/auth/Login";
 import Home from "./pages/home/Home";
@@ -9,66 +12,115 @@ import Communication from "./pages/communication/Communication";
 import Dashboard from "./pages/home/Dashboard";
 import PersistLogin from "./pages/auth/PersistLogin";
 import ProtectedBillingRoute from "./pages/auth/ProtectedBillingRoute";
-import PersonelForm from "./pages/actions/PersonelForm";
-import StudentForm from "./pages/actions/StudentForm";
-import AllTeachers from "./pages/actions/AllTeachers";
-import AllBursars from "./pages/actions/AllBursars";
-import AllStudents from "./pages/actions/AllStudents";
-import SendMessageForm from "./pages/communication/SendMessageForm";
-import StudentEditPage from "./pages/actions/StudentEditPage";
-import PersonnelEditPage from "./pages/actions/PersonnelEditPage";
-import ParentEditPage from "./pages/actions/ParentEditPage";
-import AttendanceDashboard from "./pages/attendance/AttendanceDashboard";
-import ParentForm from "./pages/actions/ParentForm";
-import SetupWizard from "./components/wizard/SetUpWizard";
-import AttendancePage from "./pages/attendance/AttendancePage";
-import ExamsPage from "./pages/exams/ExamsPage";
-import RecordResultsPage from "./pages/exams/RecordResultsPage";
-import FeesPage from "./pages/fees/FeesPage";
-import AddFeePage from "./pages/fees/AddFeePage";
-
-import AllSchools from "./pages/actions/AllSchools";
-import AllParents from "./pages/actions/AllParents";
-import SchoolEditPage from "./pages/actions/SchoolEditPage";
-import SchoolSettings from "./pages/settings/SchoolSettings";
-import ReportCardsPage from "./pages/exams/ReportCardsPage";
+import ResetPassword from "./pages/auth/ResetPassword";
 import Analytics from "./components/analytics/Analytics";
 import Feedback from "./pages/feedback/Feedback";
 import InstallPrompt from "./install/InstallPrompt";
-import { useSelector } from "react-redux";
-import ReviewPage from "./pages/review/ReviewPage";
-import Billing from "./pages/home/Billing";
-import AttendanceLogsPage from "./pages/attendance/AttendanceLogsPage";
-import ResultsAuditPage from "./pages/exams/ResultsAuditPage";
-import FeeAuditPage from "./pages/fees/FeeAuditPage";
-import CreditAuditPage from "./pages/fees/CreditAuditPage";
-import ResetPassword from "./pages/auth/ResetPassword";
-import DebtorHistoryPage from "./pages/fees/DebtorHistoryPage";
 import LoadingWithFacts from "./components/layout/LoadingWithFacts";
-import { useEffect } from "react";
+import Billing from "./pages/home/Billing";
+import SetupWizard from "./components/wizard/SetUpWizard";
+import ReviewPage from "./pages/review/ReviewPage";
 
+// ---------------- Lazy imports for role-specific modules ----------------
+const FeesPage = React.lazy(() => import("./pages/fees/FeesPage"));
+const AddFeePage = React.lazy(() => import("./pages/fees/AddFeePage"));
+const FeeAuditPage = React.lazy(() => import("./pages/fees/FeeAuditPage"));
+const CreditAuditPage = React.lazy(() => import("./pages/fees/CreditAuditPage"));
+const DebtorHistoryPage = React.lazy(() => import("./pages/fees/DebtorHistoryPage"));
+
+const AttendanceDashboard = React.lazy(() => import("./pages/attendance/AttendanceDashboard"));
+const AttendancePage = React.lazy(() => import("./pages/attendance/AttendancePage"));
+const AttendanceLogsPage = React.lazy(() => import("./pages/attendance/AttendanceLogsPage"));
+
+const SchoolSettings = React.lazy(() => import("./pages/settings/SchoolSettings"));
+
+const PersonelForm = React.lazy(() => import("./pages/actions/PersonelForm"));
+const StudentForm = React.lazy(() => import("./pages/actions/StudentForm"));
+const ParentForm = React.lazy(() => import("./pages/actions/ParentForm"));
+
+const AllStudents = React.lazy(() => import("./pages/actions/AllStudents"));
+const StudentEditPage = React.lazy(() => import("./pages/actions/StudentEditPage"));
+
+const AllTeachers = React.lazy(() => import("./pages/actions/AllTeachers"));
+const AllBursars = React.lazy(() => import("./pages/actions/AllBursars"));
+const AllParents = React.lazy(() => import("./pages/actions/AllParents"));
+
+const PersonnelEditPage = React.lazy(() => import("./pages/actions/PersonnelEditPage"));
+const ParentEditPage = React.lazy(() => import("./pages/actions/ParentEditPage"));
+
+const AllSchools = React.lazy(() => import("./pages/actions/AllSchools"));
+const SchoolEditPage = React.lazy(() => import("./pages/actions/SchoolEditPage"));
+
+const ExamsPage = React.lazy(() => import("./pages/exams/ExamsPage"));
+const RecordResultsPage = React.lazy(() => import("./pages/exams/RecordResultsPage"));
+const ReportCardsPage = React.lazy(() => import("./pages/exams/ReportCardsPage"));
+const ResultsAuditPage = React.lazy(() => import("./pages/exams/ResultsAuditPage"));
+
+// ---------------- Role-based preloading ----------------
+const preloadTeacherModules = () => {
+  import("./pages/attendance/AttendanceDashboard");
+  import("./pages/attendance/AttendancePage");
+  import("./pages/attendance/AttendanceLogsPage");
+  import("./pages/exams/ExamsPage");
+  import("./pages/exams/RecordResultsPage");
+  import("./pages/exams/ReportCardsPage");
+  import("./pages/exams/ResultsAuditPage");
+};
+
+const preloadBursarModules = () => {
+  import("./pages/fees/FeesPage");
+  import("./pages/fees/AddFeePage");
+  import("./pages/fees/FeeAuditPage");
+  import("./pages/fees/CreditAuditPage");
+  import("./pages/fees/DebtorHistoryPage");
+};
+
+const preloadAdminModules = () => {
+  preloadTeacherModules();
+  preloadBursarModules();
+  import("./pages/settings/SchoolSettings");
+  import("./pages/actions/PersonelForm");
+  import("./pages/actions/StudentForm");
+  import("./pages/actions/ParentForm");
+  import("./pages/actions/AllStudents");
+  import("./pages/actions/StudentEditPage");
+  import("./pages/actions/AllTeachers");
+  import("./pages/actions/AllBursars");
+  import("./pages/actions/AllParents");
+  import("./pages/actions/PersonnelEditPage");
+  import("./pages/actions/ParentEditPage");
+};
+
+const preloadSuperAdminModules = () => {
+  preloadAdminModules();
+  import("./pages/actions/AllSchools");
+  import("./pages/actions/SchoolEditPage");
+};
+
+// ---------------- Home redirect ----------------
 const HomeRedirect = () => {
   const { accessToken } = useSelector((state) => state.auth);
-
   useEffect(() => {
     fetch(`${import.meta.env.VITE_BACKEND_URL}/api/ping`).catch(() => {});
   }, []);
-
-  // Wait until PersistLogin has finished loading
-  if (accessToken === undefined) return <LoadingWithFacts />; // or a spinner
-
+  if (accessToken === undefined) return <LoadingWithFacts />;
   return accessToken ? <Navigate to="/dashboard" replace /> : <Home />;
 };
 
 function App() {
-  // useEffect(() => {
-  //   const handleFocus = () => {
-  //     if ("clearAppBadge" in navigator)
-  //       navigator.clearAppBadge().catch(() => {});
-  //   };
-  //   window.addEventListener("focus", handleFocus);
-  //   return () => window.removeEventListener("focus", handleFocus);
-  // }, []);
+  const { user, accessToken } = useSelector((state) => state.auth);
+  const role = user?.role;
+
+  // Preload role-relevant modules on app load
+  useEffect(() => {
+    if (!role) return;
+    if (role === "teacher") preloadTeacherModules();
+    if (role === "bursar") preloadBursarModules();
+    if (role === "admin") preloadAdminModules();
+    if (role === "superadmin") preloadSuperAdminModules();
+  }, [role]);
+
+  
 
   return (
     <div className="bg-gray-950 text-white min-h-screen">
@@ -86,72 +138,248 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/reset-password/:token" element={<ResetPassword />} />
+          <Route path="setup" element={<SetupWizard />} />
+          <Route path="communication" element={<Communication />} />
+          <Route path="review" element={<ReviewPage />} />
 
           {/* Protected routes */}
           <Route element={<PersistLogin />}>
             <Route path="/feedback" element={<Feedback />} />
             <Route path="/dashboard">
-              <Route path="billing" element={<Billing />} />
-
+              <Route
+                path="billing"
+                element={
+                  <Suspense fallback={<LoadingWithFacts />}>
+                    <Billing />
+                  </Suspense>
+                }
+              />
               <Route element={<ProtectedBillingRoute />}>
                 <Route index element={<Dashboard />} />
-                <Route path="fees" element={<FeesPage />} />
-                <Route path="fees/add" element={<AddFeePage />} />
-                <Route path="fees/logs" element={<FeeAuditPage />} />
-                <Route path="fees/credit" element={<CreditAuditPage />} />
-                <Route
-                  path="debtors/:studentId"
-                  element={<DebtorHistoryPage />}
-                />
 
-                <Route path="attendance" element={<AttendanceDashboard />} />
-                <Route path="attendance/mark" element={<AttendancePage />} />
-                <Route
-                  path="attendance/logs"
-                  element={<AttendanceLogsPage />}
-                />
+                {/* ---------------- Teacher routes ---------------- */}
+                {["teacher", "admin", "superadmin"].includes(role) && (
+                  <>
+                    <Route
+                      path="attendance"
+                      element={
+                        <Suspense fallback={<LoadingWithFacts />}>
+                          <AttendanceDashboard />
+                        </Suspense>
+                      }
+                    />
+                    <Route
+                      path="attendance/mark"
+                      element={
+                        <Suspense fallback={<LoadingWithFacts />}>
+                          <AttendancePage />
+                        </Suspense>
+                      }
+                    />
+                    <Route
+                      path="attendance/logs"
+                      element={
+                        <Suspense fallback={<LoadingWithFacts />}>
+                          <AttendanceLogsPage />
+                        </Suspense>
+                      }
+                    />
+                    <Route
+                      path="exams"
+                      element={
+                        <Suspense fallback={<LoadingWithFacts />}>
+                          <ExamsPage />
+                        </Suspense>
+                      }
+                    />
+                    <Route
+                      path="exams/record"
+                      element={
+                        <Suspense fallback={<LoadingWithFacts />}>
+                          <RecordResultsPage />
+                        </Suspense>
+                      }
+                    />
+                    <Route
+                      path="exams/report"
+                      element={
+                        <Suspense fallback={<LoadingWithFacts />}>
+                          <ReportCardsPage />
+                        </Suspense>
+                      }
+                    />
+                    <Route
+                      path="exams/logs"
+                      element={
+                        <Suspense fallback={<LoadingWithFacts />}>
+                          <ResultsAuditPage />
+                        </Suspense>
+                      }
+                    />
+                  </>
+                )}
 
-                <Route path="communication" element={<Communication />} />
-                <Route
-                  path="communication/send"
-                  element={<SendMessageForm />}
-                />
-                <Route path="settings" element={<SchoolSettings />} />
+                {/* ---------------- Bursar routes ---------------- */}
+                {["bursar", "admin", "superadmin"].includes(role) && (
+                  <>
+                    <Route
+                      path="fees"
+                      element={
+                        <Suspense fallback={<LoadingWithFacts />}>
+                          <FeesPage />
+                        </Suspense>
+                      }
+                    />
+                    <Route
+                      path="fees/add"
+                      element={
+                        <Suspense fallback={<LoadingWithFacts />}>
+                          <AddFeePage />
+                        </Suspense>
+                      }
+                    />
+                    <Route
+                      path="fees/logs"
+                      element={
+                        <Suspense fallback={<LoadingWithFacts />}>
+                          <FeeAuditPage />
+                        </Suspense>
+                      }
+                    />
+                    <Route
+                      path="fees/credit"
+                      element={
+                        <Suspense fallback={<LoadingWithFacts />}>
+                          <CreditAuditPage />
+                        </Suspense>
+                      }
+                    />
+                    <Route
+                      path="debtors/:studentId"
+                      element={
+                        <Suspense fallback={<LoadingWithFacts />}>
+                          <DebtorHistoryPage />
+                        </Suspense>
+                      }
+                    />
+                  </>
+                )}
 
-                {/* Forms */}
-                <Route path="createPersonel" element={<PersonelForm />} />
-                <Route path="createStudent" element={<StudentForm />} />
-                <Route path="createParent" element={<ParentForm />} />
+                {/* ---------------- Admin/Superadmin routes ---------------- */}
+                {["admin", "superadmin"].includes(role) && (
+                  <>
+                    <Route
+                      path="settings"
+                      element={
+                        <Suspense fallback={<LoadingWithFacts />}>
+                          <SchoolSettings />
+                        </Suspense>
+                      }
+                    />
+                    <Route
+                      path="createPersonel"
+                      element={
+                        <Suspense fallback={<LoadingWithFacts />}>
+                          <PersonelForm />
+                        </Suspense>
+                      }
+                    />
+                    <Route
+                      path="createStudent"
+                      element={
+                        <Suspense fallback={<LoadingWithFacts />}>
+                          <StudentForm />
+                        </Suspense>
+                      }
+                    />
+                    <Route
+                      path="createParent"
+                      element={
+                        <Suspense fallback={<LoadingWithFacts />}>
+                          <ParentForm />
+                        </Suspense>
+                      }
+                    />
+                    <Route
+                      path="students"
+                      element={
+                        <Suspense fallback={<LoadingWithFacts />}>
+                          <AllStudents />
+                        </Suspense>
+                      }
+                    />
+                    <Route
+                      path="students/edit/:id"
+                      element={
+                        <Suspense fallback={<LoadingWithFacts />}>
+                          <StudentEditPage />
+                        </Suspense>
+                      }
+                    />
+                    <Route
+                      path="teachers"
+                      element={
+                        <Suspense fallback={<LoadingWithFacts />}>
+                          <AllTeachers />
+                        </Suspense>
+                      }
+                    />
+                    <Route
+                      path="bursars"
+                      element={
+                        <Suspense fallback={<LoadingWithFacts />}>
+                          <AllBursars />
+                        </Suspense>
+                      }
+                    />
+                    <Route
+                      path="parents"
+                      element={
+                        <Suspense fallback={<LoadingWithFacts />}>
+                          <AllParents />
+                        </Suspense>
+                      }
+                    />
+                    <Route
+                      path="personnel/edit/:id"
+                      element={
+                        <Suspense fallback={<LoadingWithFacts />}>
+                          <PersonnelEditPage />
+                        </Suspense>
+                      }
+                    />
+                    <Route
+                      path="personnel/edit-parent/:id"
+                      element={
+                        <Suspense fallback={<LoadingWithFacts />}>
+                          <ParentEditPage />
+                        </Suspense>
+                      }
+                    />
+                  </>
+                )}
 
-                {/* Lists */}
-                <Route path="students" element={<AllStudents />} />
-                <Route path="students/edit/:id" element={<StudentEditPage />} />
-
-                <Route path="setup" element={<SetupWizard />} />
-
-                <Route path="teachers" element={<AllTeachers />} />
-                <Route path="bursars" element={<AllBursars />} />
-                <Route path="parents" element={<AllParents />} />
-                <Route
-                  path="personnel/edit/:id"
-                  element={<PersonnelEditPage />}
-                />
-                <Route
-                  path="personnel/edit-parent/:id"
-                  element={<ParentEditPage />}
-                />
-                <Route path="schools" element={<AllSchools />} />
-                <Route
-                  path="schools/edit-school/:id"
-                  element={<SchoolEditPage />}
-                />
-
-                <Route path="exams" element={<ExamsPage />} />
-                <Route path="exams/record" element={<RecordResultsPage />} />
-                <Route path="exams/report" element={<ReportCardsPage />} />
-                <Route path="exams/logs" element={<ResultsAuditPage />} />
-
-                <Route path="review" element={<ReviewPage />} />
+                {/* ---------------- Superadmin-only routes ---------------- */}
+                {role === "superadmin" && (
+                  <>
+                    <Route
+                      path="schools"
+                      element={
+                        <Suspense fallback={<LoadingWithFacts />}>
+                          <AllSchools />
+                        </Suspense>
+                      }
+                    />
+                    <Route
+                      path="schools/edit-school/:id"
+                      element={
+                        <Suspense fallback={<LoadingWithFacts />}>
+                          <SchoolEditPage />
+                        </Suspense>
+                      }
+                    />
+                  </>
+                )}
               </Route>
             </Route>
           </Route>

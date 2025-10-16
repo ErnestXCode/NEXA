@@ -1,16 +1,44 @@
 /// <reference lib="webworker" />
 
+/* eslint-env worker */
+
+
 // ✅ Use Workbox from CDN (no build step required)
-importScripts(
+self.importScripts(
   "https://storage.googleapis.com/workbox-cdn/releases/6.5.4/workbox-sw.js"
 );
 
-if (workbox) {
+if (self.workbox) {
   console.log("✅ Workbox loaded successfully");
 
-  workbox.core.clientsClaim();
-  workbox.precaching.cleanupOutdatedCaches();
-  workbox.precaching.precacheAndRoute(self.__WB_MANIFEST || []);
+  self.skipWaiting();
+  self.workbox.core.clientsClaim();
+  self.workbox.precaching.cleanupOutdatedCaches();
+  self.workbox.precaching.precacheAndRoute(self.__WB_MANIFEST || []);
+
+  // Always fetch the latest for HTML pages (app shell)
+  self.workbox.routing.registerRoute(
+  ({ request }) => request.destination === "image",
+  new self.workbox.strategies.CacheFirst({
+    cacheName: "images-cache",
+    plugins: [
+      new self.workbox.expiration.ExpirationPlugin({
+        maxEntries: 100,
+        maxAgeSeconds: 7 * 24 * 60 * 60, // 1 week
+      }),
+    ],
+  })
+);
+
+
+  // For static assets (JS/CSS), keep precache
+  self.workbox.routing.registerRoute(
+    ({ request }) =>
+      request.destination === "script" || request.destination === "style",
+    new self.workbox.strategies.StaleWhileRevalidate({
+      cacheName: "static-resources",
+    })
+  );
 } else {
   console.error("❌ Workbox failed to load");
 }
