@@ -9,7 +9,7 @@ const StudentFeesPage = () => {
   useEffect(() => {
     const fetchRecords = async () => {
       try {
-        const res = await api.get(`/fees/student/${studentId}`);
+        const res = await api.get(`/fees/student/${studentId}/history`);
         setRecords(res.data);
       } catch (err) {
         console.error(err);
@@ -30,16 +30,23 @@ const StudentFeesPage = () => {
             <th className="p-2">Type</th>
             <th className="p-2">Method</th>
             <th className="p-2">Date</th>
+            <th className="p-2">Handled By</th>
+            <th className="p-2">Note</th>
           </tr>
         </thead>
+
         <tbody>
-          {records.map(r => (
+          {records.map((r) => (
             <tr key={r._id} className="border-t border-gray-700">
               <td className="p-2">{r.term}</td>
-              <td className="p-2">{r.amount}</td>
-              <td className="p-2">{r.type}</td>
-              <td className="p-2">{r.method}</td>
-              <td className="p-2">{new Date(r.date).toLocaleDateString()}</td>
+              <td className="p-2">KES {r.amount.toLocaleString()}</td>
+              <td className="p-2 capitalize">{r.type}</td>
+              <td className="p-2 capitalize">{r.method}</td>
+              <td className="p-2">
+                {new Date(r.createdAt).toLocaleDateString()}
+              </td>
+              <td className="p-2">{r.handledBy ? r.handledBy.name : "—"}</td>
+              <td className="p-2">{r.note || "—"}</td>
             </tr>
           ))}
         </tbody>

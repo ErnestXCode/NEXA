@@ -19,6 +19,7 @@ const {
   getAllTransactions,
   getStudentFeeHistory,
   updateFeeRule,
+  getStudentsByClass,
 } = require("../controllers/fee/feeController");
 
 const {
@@ -38,7 +39,7 @@ router.post("/transactions", verifyJWT, recordTransaction);
 router.get("/transactions/all", verifyJWT, authorize(["admin", "bursar"]), getAllTransactions);
 
 // 📊 Get balances for a student
-router.get("/students/:studentId/balance", verifyJWT, getStudentBalance);
+// router.get("/students/:studentId/balance", verifyJWT, getStudentBalance);
 
 // 🔍 Fetch student transaction history
 router.get(
@@ -61,6 +62,8 @@ router.get("/schools/:schoolId/class-summary", verifyJWT, getClassSummary);
 
 // 🚨 Debtors list
 router.get("/schools/:schoolId/debtors", verifyJWT, getDebtors);
+
+router.get("/schools/class-students", verifyJWT, getStudentsByClass);
 
 router.get(
   "/schools/:schoolId/term-summary",

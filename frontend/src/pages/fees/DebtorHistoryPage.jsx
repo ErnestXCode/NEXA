@@ -72,56 +72,60 @@ const DebtorHistoryPage = () => {
       </div>
 
       {/* Transactions */}
-      <div className="bg-gray-900 p-6 rounded-xl border border-gray-800 shadow-md">
-        <h2 className="text-xl font-semibold border-b border-gray-800 pb-2 mb-4">
-          📜 All Transactions
-        </h2>
+    {/* Transactions */}
+<div className="bg-gray-900 p-6 rounded-xl border border-gray-800 shadow-md">
+  <h2 className="text-xl font-semibold border-b border-gray-800 pb-2 mb-4">
+    📜 All Transactions
+  </h2>
 
-        {transactions.length === 0 ? (
-          <p className="text-gray-400">No transactions found.</p>
-        ) : (
-          <table className="min-w-full border-collapse text-gray-200">
-            <thead>
-              <tr className="bg-gray-800 text-gray-300 text-sm uppercase tracking-wider">
-                <th className="p-3 text-left border-b border-gray-700">Date</th>
-                <th className="p-3 text-left border-b border-gray-700">Type</th>
-                <th className="p-3 text-left border-b border-gray-700">
-                  Amount
-                </th>
-                <th className="p-3 text-left border-b border-gray-700">
-                  Handled By
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {transactions.map((t) => (
-                <tr key={t._id} className="hover:bg-gray-800/50 transition">
-                  <td className="p-3 border-b border-gray-800">
-                    {dayjs(t.createdAt).format("DD MMM YYYY")}
-                  </td>
-                  <td className="p-3 border-b border-gray-800 capitalize">
-                    {t.type}
-                  </td>
-                  <td
-                    className={`p-3 border-b border-gray-800 font-semibold ${
-                      t.type === "fine"
-                        ? "text-red-400"
-                        : t.type === "adjustment"
-                        ? "text-yellow-400"
-                        : "text-green-400"
-                    }`}
-                  >
-                    KES {t.amount.toLocaleString()}
-                  </td>
-                  <td className="p-3 border-b border-gray-800">
-                    {t.handledBy?.name || "—"}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
+  {transactions.length === 0 ? (
+    <p className="text-gray-400">No transactions found.</p>
+  ) : (
+    <table className="min-w-full border-collapse text-gray-200">
+      <thead>
+        <tr className="bg-gray-800 text-gray-300 text-sm uppercase tracking-wider">
+          <th className="p-3 text-left border-b border-gray-700">Date</th>
+          <th className="p-3 text-left border-b border-gray-700">Academic Year</th>
+          <th className="p-3 text-left border-b border-gray-700">Term</th>
+          <th className="p-3 text-left border-b border-gray-700">Type</th>
+          <th className="p-3 text-left border-b border-gray-700">Amount</th>
+          <th className="p-3 text-left border-b border-gray-700">Method</th>
+          <th className="p-3 text-left border-b border-gray-700">Handled By</th>
+          <th className="p-3 text-left border-b border-gray-700">Note</th>
+        </tr>
+      </thead>
+      <tbody>
+        {transactions.map((t) => (
+          <tr key={t._id} className="hover:bg-gray-800/50 transition">
+            <td className="p-3 border-b border-gray-800">
+              {dayjs(t.createdAt).format("DD MMM YYYY")}
+            </td>
+            <td className="p-3 border-b border-gray-800">{t.academicYear}</td>
+            <td className="p-3 border-b border-gray-800">{t.term}</td>
+            <td className="p-3 border-b border-gray-800 capitalize">{t.type}</td>
+            <td
+              className={`p-3 border-b border-gray-800 font-semibold ${
+                t.type === "fine"
+                  ? "text-red-400"
+                  : t.type === "adjustment"
+                  ? "text-yellow-400"
+                  : "text-green-400"
+              }`}
+            >
+              KES {t.amount.toLocaleString()}
+            </td>
+            <td className="p-3 border-b border-gray-800 capitalize">{t.method}</td>
+            <td className="p-3 border-b border-gray-800">
+              {t.handledBy?.name || "—"}
+            </td>
+            <td className="p-3 border-b border-gray-800">{t.note || "—"}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  )}
+</div>
+
     </div>
   );
 };

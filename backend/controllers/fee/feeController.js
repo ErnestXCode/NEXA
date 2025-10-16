@@ -201,27 +201,27 @@ exports.getAllTransactions = async (req, res) => {
 /* -------------------------------
    📊 Get Balance for a Student
 --------------------------------*/
-exports.getStudentBalance = async (req, res) => {
-  console.time("getStudentBalance");
+// exports.getStudentBalance = async (req, res) => {
+//   console.time("getStudentBalance");
 
-  try {
-    const schoolId = req.user.school;
+//   try {
+//     const schoolId = req.user.school;
 
-    const { academicYear, studentId } = req.query;
+//     const { academicYear, studentId } = req.query;
 
-    const student = await Student.findById(studentId);
-    if (!student) return res.status(404).json({ message: "Student not found" });
+//     const student = await Student.findById(studentId);
+//     if (!student) return res.status(404).json({ message: "Student not found" });
 
-    const balances = await student.computeBalances(academicYear);
+//     const balances = await student.computeBalances(academicYear);
 
-    console.timeEnd("getStudentBalance");
+//     console.timeEnd("getStudentBalance");
 
-    res.json({ studentId, academicYear, balances });
-  } catch (err) {
-    console.error("getStudentBalance error:", err);
-    res.status(500).json({ message: "Server error" });
-  }
-};
+//     res.json({ studentId, academicYear, balances });
+//   } catch (err) {
+//     console.error("getStudentBalance error:", err);
+//     res.status(500).json({ message: "Server error" });
+//   }
+// };
 
 /* -------------------------------
    🏫 Set Fee Rules for a School
@@ -644,7 +644,7 @@ exports.getSchoolTermComparison = async (req, res) => {
 //   }
 // };
 exports.getClassSummary = async (req, res) => {
-  console.time("classSummary");
+  // console.time("classSummary");
   try {
     const schoolId = req.user.school;
     const { academicYear } = req.query;
@@ -659,7 +659,7 @@ exports.getClassSummary = async (req, res) => {
     ]);
 
     if (!students.length) {
-      console.timeEnd("classSummary");
+      // console.timeEnd("classSummary");
       return res.json(summary);
     }
 
@@ -715,7 +715,7 @@ exports.getClassSummary = async (req, res) => {
       }
     }
 
-    console.timeEnd("classSummary");
+    // console.timeEnd("classSummary");
     res.json(summary);
   } catch (err) {
     console.error("getClassSummary error:", err);
@@ -732,7 +732,7 @@ exports.getClassSummary = async (req, res) => {
 // ✅ Enhanced Debtors Controller with Filters
 
 exports.getDebtors = async (req, res) => {
-  console.time("debtors");
+  // console.time("debtors");
 
   try {
     const schoolId = req.user.school;
@@ -761,7 +761,7 @@ exports.getDebtors = async (req, res) => {
     }).lean();
 
     if (!students.length) {
-      console.timeEnd("debtors");
+      // console.timeEnd("debtors");
       return res.json({
         totalDebtors: 0,
         totalPages: 0,
@@ -852,7 +852,7 @@ exports.getDebtors = async (req, res) => {
     const startIndex = (pageInt - 1) * limitInt;
     const paginatedDebtors = debtors.slice(startIndex, startIndex + limitInt);
 
-    console.timeEnd("debtors");
+    // console.timeEnd("debtors");
     res.json({
       totalDebtors: debtors.length,
       totalPages: Math.ceil(debtors.length / limitInt),
@@ -867,7 +867,7 @@ exports.getDebtors = async (req, res) => {
 };
 
 exports.onboardStudents = async (req, res) => {
-  console.time("onboarding");
+  // console.time("onboarding");
   try {
     const schoolId = req.user.school;
     const { students, academicYear, term, viaCSV } = req.body;
@@ -963,7 +963,7 @@ exports.onboardStudents = async (req, res) => {
     if (transactions.length > 0) {
       await FeeTransaction.insertMany(transactions, { ordered: false });
     }
-    console.timeEnd("onboarding");
+    // console.timeEnd("onboarding");
 
     res.status(201).json({
       message: "Students onboarded successfully",
@@ -1057,7 +1057,7 @@ exports.getStudentLogs = async (req, res) => {
 
 // controllers/feeController.js
 exports.getStudentFeeHistory = async (req, res) => {
-  console.time("getStudentFeeHistory");
+  // console.time("getStudentFeeHistory");
   try {
     const schoolId = req.user.school;
     const { studentId } = req.params;
@@ -1069,13 +1069,13 @@ exports.getStudentFeeHistory = async (req, res) => {
     }).lean();
 
     if (!student) {
-      console.timeEnd("getStudentFeeHistory");
+      // console.timeEnd("getStudentFeeHistory");
       return res
         .status(404)
         .json({ message: "Student not found or not in your school" });
     }
 
-    console.log("student---------", student);
+    // console.log("student---------", student);
 
     // Fetch all transactions for that student — all years, all terms
     const transactions = await FeeTransaction.find({
@@ -1086,7 +1086,7 @@ exports.getStudentFeeHistory = async (req, res) => {
       .sort({ createdAt: -1 }) // most recent first
       .lean();
 
-    console.log("trans------", transactions);
+    // console.log("trans------", transactions);
 
     // Compute totals for quick overview
     const totalPaid = transactions
@@ -1101,7 +1101,7 @@ exports.getStudentFeeHistory = async (req, res) => {
       .filter((t) => t.type === "fine")
       .reduce((sum, t) => sum + t.amount, 0);
 
-    console.timeEnd("getStudentFeeHistory");
+    // console.timeEnd("getStudentFeeHistory");
 
     res.json({
       student: {
@@ -1122,3 +1122,94 @@ exports.getStudentFeeHistory = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+
+
+// controllers/feeController.js
+exports.getStudentsByClass = async (req, res) => {
+  try {
+    const schoolId = req.user.school;
+    console.log('hit-----------------------------')
+    const { classLevel, academicYear } = req.query;
+    console.log(req.query)
+
+    if (!classLevel) 
+      return res.status(400).json({ message: "classLevel is required" });
+
+    // 1️⃣ Fetch all students in the class
+    const students = await Student.find({ school: schoolId, classLevel }).lean();
+    if (!students.length) return res.json({ students: [] });
+
+    const studentIds = students.map(s => s._id);
+
+    // 2️⃣ Fetch all FeeTransactions for these students in the given year
+    const transactions = await FeeTransaction.find({
+      student: { $in: studentIds },
+      academicYear,
+    }).lean();
+
+    // Map transactions by student + term
+    const txnMap = {};
+    for (const t of transactions) {
+      if (!txnMap[t.student]) txnMap[t.student] = {};
+      txnMap[t.student][t.term] = (txnMap[t.student][t.term] || 0) + t.amount;
+    }
+
+    // 3️⃣ Build fee lookup from school's fee rules
+    const school = await School.findById(schoolId).lean();
+    const allClasses = school.classLevels.map(c => c.name);
+    const expectedMap = {};
+
+    for (const rule of school.feeRules.filter(r => r.academicYear === academicYear)) {
+      const fromIdx = allClasses.indexOf(rule.fromClass);
+      const toIdx = allClasses.indexOf(rule.toClass);
+
+      for (let i = fromIdx; i <= toIdx; i++) {
+        const className = allClasses[i];
+        if (!expectedMap[className]) expectedMap[className] = {};
+        expectedMap[className][rule.term] = rule.amount;
+      }
+    }
+
+    const terms = ["Term 1", "Term 2", "Term 3"];
+
+    // 4️⃣ Compute balances for each student
+    const studentSummaries = students.map(student => {
+      let carryOver = 0;
+
+      const termBreakdown = terms.map(term => {
+        const expected = expectedMap[student.classLevel]?.[term] || 0;
+        const paid = txnMap[student._id]?.[term] || 0;
+
+        let balance = expected - (paid + carryOver);
+
+        if (balance <= 0) {
+          carryOver = Math.abs(balance);
+          balance = 0;
+        } else {
+          carryOver = 0;
+        }
+
+        return { term, expected, paid, outstanding: balance };
+      });
+
+      const totalOutstanding = termBreakdown.reduce((sum, t) => sum + t.outstanding, 0);
+
+      return {
+        studentId: student._id,
+        name: `${student.firstName} ${student.lastName}`,
+        classLevel: student.classLevel,
+        totalOutstanding,
+        terms: termBreakdown
+      };
+    });
+
+    // 5️⃣ Send all students, even if totalOutstanding is 0
+    res.json({ students: studentSummaries });
+
+  } catch (err) {
+    console.error("getStudentsByClass error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
