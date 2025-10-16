@@ -32,7 +32,6 @@ import AllParents from "./pages/actions/AllParents";
 import SchoolEditPage from "./pages/actions/SchoolEditPage";
 import SchoolSettings from "./pages/settings/SchoolSettings";
 import ReportCardsPage from "./pages/exams/ReportCardsPage";
-import Analytics from "./components/analytics/Analytics";
 import Feedback from "./pages/feedback/Feedback";
 import InstallPrompt from "./install/InstallPrompt";
 import { useSelector } from "react-redux";
@@ -47,6 +46,8 @@ import DebtorHistoryPage from "./pages/fees/DebtorHistoryPage";
 import LoadingWithFacts from "./components/layout/LoadingWithFacts";
 import { useEffect } from "react";
 import ClassStudentsPage from "./pages/fees/ClassStudentsPage";
+
+import { Analytics } from "@vercel/analytics/react"
 
 const HomeRedirect = () => {
   const { accessToken } = useSelector((state) => state.auth);
