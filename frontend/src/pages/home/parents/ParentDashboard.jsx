@@ -1,10 +1,10 @@
 // src/pages/dashboard/parent/ParentDashboard.jsx
 import React, { useEffect, useState } from "react";
-import { NavLink } from "react-router-dom";
 import api from "../../../api/axios";
 import useUnreadMessages from "../../../hooks/useUnreadMessages";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import CustomSelect from "../../../components/layout/CustomSelect";
+import { NavLink, useNavigate } from "react-router-dom";
 
 const ParentDashboard = () => {
   const [children, setChildren] = useState([]);
@@ -18,6 +18,7 @@ const ParentDashboard = () => {
     confirmed: false,
     rejected: false,
   });
+  const navigate = useNavigate();
 
   const [proof, setProof] = useState({
     amount: "",
@@ -218,9 +219,8 @@ const ParentDashboard = () => {
               </p>
             </div>
           </div>
-
           {/* ✅ New Outstanding Fees Block (from /fees/outstanding) */}
-          {feeBalances && (
+          {/* {feeBalances && (
             <div className="bg-gray-900 p-6 rounded-2xl shadow-md">
               <h2 className="text-xl font-bold mb-4 text-white">
                 Outstanding Balances –{" "}
@@ -256,8 +256,7 @@ const ParentDashboard = () => {
                 )}
               </ul>
             </div>
-          )}
-
+          )} */}
           {/* Payment Options */}
           {school?.paymentOptions?.length > 0 && (
             <div className="bg-gradient-to-r from-gray-900 to-gray-800 p-6 rounded-2xl shadow-md text-center">
@@ -304,7 +303,6 @@ const ParentDashboard = () => {
               </div>
             </div>
           )}
-
           {/* My Proofs Section */}
           {/* <div className="bg-gray-900 p-6 rounded-2xl shadow-md mt-6">
             <h2 className="text-xl font-bold mb-4 text-white">
@@ -362,7 +360,6 @@ const ParentDashboard = () => {
               </div>
             ))}
           </div> */}
-
           {/* My Proofs Section */}
           <div className="bg-gray-900 p-6 rounded-2xl shadow-md mt-6">
             <h2 className="text-xl font-bold mb-4 text-white">
@@ -449,7 +446,12 @@ const ParentDashboard = () => {
               );
             })}
           </div>
-
+          <button
+            onClick={() => navigate(`/dashboard/debtors/${selectedChild._id}`)}
+            className="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg shadow-md transition"
+          >
+            View Fee History
+          </button>
           {/* Submit Payment Proof */}
           <div className="bg-gray-900 p-6 rounded-2xl shadow-md mt-6">
             <h2 className="text-xl font-bold mb-4 text-white">
@@ -497,7 +499,6 @@ const ParentDashboard = () => {
               )}
             </div>
           </div>
-
           {/* Attendance Summary */}
           {attendanceSummary && (
             <div className="bg-gradient-to-r from-gray-900 to-gray-800 p-6 rounded-2xl shadow-md">
@@ -528,7 +529,6 @@ const ParentDashboard = () => {
               </div>
             </div>
           )}
-
           {/* Exams Section */}
           {/* Exams Section */}
           {childExams.length > 0 && (

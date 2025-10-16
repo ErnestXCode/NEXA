@@ -380,26 +380,27 @@ const RecordResultsPage = () => {
         }
       `}</style>
 
-      {showModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-60 z-50">
-          <div className="bg-gray-800 text-white rounded-lg shadow-xl p-6 w-80 border border-gray-700 modal-enter">
-            <h3
-              className={`text-lg font-semibold mb-2 ${
-                isError ? "text-red-400" : "text-green-400"
-              }`}
-            >
-              {isError ? "Error" : "Success"}
-            </h3>
-            <p className="mb-4 text-gray-200">{modalMessage}</p>
-            <button
-              onClick={() => setShowModal(false)}
-              className="w-full px-4 py-2 bg-blue-600 rounded hover:bg-blue-700 transition"
-            >
-              OK
-            </button>
-          </div>
-        </div>
-      )}
+    {showModal && (
+  <div className="fixed inset-0 flex items-center justify-center backdrop-blur-md bg-gray-900/40 z-50">
+    <div className="bg-gray-800 text-white rounded-lg shadow-xl p-6 w-80 border border-gray-700">
+      <h3
+        className={`text-lg font-semibold mb-2 ${
+          isError ? "text-red-400" : "text-green-400"
+        }`}
+      >
+        {isError ? "Error" : "Success"}
+      </h3>
+      <p className="mb-4 text-gray-200">{modalMessage}</p>
+      <button
+        onClick={() => setShowModal(false)}
+        className="w-full px-4 py-2 bg-blue-600 rounded hover:bg-blue-700 transition"
+      >
+        OK
+      </button>
+    </div>
+  </div>
+)}
+
     </div>
   );
 };
