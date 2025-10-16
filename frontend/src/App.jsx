@@ -48,6 +48,7 @@ import { useEffect } from "react";
 import ClassStudentsPage from "./pages/fees/ClassStudentsPage";
 
 import { Analytics } from "@vercel/analytics/react"
+import { SpeedInsights } from "@vercel/speed-insights/react"
 
 const HomeRedirect = () => {
   const { accessToken } = useSelector((state) => state.auth);
@@ -70,6 +71,7 @@ function App() {
     <div className="bg-gray-950 text-white min-h-screen">
       <BrowserRouter>
         <Analytics />
+        <SpeedInsights />
         <InstallPrompt />
         <Routes>
           {/* Public routes, critical */}
