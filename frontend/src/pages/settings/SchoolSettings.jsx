@@ -101,27 +101,26 @@ const SchoolSettings = ({ onNext }) => {
   };
 
   // --- Payment Options helpers (NEW) ---
-const addPaymentOption = () => {
-  setSchool((prev) => ({
-    ...prev,
-    paymentOptions: [
-      ...(prev.paymentOptions || []),
-      { type: "mpesa_paybill", label: "", account: "", instructions: "" },
-    ],
-  }));
-};
+  const addPaymentOption = () => {
+    setSchool((prev) => ({
+      ...prev,
+      paymentOptions: [
+        ...(prev.paymentOptions || []),
+        { type: "mpesa_paybill", label: "", account: "", instructions: "" },
+      ],
+    }));
+  };
 
-const updatePaymentOption = (idx, key, value) => {
-  const newOpts = [...(school.paymentOptions || [])];
-  newOpts[idx] = { ...newOpts[idx], [key]: value };
-  setSchool((prev) => ({ ...prev, paymentOptions: newOpts }));
-};
+  const updatePaymentOption = (idx, key, value) => {
+    const newOpts = [...(school.paymentOptions || [])];
+    newOpts[idx] = { ...newOpts[idx], [key]: value };
+    setSchool((prev) => ({ ...prev, paymentOptions: newOpts }));
+  };
 
-const removePaymentOption = (idx) => {
-  const newOpts = (school.paymentOptions || []).filter((_, i) => i !== idx);
-  setSchool((prev) => ({ ...prev, paymentOptions: newOpts }));
-};
-
+  const removePaymentOption = (idx) => {
+    const newOpts = (school.paymentOptions || []).filter((_, i) => i !== idx);
+    setSchool((prev) => ({ ...prev, paymentOptions: newOpts }));
+  };
 
   // --- Subjects by Class Range helpers (NEW) ---
   const addSubjectsRule = () => {
@@ -194,132 +193,210 @@ const removePaymentOption = (idx) => {
         </h1>
         <form onSubmit={handleSubmit} className="space-y-10">
           {/* Basic Info */}
-          <section>
-            <h2 className="text-gray-200 font-semibold mb-3 border-b border-gray-700 pb-1">
-              Basic Information
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <input
-                name="name"
-                placeholder="School Name"
-                value={school.name}
-                onChange={handleChange}
-                className="w-full p-2 rounded bg-gray-800 text-white text-sm"
-              />
-              <input
-                name="address"
-                placeholder="Address"
-                value={school.address || ""}
-                onChange={handleChange}
-                className="w-full p-2 rounded bg-gray-800 text-white text-sm"
-              />
-              <input
-                name="email"
-                placeholder="Email"
-                value={school.email || ""}
-                onChange={handleChange}
-                className="w-full p-2 rounded bg-gray-800 text-white text-sm"
-              />
-              <input
-                name="phone"
-                placeholder="Phone"
-                value={school.phone || ""}
-                onChange={handleChange}
-                className="w-full p-2 rounded bg-gray-800 text-white text-sm"
-              />
-            </div>
-          </section>
-
-          {/* Payment Options (NEW) */}
-{/* Payment Options (Simplified) */}
-<section>
+        <section>
   <h2 className="text-gray-200 font-semibold mb-3 border-b border-gray-700 pb-1">
-    Payment Methods
+    Basic Information
   </h2>
-  <div className="space-y-3">
-    {school.paymentOptions?.map((opt, idx) => {
-      // dynamic placeholder based on type
-      const getAccountPlaceholder = (type) => {
-        switch (type) {
-          case "mpesa_paybill":
-            return "Enter Paybill Number";
-          case "mpesa_till":
-            return "Enter Till Number";
-          case "phone":
-            return "Enter Phone Number";
-          case "bank":
-            return "Enter Bank Account Number";
-          default:
-            return "Enter Account Reference";
-        }
-      };
+  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <div>
+      <label className="block text-gray-400 text-sm mb-1">School Name</label>
+      <input
+        name="name"
+        value={school.name}
+        onChange={handleChange}
+        className="w-full p-2 rounded bg-gray-800 text-white text-sm"
+      />
+    </div>
 
-      return (
-        <div
-          key={idx}
-          className="bg-gray-800 p-3 rounded border border-gray-700 space-y-2"
-        >
-          {/* Type selector (dropdown is effectively the "label") */}
-          <select
-            value={opt.type}
-            onChange={(e) => updatePaymentOption(idx, "type", e.target.value)}
-            className="w-full p-2 rounded bg-gray-700 text-white text-sm"
-          >
-            <option value="mpesa_paybill">M-Pesa Paybill</option>
-            <option value="mpesa_till">M-Pesa Till</option>
-            <option value="phone">Phone Number</option>
-            <option value="bank">Bank Account</option>
-          </select>
+    <div>
+      <label className="block text-gray-400 text-sm mb-1">Address</label>
+      <input
+        name="address"
+        value={school.address || ""}
+        onChange={handleChange}
+        className="w-full p-2 rounded bg-gray-800 text-white text-sm"
+      />
+    </div>
 
-          {/* Account field with dynamic placeholder */}
-          <input
-            type="text"
-            placeholder={getAccountPlaceholder(opt.type)}
-            value={opt.account || ""}
-            onChange={(e) => updatePaymentOption(idx, "account", e.target.value)}
-            className="w-full p-2 rounded bg-gray-700 text-white text-sm"
-          />
+    <div>
+      <label className="block text-gray-400 text-sm mb-1">Email</label>
+      <input
+        name="email"
+        value={school.email || ""}
+        onChange={handleChange}
+        className="w-full p-2 rounded bg-gray-800 text-white text-sm"
+      />
+    </div>
 
-          {/* Instructions */}
-         {/* Instructions */}
-<div>
-  <label className="block text-gray-400 text-sm mb-1">
-    Payment Instructions (one per line)
-  </label>
-  <textarea
-    placeholder={`Example:\n- Use Admission Number as Ref\n- Keep payment receipt`}
-    value={opt.instructions || ""}
-    onChange={(e) =>
-      updatePaymentOption(idx, "instructions", e.target.value)
-    }
-    className="w-full p-2 rounded bg-gray-700 text-white text-sm"
-    rows={3}
-  />
-</div>
+    <div>
+      <label className="block text-gray-400 text-sm mb-1">Phone</label>
+      <input
+        name="phone"
+        value={school.phone || ""}
+        onChange={handleChange}
+        className="w-full p-2 rounded bg-gray-800 text-white text-sm"
+      />
+    </div>
 
+    <div>
+      <label className="block text-gray-400 text-sm mb-1">School Motto</label>
+      <input
+        name="motto"
+        value={school.motto || ""}
+        onChange={handleChange}
+        className="w-full p-2 rounded bg-gray-800 text-white text-sm"
+      />
+    </div>
 
-          <button
-            type="button"
-            onClick={() => removePaymentOption(idx)}
-            className="text-red-400 hover:text-red-600 text-sm"
-          >
-            ✕ Remove Payment Method
-          </button>
-        </div>
-      );
-    })}
+    <div>
+      <label className="block text-gray-400 text-sm mb-1">School Vision</label>
+      <input
+        name="vision"
+        value={school.vision || ""}
+        onChange={handleChange}
+        className="w-full p-2 rounded bg-gray-800 text-white text-sm"
+      />
+    </div>
 
-    <button
-      type="button"
-      onClick={addPaymentOption}
-      className="px-3 py-1 bg-gray-700 text-white rounded hover:bg-gray-600 text-sm"
-    >
-      ➕ Add Payment Method
-    </button>
+    <div className="sm:col-span-2">
+      <label className="block text-gray-400 text-sm mb-1">
+        Upload School Logo (max 2MB)
+      </label>
+      <input
+        type="file"
+        accept="image/*"
+        onChange={async (e) => {
+          const file = e.target.files[0];
+          if (!file) return;
+
+          const maxSizeMB = 2;
+          if (file.size / 1024 / 1024 > maxSizeMB) {
+            alert(`File too large! Maximum allowed size is ${maxSizeMB}MB.`);
+            return;
+          }
+
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            setSchool((prev) => ({ ...prev, logoUrl: reader.result }));
+          };
+          reader.readAsDataURL(file);
+        }}
+        className="w-full p-2 rounded bg-gray-800 text-white text-sm"
+      />
+    </div>
   </div>
 </section>
 
+          <div className="flex flex-col items-center mb-3">
+            {school.logoUrl ? (
+              <img
+                src={school.logoUrl}
+                alt="School Logo"
+                className="w-32 h-32 object-contain rounded-lg border border-gray-700 mb-2"
+              />
+            ) : (
+              <div className="w-32 h-32 bg-gray-800 rounded-lg border border-gray-700 mb-2 flex items-center justify-center text-gray-500 text-sm">
+                No Logo
+              </div>
+            )}
+            <span className="text-gray-400 text-xs">Logo Preview</span>
+          </div>
 
+          {/* Payment Options (NEW) */}
+          {/* Payment Options (Simplified) */}
+          <section>
+            <h2 className="text-gray-200 font-semibold mb-3 border-b border-gray-700 pb-1">
+              Payment Methods
+            </h2>
+            <div className="space-y-3">
+              {school.paymentOptions?.map((opt, idx) => {
+                // dynamic placeholder based on type
+                const getAccountPlaceholder = (type) => {
+                  switch (type) {
+                    case "mpesa_paybill":
+                      return "Enter Paybill Number";
+                    case "mpesa_till":
+                      return "Enter Till Number";
+                    case "phone":
+                      return "Enter Phone Number";
+                    case "bank":
+                      return "Enter Bank Account Number";
+                    default:
+                      return "Enter Account Reference";
+                  }
+                };
+
+                return (
+                  <div
+                    key={idx}
+                    className="bg-gray-800 p-3 rounded border border-gray-700 space-y-2"
+                  >
+                    {/* Type selector (dropdown is effectively the "label") */}
+                    <select
+                      value={opt.type}
+                      onChange={(e) =>
+                        updatePaymentOption(idx, "type", e.target.value)
+                      }
+                      className="w-full p-2 rounded bg-gray-700 text-white text-sm"
+                    >
+                      <option value="mpesa_paybill">M-Pesa Paybill</option>
+                      <option value="mpesa_till">M-Pesa Till</option>
+                      <option value="phone">Phone Number</option>
+                      <option value="bank">Bank Account</option>
+                    </select>
+
+                    {/* Account field with dynamic placeholder */}
+                    <input
+                      type="text"
+                      placeholder={getAccountPlaceholder(opt.type)}
+                      value={opt.account || ""}
+                      onChange={(e) =>
+                        updatePaymentOption(idx, "account", e.target.value)
+                      }
+                      className="w-full p-2 rounded bg-gray-700 text-white text-sm"
+                    />
+
+                    {/* Instructions */}
+                    {/* Instructions */}
+                    <div>
+                      <label className="block text-gray-400 text-sm mb-1">
+                        Payment Instructions (one per line)
+                      </label>
+                      <textarea
+                        placeholder={`Example:\n- Use Admission Number as Ref\n- Keep payment receipt`}
+                        value={opt.instructions || ""}
+                        onChange={(e) =>
+                          updatePaymentOption(
+                            idx,
+                            "instructions",
+                            e.target.value
+                          )
+                        }
+                        className="w-full p-2 rounded bg-gray-700 text-white text-sm"
+                        rows={3}
+                      />
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => removePaymentOption(idx)}
+                      className="text-red-400 hover:text-red-600 text-sm"
+                    >
+                      ✕ Remove Payment Method
+                    </button>
+                  </div>
+                );
+              })}
+
+              <button
+                type="button"
+                onClick={addPaymentOption}
+                className="px-3 py-1 bg-gray-700 text-white rounded hover:bg-gray-600 text-sm"
+              >
+                ➕ Add Payment Method
+              </button>
+            </div>
+          </section>
 
           {/* Global Subjects */}
           <section>
@@ -468,116 +545,118 @@ const removePaymentOption = (idx) => {
           )} */}
 
           <section>
-  <h2 className="text-gray-200 font-semibold mb-3 border-b border-gray-700 pb-1">
-    Class Levels & Streams
-  </h2>
+            <h2 className="text-gray-200 font-semibold mb-3 border-b border-gray-700 pb-1">
+              Class Levels & Streams
+            </h2>
 
-  <div
-    className="
+            <div
+              className="
       grid gap-3
       sm:grid-cols-2
       lg:grid-cols-3
       xl:grid-cols-4
     "
-  >
-    {school.classLevels.map((cls, idx) => (
-      <div
-        key={idx}
-        className="bg-gray-800 p-3 rounded border border-gray-700 flex flex-col"
-      >
-        <div className="flex justify-between items-center mb-2">
-          <input
-            value={cls.name}
-            onChange={(e) => {
-              const newLevels = [...school.classLevels];
-              newLevels[idx].name = e.target.value;
-              setSchool((prev) => ({
-                ...prev,
-                classLevels: newLevels,
-              }));
-            }}
-            className="flex-1 mr-2 p-2 rounded bg-gray-700 text-white text-sm"
-          />
-          <button
-            type="button"
-            onClick={() => {
-              const newLevels = school.classLevels.filter((_, i) => i !== idx);
-              setSchool((prev) => ({
-                ...prev,
-                classLevels: newLevels,
-              }));
-            }}
-            className="text-red-400 hover:text-red-600 text-sm"
-          >
-            ✕ 
-          </button>
-        </div>
-
-        <div className="flex flex-wrap gap-2">
-          {cls.streams.map((s, i) => (
-            <span
-              key={i}
-              className="bg-green-600 text-white px-2 py-1 rounded-full text-sm flex items-center gap-1"
             >
-              {s}
+              {school.classLevels.map((cls, idx) => (
+                <div
+                  key={idx}
+                  className="bg-gray-800 p-3 rounded border border-gray-700 flex flex-col"
+                >
+                  <div className="flex justify-between items-center mb-2">
+                    <input
+                      value={cls.name}
+                      onChange={(e) => {
+                        const newLevels = [...school.classLevels];
+                        newLevels[idx].name = e.target.value;
+                        setSchool((prev) => ({
+                          ...prev,
+                          classLevels: newLevels,
+                        }));
+                      }}
+                      className="flex-1 mr-2 p-2 rounded bg-gray-700 text-white text-sm"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newLevels = school.classLevels.filter(
+                          (_, i) => i !== idx
+                        );
+                        setSchool((prev) => ({
+                          ...prev,
+                          classLevels: newLevels,
+                        }));
+                      }}
+                      className="text-red-400 hover:text-red-600 text-sm"
+                    >
+                      ✕
+                    </button>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    {cls.streams.map((s, i) => (
+                      <span
+                        key={i}
+                        className="bg-green-600 text-white px-2 py-1 rounded-full text-sm flex items-center gap-1"
+                      >
+                        {s}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newLevels = [...school.classLevels];
+                            newLevels[idx].streams = newLevels[
+                              idx
+                            ].streams.filter((_, si) => si !== i);
+                            setSchool((prev) => ({
+                              ...prev,
+                              classLevels: newLevels,
+                            }));
+                          }}
+                          className="ml-1 text-xs text-red-200 hover:text-red-400"
+                        >
+                          ✕
+                        </button>
+                      </span>
+                    ))}
+                    {false && (
+                      <input
+                        type="text"
+                        placeholder="Add stream"
+                        onKeyDown={(e) => {
+                          if (["Enter", ","].includes(e.key)) {
+                            e.preventDefault();
+                            const newLevels = [...school.classLevels];
+                            newLevels[idx].streams.push(e.target.value.trim());
+                            setSchool((prev) => ({
+                              ...prev,
+                              classLevels: newLevels,
+                            }));
+                            e.target.value = "";
+                          }
+                        }}
+                        className="flex-1 min-w-[120px] p-2 rounded bg-gray-700 text-white text-sm"
+                      />
+                    )}
+                  </div>
+                </div>
+              ))}
+
               <button
                 type="button"
-                onClick={() => {
-                  const newLevels = [...school.classLevels];
-                  newLevels[idx].streams = newLevels[idx].streams.filter(
-                    (_, si) => si !== i
-                  );
+                onClick={() =>
                   setSchool((prev) => ({
                     ...prev,
-                    classLevels: newLevels,
-                  }));
-                }}
-                className="ml-1 text-xs text-red-200 hover:text-red-400"
-              >
-                ✕
-              </button>
-            </span>
-          ))}
-          {false && (
-            <input
-              type="text"
-              placeholder="Add stream"
-              onKeyDown={(e) => {
-                if (["Enter", ","].includes(e.key)) {
-                  e.preventDefault();
-                  const newLevels = [...school.classLevels];
-                  newLevels[idx].streams.push(e.target.value.trim());
-                  setSchool((prev) => ({
-                    ...prev,
-                    classLevels: newLevels,
-                  }));
-                  e.target.value = "";
+                    classLevels: [
+                      ...prev.classLevels,
+                      { name: "New Class", streams: [] },
+                    ],
+                  }))
                 }
-              }}
-              className="flex-1 min-w-[120px] p-2 rounded bg-gray-700 text-white text-sm"
-            />
-          )}
-        </div>
-      </div>
-    ))}
-
-    <button
-      type="button"
-      onClick={() =>
-        setSchool((prev) => ({
-          ...prev,
-          classLevels: [...prev.classLevels, { name: "New Class", streams: [] }],
-        }))
-      }
-      className="px-3 py-2 bg-gray-700 text-white rounded hover:bg-gray-600 text-sm text-center"
-    >
-      ➕ Add Level
-    </button>
-  </div>
-</section>
-
-
-         
+                className="px-3 py-2 bg-gray-700 text-white rounded hover:bg-gray-600 text-sm text-center"
+              >
+                ➕ Add Level
+              </button>
+            </div>
+          </section>
 
           {/* Subjects By Class Range (NEW) */}
           <section>
@@ -719,8 +798,6 @@ const removePaymentOption = (idx) => {
               </div>
             </section>
           )}
-
-          
 
           <button
             type="button"

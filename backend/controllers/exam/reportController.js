@@ -18,11 +18,16 @@ function drawResultsTable(doc, er, school) {
   const headers = ["Subject", "Marks", "Performance Level", "Remark"];
 
   let x = startX;
+  // Table headers background
   headers.forEach((h, i) => {
-    doc.rect(x, y, colWidths[i], 25).stroke();
-    doc.text(h, x + 5, y + 7, { width: colWidths[i] - 10, align: "center" });
+    doc.rect(x, y, colWidths[i], 25).fillAndStroke("#bbdefb", "#0d47a1"); // soft blue fill
+    doc
+      .fillColor("#0d47a1")
+      .font("Helvetica-Bold")
+      .text(h, x + 5, y + 7, { width: colWidths[i] - 10, align: "center" });
     x += colWidths[i];
   });
+
   y += 25;
 
   // --- Table rows
@@ -43,11 +48,9 @@ function drawResultsTable(doc, er, school) {
     const rowHeight = Math.max(...heights, 25);
 
     // Alternate row background
+    // Alternate row background
     if (i % 2 === 0) {
-      doc
-        .rect(startX, y, tableWidth, rowHeight)
-        .fill("#f2f2f2")
-        .stroke();
+      doc.rect(startX, y, tableWidth, rowHeight).fill("#f1f8e9").stroke(); // light greenish
       doc.fillColor("black");
     } else {
       doc.rect(startX, y, tableWidth, rowHeight).stroke();
@@ -56,7 +59,9 @@ function drawResultsTable(doc, er, school) {
     // Draw text in each column
     let colX = startX;
     rowData.forEach((text, j) => {
-      doc.text(text, colX + 5, y + 5, {
+      const textHeight = doc.heightOfString(text, { width: colWidths[j] - 10 });
+      const textY = y + (rowHeight - textHeight) / 2; // center vertically
+      doc.text(text, colX + 5, textY, {
         width: colWidths[j] - 10,
         align: j === 1 || j === 2 ? "center" : "left",
       });
@@ -79,11 +84,13 @@ function drawResultsTable(doc, er, school) {
   }
 
   // Draw bottom border line (to close the table neatly)
-  doc.moveTo(startX, y).lineTo(startX + tableWidth, y).stroke();
+  doc
+    .moveTo(startX, y)
+    .lineTo(startX + tableWidth, y)
+    .stroke();
 
   doc.moveDown(2);
 }
-
 
 /**
  * Draw summary table for totals, average, grade
@@ -92,45 +99,44 @@ function drawSummaryTable(doc, er) {
   const startX = 50;
   const startY = doc.y;
   const rowHeight = 30;
-  const colWidths = [80, 80]; // Total, Average, Grade
+  const colWidths = [120, 120]; // Total, Average (slightly wider for readability)
+  const tableWidth = colWidths.reduce((a, b) => a + b, 0);
 
-  // Headers
+  // --- Header ---
   doc.font("Helvetica-Bold").fontSize(12);
   let x = startX;
   const headers = ["Total Marks", "Average"];
-  doc
-    .rect(
-      startX,
-      startY,
-      colWidths.reduce((a, b) => a + b, 0),
-      rowHeight
-    )
-    .stroke();
+
   headers.forEach((h, i) => {
-    doc.text(h, x + 5, startY + 8, {
+    // Light blue header background
+    doc
+      .rect(x, startY, colWidths[i], rowHeight)
+      .fillAndStroke("#bbdefb", "#0d47a1");
+    doc.fillColor("#0d47a1").text(h, x + 5, startY + 8, {
       width: colWidths[i] - 10,
       align: "center",
     });
     x += colWidths[i];
   });
 
-  // Values
-  doc.font("Helvetica").fontSize(13);
+  // --- Values ---
   const values = [er.total?.toString() || "-", er.average?.toFixed(2) || "-"];
   let y = startY + rowHeight;
   x = startX;
-  doc
-    .rect(
-      startX,
-      y,
-      colWidths.reduce((a, b) => a + b, 0),
-      rowHeight
-    )
-    .stroke();
   values.forEach((v, i) => {
-    doc.text(v, x + 5, y + 8, { width: colWidths[i] - 10, align: "center" });
+    // Subtle light grey background for value row
+    doc.rect(x, y, colWidths[i], rowHeight).fillAndStroke("#f9f9f9", "#000");
+    doc
+      .fillColor("black")
+      .text(v, x + 5, y + 8, { width: colWidths[i] - 10, align: "center" });
     x += colWidths[i];
   });
+
+  // --- Bottom border for full table ---
+  doc
+    .moveTo(startX, y + rowHeight)
+    .lineTo(startX + tableWidth, y + rowHeight)
+    .stroke();
 
   doc.moveDown(3);
 }
@@ -147,68 +153,140 @@ async function generateStudentReport(student, exam, school, positionText) {
       doc.on("end", () => resolve(Buffer.concat(chunks)));
 
       // --- Header ---
-      const logoWidth = 60;
+      // --- School Header (no outer box) ---
+      const headerY = 30;
+
+      // School logo on left
       if (school.logoUrl) {
         try {
-          doc.image(school.logoUrl, 50, 30, { width: logoWidth });
+          doc.image(school.logoUrl, 50, headerY, { width: 60, height: 60 });
         } catch (e) {
           console.warn("Logo not found:", e.message);
         }
       }
 
+      // School name centered
       doc
-  .fontSize(20)
-  .font("Helvetica-Bold")
-  .text(school.name || "School Name", 50, 35, { width: 500, align: "center" });
+        .font("Helvetica-Bold")
+        .fontSize(20)
+        .text(school.name || "School Name", 0, headerY + 15, {
+          width: 550,
+          align: "center",
+        });
 
+      // Optional motto/tagline
+      // Optional motto/tagline
+      if (school.motto) {
+        doc
+          .font("Helvetica-Oblique")
+          .fontSize(10)
+          .text(school.motto, 0, doc.y, { width: 550, align: "center" });
+      }
 
-      // Add address, phone, email if available
-   doc.fontSize(10);
-if (school.address)
-  doc.text(school.address, 50, doc.y, { width: 500, align: "center" });
-if (school.phone)
-  doc.text(`Tel: ${school.phone}`, 50, doc.y, { width: 500, align: "center" });
-if (school.email)
-  doc.text(`Email: ${school.email}`, 50, doc.y, { width: 500, align: "center" });
+      // Optional vision
+      if (school.vision) {
+        doc
+          .moveDown(0.2) // small spacing
+          .font("Helvetica-Oblique")
+          .fontSize(10)
+          .fillColor("#333333") // slightly darker grey
+          .text(`Vision: ${school.vision}`, 0, doc.y, {
+            width: 550,
+            align: "center",
+          });
+      }
 
-doc.moveDown(0.5);
-doc
-  .strokeColor("#000")
-  .lineWidth(1)
-  .moveTo(50, doc.y)
-  .lineTo(550, doc.y)
-  .stroke();
+      // School contact details under name
+      doc.font("Helvetica").fontSize(10);
+      let contactText = [];
+      if (school.address) contactText.push(school.address);
+      if (school.phone) contactText.push(`Tel: ${school.phone}`);
+      if (school.email) contactText.push(`Email: ${school.email}`);
+      doc.text(contactText.join(" | "), 0, doc.y, {
+        width: 550,
+        align: "center",
+      });
 
-doc.moveDown(1);
-doc
-  .fontSize(14)
-  .font("Helvetica-Bold")
-  .text(`${exam.name} (${exam.term})`, 50, doc.y, {
-    width: 500,
-    align: "center",
-  });
- 
-      doc.moveDown(1.5);
+      // Horizontal line below school details
+      doc.moveDown(0.5);
+      doc
+        .strokeColor("#000")
+        .lineWidth(1)
+        .moveTo(50, doc.y)
+        .lineTo(550, doc.y)
+        .stroke();
 
-      // --- Student Details ---
+      doc.moveDown(1);
+
+      // --- Exam Info Box ---
+      // Exam Info Box with color
+      const examBoxHeight = 30;
+      const examBoxY = doc.y;
+
+      doc
+        .roundedRect(50, examBoxY, 500, examBoxHeight, 5)
+        .fillAndStroke("#e3f2fd", "#0d47a1"); // light blue fill with blue border
+
+      doc
+        .fillColor("#0d47a1")
+        .font("Helvetica-Bold")
+        .fontSize(12)
+        .text(`${exam.name} (${exam.term})`, 55, examBoxY + 8);
+
+      doc
+        .fillColor("black")
+        .font("Helvetica")
+        .fontSize(12)
+        .text(`Date: ${new Date(exam.date).toDateString()}`, 400, examBoxY + 8);
+
+      // --- Student Info Box ---
+      // Calculate height dynamically
+      // --- Student Info Box (prettier version) ---
       const studentInfo = [
-        ["Name:", `${student.firstName} ${student.lastName}`],
-        ["Admission No:", student.admissionNumber || "-"],
-        ["Class:", student.classLevel],
-        ["Stream:", student.stream || "-"],
-        ["Exam Date:", new Date(exam.date).toDateString()],
-        ["Position:", positionText || "-"], // 👈 new line
+        ["Name", `${student.firstName} ${student.lastName}`],
+        ["Class", student.classLevel],
+        ["Position", positionText || "-"],
       ];
 
-      const startX = 50;
-      let startY = doc.y;
-      const col1Width = 120;
+      const rowHeight = 20;
+      const studentBoxHeight = studentInfo.length * rowHeight + 16; // padding
+      const studentBoxY = doc.y;
 
-      doc.font("Helvetica").fontSize(11);
+      // Rounded rectangle with background color
+      doc
+        .roundedRect(50, studentBoxY, 500, studentBoxHeight, 5)
+        .fillAndStroke("#f9f9f9", "#000"); // light grey fill with black border
+
+      let infoY = studentBoxY + 10;
+      const col1X = 60;
+      const col2X = 180;
+
       studentInfo.forEach(([label, value], i) => {
-        const y = startY + i * 18;
-        doc.font("Helvetica-Bold").text(label, startX, y);
-        doc.font("Helvetica").text(value, startX + col1Width, y);
+        // Draw horizontal separator for rows (except first row)
+        if (i > 0) {
+          doc
+            .strokeColor("#d3d3d3")
+            .lineWidth(0.5)
+            .moveTo(50, infoY - 5)
+            .lineTo(550, infoY - 5)
+            .stroke();
+        }
+
+        // Label styling
+        doc
+          .font("Helvetica-Bold")
+          .fontSize(11)
+          .fillColor("#0d47a1") // dark blue for labels
+          .text(`${label}:`, col1X, infoY);
+
+        // Value styling
+        doc
+          .font("Helvetica")
+          .fontSize(11)
+          .fillColor("black")
+          .text(value, col2X, infoY);
+
+        infoY += rowHeight;
       });
 
       doc.moveDown(2);
@@ -257,22 +335,28 @@ doc
         }
       }
 
-      // --- Footer ---
-      const bottom = doc.page.height - 120;
+      // --- Footer (dynamic placement) ---
+      doc.moveDown(2); // a bit of space after tables/remarks
+
+      // Ensure footer starts on a new page if space is too tight
+      if (doc.y > doc.page.height - 150) doc.addPage();
+
+      const footerY = doc.y + 20;
+
       doc
         .font("Helvetica")
         .fontSize(10)
-        .text(`Generated on: ${new Date().toDateString()}`, 50, bottom - 20);
+        .text(`Generated on: ${new Date().toDateString()}`, 50, footerY);
 
       doc
-        .text("__________________", 60, bottom)
-        .text("Class Teacher", 70, bottom + 15);
+        .text("__________________", 60, footerY + 20)
+        .text("Class Teacher", 70, footerY + 35);
       doc
-        .text("__________________", 250, bottom)
-        .text("Principal", 280, bottom + 15);
+        .text("__________________", 250, footerY + 20)
+        .text("Principal", 280, footerY + 35);
       doc
-        .text("__________________", 430, bottom)
-        .text("Parent/Guardian", 440, bottom + 15);
+        .text("__________________", 430, footerY + 20)
+        .text("Parent/Guardian", 440, footerY + 35);
 
       doc.end();
     } catch (err) {

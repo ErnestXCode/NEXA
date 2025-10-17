@@ -17,8 +17,8 @@ const feeRuleSchema = new mongoose.Schema({
   academicYear: { type: String, required: true }, // e.g. "2025/2026"
   term: { type: String, enum: ["Term 1", "Term 2", "Term 3"], required: true },
   fromClass: { type: String, required: true }, // e.g. "Grade 1"
-  toClass: { type: String, required: true },   // e.g. "Grade 3"
-  amount: { type: Number, required: true },    // expected fee
+  toClass: { type: String, required: true }, // e.g. "Grade 3"
+  amount: { type: Number, required: true }, // expected fee
 });
 
 const subjectsRuleSchema = new mongoose.Schema({
@@ -33,12 +33,11 @@ const classLevelSchema = new mongoose.Schema({
   feeExpectations: { type: [feeExpectationSchema], default: [] },
 });
 
-
 const paymentOptionSchema = new mongoose.Schema({
-  type: { 
-    type: String, 
-    enum: ["mpesa_paybill", "mpesa_till", "bank", "phone"], 
-    required: true 
+  type: {
+    type: String,
+    enum: ["mpesa_paybill", "mpesa_till", "bank", "phone"],
+    required: true,
   },
   label: { type: String }, // e.g. "School Paybill", "Bank A/C"
   account: { type: String, required: true }, // paybill no, till no, account number, or phone
@@ -52,6 +51,9 @@ const schoolSchema = new mongoose.Schema(
     phone: { type: String },
     // add payment stuff like paybill as optional
     email: { type: String },
+    motto: { type: String, default: "" },
+    vision: { type: String, default: "" },
+    logoUrl: { type: String, default: "" }, 
 
     payments: [{ type: mongoose.Schema.Types.ObjectId, ref: "Billing" }],
 
@@ -59,11 +61,8 @@ const schoolSchema = new mongoose.Schema(
     pesapalExpiresAt: { type: Date },
     lastPesapalCheck: { type: Date, default: null },
 
-
     isPilotSchool: { type: Boolean, default: false },
     isFreeTrial: { type: Boolean, default: false },
-
-    
 
     classLevels: {
       type: [classLevelSchema],
@@ -82,13 +81,13 @@ const schoolSchema = new mongoose.Schema(
     },
 
     feeRules: [feeRuleSchema],
-    
+
     subjectsByClass: {
       type: [subjectsRuleSchema],
       default: () => School.defaultCBCSubjectsByClass(),
     },
 
-     paymentOptions: {
+    paymentOptions: {
       type: [paymentOptionSchema],
       default: [],
     }, //for fees not billing
@@ -151,17 +150,6 @@ schoolSchema.statics.defaultCBCSubjectsByClass = function () {
   return [
     {
       fromClass: "PP1",
-      toClass: "PP1",
-      subjects: [
-        "Language Activities",
-        "Mathematical Activities",
-        "Christian Religious Education",
-        "Islamic Religious Education",
-        "Environmental Activities",
-      ],
-    },
-    {
-      fromClass: "PP2",
       toClass: "PP2",
       subjects: [
         "Language Activities",
@@ -185,22 +173,6 @@ schoolSchema.statics.defaultCBCSubjectsByClass = function () {
     },
     {
       fromClass: "Grade 4",
-      toClass: "Grade 4",
-      subjects: [
-        "English",
-        "Kiswahili",
-        "Mathematics",
-        "Social Studies",
-        "Science & Technology",
-        "Agriculture",
-        "Christian Religious Education",
-        "Islamic Religious Education",
-        "Arabic",
-        "French",
-      ],
-    },
-    {
-      fromClass: "Grade 5",
       toClass: "Grade 6",
       subjects: [
         "English",
@@ -212,11 +184,12 @@ schoolSchema.statics.defaultCBCSubjectsByClass = function () {
         "Christian Religious Education",
         "Islamic Religious Education",
         "Arabic",
+        "French",
       ],
     },
     {
       fromClass: "Grade 7",
-      toClass: "Grade 8",
+      toClass: "Grade 12",
       subjects: [
         "English",
         "Kiswahili",
@@ -229,24 +202,7 @@ schoolSchema.statics.defaultCBCSubjectsByClass = function () {
         "Islamic Religious Education",
         "Arabic",
       ],
-    },
-    {
-      fromClass: "Grade 9",
-      toClass: "Grade 9",
-      subjects: [
-        "English",
-        "Kiswahili",
-        "Mathematics",
-        "Integrated Science",
-        "Social Studies",
-        "Agriculture",
-        "Pre-Technical Studies",
-        "Christian Religious Education",
-        "Islamic Religious Education",
-        "Arabic",
-        "French",
-      ],
-    },
+    }
   ];
 };
 

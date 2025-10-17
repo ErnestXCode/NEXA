@@ -365,50 +365,91 @@ const ReportCardsPage = () => {
           {/* Charts */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
             {/* Top 3 */}
-            <div className="bg-gray-900 p-4 rounded-lg shadow">
-              <h3 className="text-lg font-semibold mb-2">Top 3 Students</h3>
-              <ResponsiveContainer width="100%" height={600}>
-                <BarChart key={selectedClass} data={top3}>
-                  <XAxis
-                    dataKey="name"
-                    height={100}
-                    interval={0}
-                    angle={-35}
-                    textAnchor="end"
-                  />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="average" fill="#00C49F" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+           {/* Top 3 Students */}
+<div className="bg-gray-900 p-4 rounded-lg shadow">
+  <h3 className="text-lg font-semibold mb-2 text-gray-200">Top 3 Students</h3>
+  <ResponsiveContainer width="100%" height={400}>
+    <BarChart data={top3} margin={{ top: 20, right: 20, bottom: 60, left: 20 }}>
+      <defs>
+        <linearGradient id="avgGradient" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="5%" stopColor="#00C49F" stopOpacity={0.9}/>
+          <stop offset="95%" stopColor="#00C49F" stopOpacity={0.3}/>
+        </linearGradient>
+      </defs>
+      <XAxis
+        dataKey="name"
+        angle={-25}
+        textAnchor="end"
+        height={80}
+        tick={{ fill: "#ccc" }}
+      />
+      <YAxis tick={{ fill: "#ccc" }} />
+      <Tooltip
+        contentStyle={{
+          backgroundColor: "#1f2937",
+          border: "1px solid #374151",
+          borderRadius: "8px",
+          color: "#fff"
+        }}
+        cursor={{ fill: "rgba(255,255,255,0.05)" }}
+      />
+      <Legend />
+      <Bar
+        dataKey="average"
+        fill="url(#avgGradient)"
+        radius={[6, 6, 0, 0]}
+        barSize={40}
+        animationDuration={900}
+      />
+    </BarChart>
+  </ResponsiveContainer>
+</div>
 
-            {/* Subject Performance */}
-            <div className="bg-gray-900 p-4 rounded-lg shadow">
-              <h3 className="text-lg font-semibold mb-2">
-                Best Performed Subjects
-              </h3>
-              <ResponsiveContainer width="100%" height={600}>
-                <BarChart
-                  key={selectedClass}
-                  data={subjectPerformance}
-                  margin={{ top: 20, right: 20, bottom: 60, left: 20 }}
-                >
-                  <XAxis
-                    dataKey="subject"
-                    type="category"
-                    interval={0}
-                    angle={-35}
-                    textAnchor="end"
-                    height={100}
-                  />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="average" fill="#0088FE" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+{/* Subject Performance */}
+<div className="bg-gray-900 p-4 rounded-lg shadow">
+  <h3 className="text-lg font-semibold mb-2 text-gray-200">
+    Best Performed Subjects
+  </h3>
+  <ResponsiveContainer width="100%" height={400}>
+    <BarChart
+      data={subjectPerformance}
+      margin={{ top: 20, right: 20, bottom: 60, left: 20 }}
+    >
+      <defs>
+        <linearGradient id="subjGradient" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="5%" stopColor="#0088FE" stopOpacity={0.9}/>
+          <stop offset="95%" stopColor="#0088FE" stopOpacity={0.3}/>
+        </linearGradient>
+      </defs>
+      <XAxis
+        dataKey="subject"
+        angle={-25}
+        textAnchor="end"
+        height={80}
+        tick={{ fill: "#ccc" }}
+      />
+      <YAxis tick={{ fill: "#ccc" }} />
+      <Tooltip
+        contentStyle={{
+          backgroundColor: "#1f2937",
+          border: "1px solid #374151",
+          borderRadius: "8px",
+          color: "#fff"
+        }}
+        cursor={{ fill: "rgba(255,255,255,0.05)" }}
+      />
+      <Legend />
+      <Bar
+        dataKey="average"
+        fill="url(#subjGradient)"
+        radius={[6, 6, 0, 0]}
+        barSize={35}
+        animationDuration={1000}
+      />
+    </BarChart>
+  </ResponsiveContainer>
+</div>
+
           </div>
         </>
       )}

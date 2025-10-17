@@ -134,6 +134,10 @@ const FeesPage = () => {
     select: (d) => d.feeRules || [],
   });
 
+  const filteredFeeRules = (feeRules || []).filter(
+    (r) => r.academicYear === academicYear
+  );
+
   // inside FeesPage component
   const [selectedTerm, setSelectedTerm] = useState("Term 1");
   const [selectedClass, setSelectedClass] = useState("Grade 1");
@@ -322,8 +326,30 @@ const FeesPage = () => {
           {/* Pie Chart */}
           <div className="w-full lg:w-1/3 h-90 flex flex-col items-center justify-center">
             {schoolSummary && (
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height={260}>
                 <PieChart>
+                  <defs>
+                    <linearGradient
+                      id="paidGradient"
+                      x1="0"
+                      y1="0"
+                      x2="1"
+                      y2="1"
+                    >
+                      <stop offset="0%" stopColor="#34d399" />
+                      <stop offset="100%" stopColor="#10b981" />
+                    </linearGradient>
+                    <linearGradient
+                      id="outGradient"
+                      x1="0"
+                      y1="0"
+                      x2="1"
+                      y2="1"
+                    >
+                      <stop offset="0%" stopColor="#f87171" />
+                      <stop offset="100%" stopColor="#dc2626" />
+                    </linearGradient>
+                  </defs>
                   <Pie
                     data={[
                       { name: "Paid", value: schoolSummary.paid },
@@ -333,23 +359,23 @@ const FeesPage = () => {
                     cy="50%"
                     innerRadius={70}
                     outerRadius={100}
+                    paddingAngle={3}
                     dataKey="value"
-                    labelLine={false}
                     label={({ name, percent }) =>
-                      `${name}: ${(percent * 100).toFixed(1)}%`
+                      `${name} ${(percent * 100).toFixed(1)}%`
                     }
+                    labelLine={false}
                   >
-                    {[{ fill: "#4ade80" }, { fill: "#f87171" }].map(
-                      (entry, index) => (
-                        <Cell key={`cell-${index}`} {...entry} />
-                      )
-                    )}
+                    <Cell fill="url(#paidGradient)" />
+                    <Cell fill="url(#outGradient)" />
                   </Pie>
                   <Tooltip
                     formatter={(v) => `KES ${v.toLocaleString()}`}
                     contentStyle={{
-                      backgroundColor: "#1f2937",
+                      backgroundColor: "#111827",
+                      color: "#f9fafb",
                       borderRadius: "8px",
+                      border: "1px solid #374151",
                     }}
                   />
                 </PieChart>
@@ -372,6 +398,14 @@ const FeesPage = () => {
           <p className="text-gray-400">Loading rules...</p>
         ) : (
           <div className="overflow-x-auto">
+            <p className="text-gray-400 text-sm mb-2">
+              Showing rules for{" "}
+              <span className="font-semibold text-blue-400">
+                {academicYear}
+              </span>{" "}
+              ({filteredFeeRules.length} found)
+            </p>
+
             <table className="w-full border border-gray-700 text-gray-200 mb-4">
               <thead className="bg-gray-800 text-gray-300">
                 <tr>
@@ -384,7 +418,7 @@ const FeesPage = () => {
                 </tr>
               </thead>
               <tbody>
-                {feeRules?.map((r) => (
+                {filteredFeeRules?.map((r) => (
                   <tr key={r._id} className="text-center hover:bg-gray-800/40">
                     <td className="border border-gray-700 p-2">
                       {editingRule?._id === r._id ? (
@@ -644,7 +678,6 @@ const FeesPage = () => {
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-  
         <ChartCard title="🏫 Class Fees Summary (Chart)">
           {loadingClass ? (
             <p className="text-gray-400">Loading class summary...</p>
@@ -694,20 +727,52 @@ const FeesPage = () => {
                     })}
                   margin={{ top: 5, right: 20, left: 10, bottom: 50 }}
                 >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                  <defs>
+                    <linearGradient id="paidBar" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#34d399" />
+                      <stop offset="100%" stopColor="#059669" />
+                    </linearGradient>
+                    <linearGradient id="outBar" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#f87171" />
+                      <stop offset="100%" stopColor="#b91c1c" />
+                    </linearGradient>
+                  </defs>
+
+                  <CartesianGrid strokeDasharray="3 3" stroke="#2d3748" />
                   <XAxis
                     dataKey="class"
-                    stroke="#9ca3af"
+                    stroke="#d1d5db"
                     interval={0}
                     angle={-30}
                     textAnchor="end"
                     tick={{ fontSize: 12 }}
                   />
-                  <YAxis stroke="#9ca3af" />
-                  <Tooltip formatter={(v) => `KES ${v.toLocaleString()}`} />
-                  <Legend />
-                  <Bar dataKey="Paid" fill="#4ade80" />
-                  <Bar dataKey="Outstanding" fill="#f87171" />
+                  <YAxis stroke="#d1d5db" />
+                  <Tooltip
+                    formatter={(v) => `KES ${v.toLocaleString()}`}
+                    contentStyle={{
+                      backgroundColor: "#1f2937",
+                      color: "#f9fafb",
+                      border: "1px solid #374151",
+                      borderRadius: "6px",
+                    }}
+                  />
+                  <Legend
+                    wrapperStyle={{
+                      color: "#e5e7eb",
+                      fontSize: "0.85rem",
+                    }}
+                  />
+                  <Bar
+                    dataKey="Paid"
+                    fill="url(#paidBar)"
+                    radius={[4, 4, 0, 0]}
+                  />
+                  <Bar
+                    dataKey="Outstanding"
+                    fill="url(#outBar)"
+                    radius={[4, 4, 0, 0]}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -723,15 +788,60 @@ const FeesPage = () => {
           ) : (
             <ResponsiveContainer width="100%" height={250}>
               <BarChart data={termComparison || []}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                <XAxis dataKey="term" stroke="#9ca3af" />
-                <YAxis stroke="#9ca3af" />
-                <Tooltip formatter={(v) => `KES ${v.toLocaleString()}`} />
+                <defs>
+                  <linearGradient id="expectedBar" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#60a5fa" />
+                    <stop offset="100%" stopColor="#2563eb" />
+                  </linearGradient>
+                  <linearGradient id="paidBar" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#34d399" />
+                    <stop offset="100%" stopColor="#059669" />
+                  </linearGradient>
+                  <linearGradient id="outBar" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#f87171" />
+                    <stop offset="100%" stopColor="#b91c1c" />
+                  </linearGradient>
+                </defs>
 
-                <Legend />
-                <Bar dataKey="expected" fill="#60a5fa" />
-                <Bar dataKey="paid" fill="#4ade80" />
-                <Bar dataKey="outstanding" fill="#f87171" />
+                <CartesianGrid strokeDasharray="3 3" stroke="#2d3748" />
+                <XAxis
+                  dataKey="term"
+                  stroke="#d1d5db"
+                  tick={{ fontSize: 12 }}
+                />
+                <YAxis stroke="#d1d5db" />
+                <Tooltip
+                  formatter={(v) => `KES ${v.toLocaleString()}`}
+                  contentStyle={{
+                    backgroundColor: "#1f2937",
+                    color: "#f9fafb",
+                    border: "1px solid #374151",
+                    borderRadius: "6px",
+                    fontSize: "0.85rem",
+                  }}
+                />
+                <Legend
+                  wrapperStyle={{
+                    color: "#e5e7eb",
+                    fontSize: "0.85rem",
+                  }}
+                />
+
+                <Bar
+                  dataKey="expected"
+                  fill="url(#expectedBar)"
+                  radius={[4, 4, 0, 0]}
+                />
+                <Bar
+                  dataKey="paid"
+                  fill="url(#paidBar)"
+                  radius={[4, 4, 0, 0]}
+                />
+                <Bar
+                  dataKey="outstanding"
+                  fill="url(#outBar)"
+                  radius={[4, 4, 0, 0]}
+                />
               </BarChart>
             </ResponsiveContainer>
           )}
@@ -1128,6 +1238,17 @@ const SummarySection = ({ title, data, loading }) => (
         <div className="w-full h-48">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
+              <defs>
+                <linearGradient id="paidGradient" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stopColor="#34d399" />
+                  <stop offset="100%" stopColor="#10b981" />
+                </linearGradient>
+                <linearGradient id="outGradient" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stopColor="#f87171" />
+                  <stop offset="100%" stopColor="#dc2626" />
+                </linearGradient>
+              </defs>
+
               <Pie
                 data={[
                   { name: "Paid", value: data?.paid || 0 },
@@ -1135,19 +1256,28 @@ const SummarySection = ({ title, data, loading }) => (
                 ]}
                 cx="50%"
                 cy="50%"
-                outerRadius={60}
+                outerRadius={62}
+                paddingAngle={1.5}
                 dataKey="value"
                 label={({ name, value }) =>
                   `${name}: KES ${value.toLocaleString()}`
                 }
+                labelLine={false}
               >
-                {[{ fill: "#4ade80" }, { fill: "#f87171" }].map(
-                  (entry, index) => (
-                    <Cell key={`cell-${index}`} {...entry} />
-                  )
-                )}
+                <Cell fill="url(#paidGradient)" />
+                <Cell fill="url(#outGradient)" />
               </Pie>
-              <Tooltip formatter={(v) => `KES ${v.toLocaleString()}`} />
+
+              <Tooltip
+                formatter={(v) => `KES ${v.toLocaleString()}`}
+                contentStyle={{
+                  backgroundColor: "#1f2937",
+                  color: "#f9fafb",
+                  borderRadius: "6px",
+                  border: "1px solid #374151",
+                  fontSize: "0.85rem",
+                }}
+              />
             </PieChart>
           </ResponsiveContainer>
         </div>

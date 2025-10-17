@@ -290,8 +290,6 @@ const AdminDashboard = () => {
         </div>
       </div>
 
-      
-
       {/* ================= Charts Section ================= */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {[
@@ -355,7 +353,6 @@ const AdminDashboard = () => {
                     const classA = a.class;
                     const classB = b.class;
 
-                    // Handle PP classes first
                     if (classA.startsWith("PP") && classB.startsWith("PP")) {
                       return classA.localeCompare(classB, undefined, {
                         numeric: true,
@@ -364,40 +361,62 @@ const AdminDashboard = () => {
                     if (classA.startsWith("PP")) return -1;
                     if (classB.startsWith("PP")) return 1;
 
-                    // Then numeric grades
                     const numA = parseInt(classA.replace(/\D/g, ""), 10);
                     const numB = parseInt(classB.replace(/\D/g, ""), 10);
 
                     if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
-
-                    // Fallback: alphabetical
                     return classA.localeCompare(classB);
                   })}
+                  barGap={6}
                 >
+                  <defs>
+                    <linearGradient id="studentBar" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#60a5fa" />
+                      <stop offset="100%" stopColor="#2563eb" />
+                    </linearGradient>
+                  </defs>
+
                   <CartesianGrid
                     strokeDasharray="3 3"
-                    stroke={darkTheme.grid}
+                    stroke={darkTheme.grid || "#2d3748"}
                   />
                   <XAxis
                     dataKey="class"
-                    stroke={darkTheme.axis}
-                    tick={{ fontSize: 12, fill: darkTheme.text }}
+                    stroke={darkTheme.axis || "#9ca3af"}
+                    tick={{ fontSize: 12, fill: darkTheme.text || "#e5e7eb" }}
                     interval={0}
+                    angle={-20}
+                    textAnchor="end"
+                    height={50}
                   />
                   <YAxis
-                    stroke={darkTheme.axis}
-                    tick={{ fill: darkTheme.text }}
+                    stroke={darkTheme.axis || "#9ca3af"}
+                    tick={{ fill: darkTheme.text || "#e5e7eb" }}
                   />
                   <Tooltip
                     contentStyle={{
-                      backgroundColor: darkTheme.tooltipBg,
-                      border: "none",
+                      backgroundColor: darkTheme.tooltipBg || "#1f2937",
+                      border: "1px solid #374151",
+                      borderRadius: "6px",
+                      color: darkTheme.tooltipText || "#f9fafb",
+                      fontSize: "0.85rem",
                     }}
-                    labelStyle={{ color: darkTheme.tooltipText }}
-                    itemStyle={{ color: darkTheme.tooltipText }}
+                    labelStyle={{ color: darkTheme.tooltipText || "#f9fafb" }}
+                    itemStyle={{ color: darkTheme.tooltipText || "#f9fafb" }}
                   />
-                  <Legend wrapperStyle={{ color: darkTheme.legendText }} />
-                  <Bar dataKey="count" fill={darkTheme.colors[0]} />
+                  <Legend
+                    wrapperStyle={{
+                      color: darkTheme.legendText || "#d1d5db",
+                      fontSize: "0.85rem",
+                    }}
+                  />
+                  <Bar
+                    dataKey="count"
+                    fill="url(#studentBar)"
+                    radius={[6, 6, 0, 0]}
+                    barSize={22}
+                    name="Students"
+                  />
                 </BarChart>
               </ResponsiveContainer>
             ),
@@ -405,75 +424,122 @@ const AdminDashboard = () => {
           {
             title: "Teachers per Subject",
             content: (
-              <ResponsiveContainer width="100%" height={400}>
-                <BarChart data={teachersPerSubject}  >
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    stroke={darkTheme.grid}
-                  />
-                  <XAxis
-                    dataKey="subject"
-                    interval={0}
-                    angle={-45}
-                    textAnchor="end"
-                    stroke={darkTheme.axis}
-                    height={80}
-                    tick={{ fill: darkTheme.text }}
-                  />
-                  <YAxis
-                    stroke={darkTheme.axis}
-                    tick={{ fill: darkTheme.text }}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: darkTheme.tooltipBg,
-                      border: "none",
-                    }}
-                    labelStyle={{ color: darkTheme.tooltipText }}
-                    itemStyle={{ color: darkTheme.tooltipText }}
-                  />
-                  <Legend wrapperStyle={{ color: darkTheme.legendText }} />
-                  <Bar dataKey="count" fill={darkTheme.colors[3]} />
-                </BarChart>
-              </ResponsiveContainer>
+             <ResponsiveContainer width="100%" height={400}>
+  <BarChart data={teachersPerSubject} barGap={8} barSize={28}>
+    <defs>
+      <linearGradient id="teacherBar" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stopColor="#a78bfa" />
+        <stop offset="100%" stopColor="#6d28d9" />
+      </linearGradient>
+    </defs>
+
+    <CartesianGrid strokeDasharray="3 3" stroke={darkTheme.grid || "#2d3748"} />
+
+    <XAxis
+      dataKey="subject"
+      interval={0}
+      angle={-35}
+      textAnchor="end"
+      stroke={darkTheme.axis || "#9ca3af"}
+      height={80}
+      tick={{ fill: darkTheme.text || "#e5e7eb", fontSize: 12 }}
+    />
+
+    <YAxis
+      stroke={darkTheme.axis || "#9ca3af"}
+      tick={{ fill: darkTheme.text || "#e5e7eb" }}
+    />
+
+    <Tooltip
+      contentStyle={{
+        backgroundColor: darkTheme.tooltipBg || "#1f2937",
+        border: "1px solid #374151",
+        borderRadius: "6px",
+        color: darkTheme.tooltipText || "#f9fafb",
+        fontSize: "0.85rem",
+      }}
+      labelStyle={{ color: darkTheme.tooltipText || "#f9fafb" }}
+      itemStyle={{ color: darkTheme.tooltipText || "#f9fafb" }}
+    />
+
+    <Legend
+      wrapperStyle={{
+        color: darkTheme.legendText || "#d1d5db",
+        fontSize: "0.9rem",
+        marginTop: 10,
+      }}
+    />
+
+    <Bar
+      dataKey="count"
+      fill="url(#teacherBar)"
+      radius={[8, 8, 0, 0]}
+      name="Teachers"
+    />
+  </BarChart>
+</ResponsiveContainer>
+
             ),
           },
           {
             title: "Activities Trend (Last 7 Days)",
             content: (
-              <ResponsiveContainer width="100%" height={400}>
-                <LineChart data={activitiesTrend}>
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    stroke={darkTheme.grid}
-                  />
-                  <XAxis
-                    dataKey="date"
-                    stroke={darkTheme.axis}
-                    tick={{ fill: darkTheme.text }}
-                  />
-                  <YAxis
-                    allowDecimals={false}
-                    stroke={darkTheme.axis}
-                    tick={{ fill: darkTheme.text }}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: darkTheme.tooltipBg,
-                      border: "none",
-                    }}
-                    labelStyle={{ color: darkTheme.tooltipText }}
-                    itemStyle={{ color: darkTheme.tooltipText }}
-                  />
-                  <Legend wrapperStyle={{ color: darkTheme.legendText }} />
-                  <Line
-                    type="monotone"
-                    dataKey="count"
-                    stroke={darkTheme.colors[5]}
-                    strokeWidth={2}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
+             <ResponsiveContainer width="100%" height={400}>
+  <LineChart data={activitiesTrend} margin={{ top: 20, right: 30, left: 10, bottom: 10 }}>
+    <defs>
+      <linearGradient id="activityLine" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stopColor="#38bdf8" stopOpacity={0.8} />
+        <stop offset="100%" stopColor="#0ea5e9" stopOpacity={0.2} />
+      </linearGradient>
+    </defs>
+
+    <CartesianGrid strokeDasharray="3 3" stroke={darkTheme.grid || "#2d3748"} />
+
+    <XAxis
+      dataKey="date"
+      stroke={darkTheme.axis || "#9ca3af"}
+      tick={{ fill: darkTheme.text || "#e5e7eb", fontSize: 12 }}
+      tickLine={false}
+    />
+
+    <YAxis
+      allowDecimals={false}
+      stroke={darkTheme.axis || "#9ca3af"}
+      tick={{ fill: darkTheme.text || "#e5e7eb" }}
+      tickLine={false}
+    />
+
+    <Tooltip
+      contentStyle={{
+        backgroundColor: darkTheme.tooltipBg || "#1f2937",
+        border: "1px solid #374151",
+        borderRadius: "8px",
+        color: darkTheme.tooltipText || "#f9fafb",
+        fontSize: "0.85rem",
+      }}
+      labelStyle={{ color: darkTheme.tooltipText || "#f9fafb" }}
+      itemStyle={{ color: darkTheme.tooltipText || "#f9fafb" }}
+    />
+
+    <Legend
+      wrapperStyle={{
+        color: darkTheme.legendText || "#d1d5db",
+        fontSize: "0.9rem",
+      }}
+    />
+
+    <Line
+      type="monotone"
+      dataKey="count"
+      stroke="url(#activityLine)"
+      strokeWidth={3}
+      dot={{ r: 4, fill: "#38bdf8", strokeWidth: 0 }}
+      activeDot={{ r: 6, stroke: "#38bdf8", strokeWidth: 2, fill: "#0ea5e9" }}
+      name="Activity Count"
+    />
+  </LineChart>
+</ResponsiveContainer>
+
             ),
           },
         ].map((chart, i) => (
@@ -526,7 +592,7 @@ const ManagementTable = ({
   minHeight,
 }) => (
   <section
-    className={`bg-gray-900 p-6 rounded-2xl shadow-lg border border-gray-800 ${minHeight}`}
+    className={`bg-gray-950 p-6 rounded-2xl shadow-lg border border-gray-800 ${minHeight}`}
   >
     <h2 className="text-xl font-bold mb-4">{title}</h2>
     <div className="flex justify-between items-center mb-4">

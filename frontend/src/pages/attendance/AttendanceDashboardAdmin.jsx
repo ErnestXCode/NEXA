@@ -192,31 +192,121 @@ const AttendanceDashboardAdmin = () => {
 
           {/* Line Chart */}
           <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={comparisonData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-              <XAxis dataKey="classLevel" stroke="#ccc" />
-              <YAxis stroke="#ccc" />
-              <Tooltip />
-              <Legend />
-              <Line type="monotone" dataKey="present" stroke="#4CAF50" />
-              <Line type="monotone" dataKey="absent" stroke="#F44336" />
-              <Line type="monotone" dataKey="late" stroke="#FFC107" />
-            </LineChart>
-          </ResponsiveContainer>
+  <LineChart data={comparisonData}>
+    <defs>
+      <linearGradient id="presentLine" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stopColor="#34d399" />
+        <stop offset="100%" stopColor="#059669" />
+      </linearGradient>
+      <linearGradient id="absentLine" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stopColor="#f87171" />
+        <stop offset="100%" stopColor="#b91c1c" />
+      </linearGradient>
+      <linearGradient id="lateLine" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stopColor="#fde047" />
+        <stop offset="100%" stopColor="#facc15" />
+      </linearGradient>
+    </defs>
+
+    <CartesianGrid strokeDasharray="3 3" stroke="#2d3748" />
+    <XAxis
+      dataKey="classLevel"
+      stroke="#d1d5db"
+      tick={{ fontSize: 12 }}
+    />
+    <YAxis stroke="#d1d5db" />
+    <Tooltip
+      contentStyle={{
+        backgroundColor: "#1f2937",
+        color: "#f9fafb",
+        border: "1px solid #374151",
+        borderRadius: "6px",
+        fontSize: "0.85rem",
+      }}
+    />
+    <Legend
+      wrapperStyle={{
+        color: "#e5e7eb",
+        fontSize: "0.85rem",
+      }}
+    />
+
+    <Line
+      type="monotone"
+      dataKey="present"
+      stroke="url(#presentLine)"
+      strokeWidth={3}
+      dot={{ r: 3, strokeWidth: 1, fill: "#10b981" }}
+      activeDot={{ r: 5 }}
+    />
+    <Line
+      type="monotone"
+      dataKey="absent"
+      stroke="url(#absentLine)"
+      strokeWidth={3}
+      dot={{ r: 3, strokeWidth: 1, fill: "#ef4444" }}
+      activeDot={{ r: 5 }}
+    />
+    <Line
+      type="monotone"
+      dataKey="late"
+      stroke="url(#lateLine)"
+      strokeWidth={3}
+      dot={{ r: 3, strokeWidth: 1, fill: "#facc15" }}
+      activeDot={{ r: 5 }}
+    />
+  </LineChart>
+</ResponsiveContainer>
+
 
           {/* Bar Chart */}
           <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={comparisonData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-              <XAxis dataKey="classLevel" stroke="#ccc" />
-              <YAxis stroke="#ccc" />
-              <Tooltip />
-              <Legend />
-              <Bar dataKey="present" fill="#4CAF50" />
-              <Bar dataKey="absent" fill="#F44336" />
-              <Bar dataKey="late" fill="#FFC107" />
-            </BarChart>
-          </ResponsiveContainer>
+  <BarChart data={comparisonData}>
+    <defs>
+      <linearGradient id="presentBar" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stopColor="#34d399" />
+        <stop offset="100%" stopColor="#059669" />
+      </linearGradient>
+      <linearGradient id="absentBar" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stopColor="#f87171" />
+        <stop offset="100%" stopColor="#b91c1c" />
+      </linearGradient>
+      <linearGradient id="lateBar" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stopColor="#fde047" />
+        <stop offset="100%" stopColor="#facc15" />
+      </linearGradient>
+    </defs>
+
+    <CartesianGrid strokeDasharray="3 3" stroke="#2d3748" />
+    <XAxis
+      dataKey="classLevel"
+      stroke="#d1d5db"
+      tick={{ fontSize: 12 }}
+    />
+    <YAxis stroke="#d1d5db" />
+    <Tooltip
+      contentStyle={{
+        backgroundColor: "#1f2937",
+        color: "#f9fafb",
+        border: "1px solid #374151",
+        borderRadius: "6px",
+        fontSize: "0.85rem",
+      }}
+      formatter={(v) => v.toLocaleString()}
+    />
+    <Legend
+      wrapperStyle={{
+        color: "#e5e7eb",
+        fontSize: "0.85rem",
+      }}
+    />
+
+    <Bar dataKey="present" fill="url(#presentBar)" radius={[4, 4, 0, 0]} />
+    <Bar dataKey="absent" fill="url(#absentBar)" radius={[4, 4, 0, 0]} />
+    <Bar dataKey="late" fill="url(#lateBar)" radius={[4, 4, 0, 0]} />
+  </BarChart>
+</ResponsiveContainer>
+
         </div>
       </div>
 
@@ -229,40 +319,120 @@ const AttendanceDashboardAdmin = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 overflow-x-auto">
 
           {/* Line Chart */}
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={avgData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-              <XAxis dataKey="classLevel" stroke="#ccc" />
-              <YAxis stroke="#ccc" />
-              <Tooltip />
-              <Legend />
-              <Line
-                type="monotone"
-                dataKey="avgPerDay"
-                stroke="#4CAF50"
-                name="Avg Attendance"
-              />
-              <Line
-                type="monotone"
-                dataKey="markCount"
-                stroke="#2196F3"
-                name="Days Marked"
-              />
-            </LineChart>
-          </ResponsiveContainer>
+         <ResponsiveContainer width="100%" height={300}>
+  <LineChart data={avgData}>
+    <defs>
+      <linearGradient id="avgLine" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stopColor="#34d399" />
+        <stop offset="100%" stopColor="#059669" />
+      </linearGradient>
+      <linearGradient id="markLine" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stopColor="#60a5fa" />
+        <stop offset="100%" stopColor="#2563eb" />
+      </linearGradient>
+    </defs>
+
+    <CartesianGrid strokeDasharray="3 3" stroke="#2d3748" />
+    <XAxis
+      dataKey="classLevel"
+      stroke="#d1d5db"
+      tick={{ fontSize: 12 }}
+    />
+    <YAxis stroke="#d1d5db" />
+    <Tooltip
+      contentStyle={{
+        backgroundColor: "#1f2937",
+        color: "#f9fafb",
+        border: "1px solid #374151",
+        borderRadius: "6px",
+        fontSize: "0.85rem",
+      }}
+      formatter={(v) => v.toLocaleString()}
+    />
+    <Legend
+      wrapperStyle={{
+        color: "#e5e7eb",
+        fontSize: "0.85rem",
+      }}
+    />
+
+    <Line
+      type="monotone"
+      dataKey="avgPerDay"
+      stroke="url(#avgLine)"
+      strokeWidth={3}
+      dot={{ r: 3, strokeWidth: 1, fill: "#10b981" }}
+      activeDot={{ r: 5 }}
+      name="Avg Attendance"
+    />
+    <Line
+      type="monotone"
+      dataKey="markCount"
+      stroke="url(#markLine)"
+      strokeWidth={3}
+      dot={{ r: 3, strokeWidth: 1, fill: "#3b82f6" }}
+      activeDot={{ r: 5 }}
+      name="Days Marked"
+    />
+  </LineChart>
+</ResponsiveContainer>
+
 
           {/* Bar Chart */}
           <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={avgData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-              <XAxis dataKey="classLevel" stroke="#ccc" />
-              <YAxis stroke="#ccc" />
-              <Tooltip />
-              <Legend />
-              <Bar dataKey="avgPerDay" fill="#4CAF50" name="Avg Attendance" />
-              <Bar dataKey="markCount" fill="#2196F3" name="Days Marked" />
-            </BarChart>
-          </ResponsiveContainer>
+  <BarChart data={avgData} barGap={6}>
+    <defs>
+      <linearGradient id="avgBar" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stopColor="#34d399" />
+        <stop offset="100%" stopColor="#059669" />
+      </linearGradient>
+      <linearGradient id="markBar" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stopColor="#60a5fa" />
+        <stop offset="100%" stopColor="#2563eb" />
+      </linearGradient>
+    </defs>
+
+    <CartesianGrid strokeDasharray="3 3" stroke="#2d3748" />
+    <XAxis
+      dataKey="classLevel"
+      stroke="#d1d5db"
+      tick={{ fontSize: 12 }}
+    />
+    <YAxis stroke="#d1d5db" />
+    <Tooltip
+      contentStyle={{
+        backgroundColor: "#1f2937",
+        color: "#f9fafb",
+        border: "1px solid #374151",
+        borderRadius: "6px",
+        fontSize: "0.85rem",
+      }}
+      formatter={(v) => v.toLocaleString()}
+    />
+    <Legend
+      wrapperStyle={{
+        color: "#e5e7eb",
+        fontSize: "0.85rem",
+      }}
+    />
+
+    <Bar
+      dataKey="avgPerDay"
+      fill="url(#avgBar)"
+      name="Avg Attendance"
+      radius={[6, 6, 0, 0]}
+      barSize={20}
+    />
+    <Bar
+      dataKey="markCount"
+      fill="url(#markBar)"
+      name="Days Marked"
+      radius={[6, 6, 0, 0]}
+      barSize={20}
+    />
+  </BarChart>
+</ResponsiveContainer>
+
         </div>
       </div>
     </div>

@@ -89,6 +89,10 @@ const updateSchool = async (req, res) => {
       updatedData.classLevels = sortClassesByOrder(updatedData.classLevels);
     }
 
+     if (updatedData.logoUrl && typeof updatedData.logoUrl !== "string") {
+      return res.status(400).json({ msg: "Invalid logo format" });
+    }
+
     const updated = await School.findByIdAndUpdate(req.params.id, updatedData, { new: true });
     if (!updated) return res.status(404).json({ msg: "School not found" });
 

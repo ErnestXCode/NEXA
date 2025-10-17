@@ -3,7 +3,7 @@ dotenv.config();
 
 const express = require("express");
 const cookieParser = require("cookie-parser");
-const compression = require('compression');
+const compression = require("compression");
 
 const cors = require("cors");
 const connectDB = require("./config/connectDB");
@@ -13,12 +13,11 @@ const { Server } = require("socket.io");
 const helmet = require("helmet"); // secure headers
 const mongoSanitize = require("express-mongo-sanitize"); // prevent Mongo injection
 const xss = require("xss-clean"); // prevent XSS attacks
-const rateLimit = require("express-rate-limit"); 
+const rateLimit = require("express-rate-limit");
 
 // 🔹 Add cron
 const cron = require("node-cron");
 const Student = require("./models/Student"); // adjust path if needed
-
 
 const app = express();
 const server = http.createServer(app);
@@ -38,10 +37,13 @@ io.on("connection", (socket) => {
     // Log all rooms
     const rooms = io.sockets.adapter.rooms;
     console.log("All rooms:", rooms);
-    
+
     // Optional: list sockets in this room
     const clients = io.sockets.adapter.rooms.get(schoolId);
-    console.log(`Sockets in room ${schoolId}:`, clients ? Array.from(clients) : []);
+    console.log(
+      `Sockets in room ${schoolId}:`,
+      clients ? Array.from(clients) : []
+    );
   });
 
   socket.on("disconnect", () => {
@@ -49,11 +51,15 @@ io.on("connection", (socket) => {
   });
 });
 
-
 // Export io for use in controllers
 app.set("io", io);
 
-const whiteList = [process.env.VITE_URL, "https://cron-job.org", 'http://localhost:3000', 'http://localhost:4173'];
+const whiteList = [
+  process.env.VITE_URL,
+  "https://cron-job.org",
+  "http://localhost:3000",
+  "http://localhost:4173",
+];
 const corsOptions = {
   origin: (origin, callback) => {
     if (whiteList.includes(origin) || !origin) callback(null, true);
@@ -61,7 +67,6 @@ const corsOptions = {
   },
   credentials: true,
 };
-
 
 // app.use(
 //   helmet({
@@ -71,10 +76,10 @@ const corsOptions = {
 // );
 
 app.use(cors(corsOptions));
-app.use(express.json());
+app.use(express.json({ limit: "5mb" }));
+app.use(express.urlencoded({ limit: "5mb", extended: true }));
 app.use(cookieParser());
 app.use(compression());
-
 
 // app.use((req, res, next) => {
 //   if (!req.body && !req.query && !req.params) return next();
@@ -99,7 +104,6 @@ app.use(compression());
 //   }
 // });
 
-
 // Routes
 app.use("/api/attendance", require("./routes/attendance"));
 app.use("/api/exams", require("./routes/exam"));
@@ -117,7 +121,6 @@ app.use("/api/pesapal", require("./routes/pesapal"));
 app.use("/api/manual-payments", require("./routes/manualPayments"));
 app.use("/api/credits", require("./routes/credits"));
 
-
 app.get("/api/ping", (req, res) => {
   return res.status(200).json({
     status: "ok",
@@ -130,7 +133,6 @@ app.get("/api/ping", (req, res) => {
 const dbReady = connectDB().then(() => {
   console.log("MongoDB connected");
 });
-
 
 dbReady.then(() => {
   // CBC class promotion map
@@ -161,13 +163,14 @@ dbReady.then(() => {
         }
       }
 
-      console.log(`Promoted ${promotedCount} students to next class for new year`);
+      console.log(
+        `Promoted ${promotedCount} students to next class for new year`
+      );
     } catch (err) {
       console.error("Error promoting students:", err);
     }
   });
 });
-
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
