@@ -68,12 +68,12 @@ const corsOptions = {
   credentials: true,
 };
 
-// app.use(
-//   helmet({
-//     contentSecurityPolicy: false, // or customize it
-//     crossOriginEmbedderPolicy: false, // only if needed
-//   })
-// );
+app.use(
+  helmet({
+    contentSecurityPolicy: false, // or customize it
+    crossOriginEmbedderPolicy: false, // only if needed
+  })
+);
 
 app.use(cors(corsOptions));
 app.use(express.json({ limit: "5mb" }));

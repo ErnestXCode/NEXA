@@ -8,16 +8,17 @@ const authorize = require("../middleware/authorize");
 const handleBulkRegister = require("../controllers/auth/bulkRegisterController");
 const { bulkCreateParents } = require("../controllers/personel/parents/bulkParentController");
 const { forgotPasswordInternal, resetPasswordInternal } = require("../controllers/auth/forgotPasswordController");
+const authLimiter = require("../middleware/rateLimiter");
 
 const router = express.Router();
 
-router.post("/register", handleRegister);
-router.post("/login", handleLogin);
+router.post("/register", authLimiter, handleRegister);
+router.post("/login",authLimiter, handleLogin);
 router.post("/refresh", handleTokenRefresh);
 router.post("/logout", verifyJWT, handleLogout);
 
-router.post("/forgot-password", forgotPasswordInternal);
-router.post("/reset-password", resetPasswordInternal);
+router.post("/forgot-password",authLimiter, forgotPasswordInternal);
+router.post("/reset-password",authLimiter, resetPasswordInternal);
 
 router.post(
   "/registerpersonel",
