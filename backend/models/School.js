@@ -189,7 +189,7 @@ schoolSchema.statics.defaultCBCSubjectsByClass = function () {
     },
     {
       fromClass: "Grade 7",
-      toClass: "Grade 12",
+      toClass: "Grade 10",
       subjects: [
         "English",
         "Kiswahili",

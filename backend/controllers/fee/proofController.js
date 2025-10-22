@@ -8,44 +8,6 @@ const pushSubscription = require("../../models/pushSubscription");
 const webpush = require("web-push");
 
 
-// ---------------------
-// Parent submits proof
-// ---------------------
-// exports.submitProof = async (req, res) => {
-//   try {
-//     const { studentId, amount, method, txnCode } = req.body;
-//     const parentId = req.user.userId;
-
-//     // Verify student belongs to parent
-//     const student = await Student.findById(studentId);
-//     if (!student) return res.status(404).json({ message: "Student not found" });
-//     if (String(student.guardian) !== String(parentId)) {
-//       return res.status(403).json({ message: "Not authorized for this student" });
-//     }
-
-//     // Optional: auto-fill academicYear and term from school
-//     const school = await School.findById(student.school).lean();
-//     const academicYear = school?.currentAcademicYear || "2025/2026";
-//     const term = school?.currentTerm || "Term 1";
-
-//     const proof = new PaymentProof({
-//       studentId,
-//       parentId,
-//       amount,
-//       method,
-//       txnCode,
-//       academicYear,
-//       term,
-//     });
-
-//     await proof.save();
-
-//     res.status(201).json({ message: "Proof submitted successfully", proof });
-//   } catch (err) {
-//     console.error("submitProof error:", err);
-//     res.status(500).json({ message: "Server error" });
-//   }
-// };
 
 exports.submitProof = async (req, res) => {
   try {

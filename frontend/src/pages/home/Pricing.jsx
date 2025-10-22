@@ -7,7 +7,7 @@ const plans = [
   {
     plan: "Starter",
     price: 20000,
-    pesapalAvailable: true,
+    pesapalAvailable: false,
     features: [
       "Up to 100 students",
       "Basic exam reports",
