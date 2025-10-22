@@ -247,44 +247,36 @@ const FeatureSlider = () => {
       desc: "Record and manage school fees, monitor balances, and gain insights through smart analytics.",
       img: "/images/feesModule.png",
     },
+    {
+      title: "Parent Dashboard",
+      desc: "Parents can view fee balances, attendance, report cards, and school updates — all in one clear dashboard.",
+      img: "/images/parentViewNexa.png",
+    },
+    {
+      title: "Teacher Dashboard",
+      desc: "Teachers manage classes, record attendance and exams, communicate with parents, and monitor performance trends.",
+      img: "/images/teacherViewNexa.png",
+    },
+    {
+      title: "Bursar Dashboard",
+      desc: "Track all financial activities — from payments to analytics — with a secure and organized bursar view.",
+      img: "/images/bursarViewNexa.png",
+    },
   ];
 
   const [index, setIndex] = useState(0);
+  const [itemsPerView, setItemsPerView] = useState(window.innerWidth < 768 ? 1 : 3);
+  const [selectedImage, setSelectedImage] = useState(null);
 
   useEffect(() => {
-    const interval = setInterval(() => handleNext(), 4000);
-    return () => clearInterval(interval);
-  });
-
-  const [itemsPerView, setItemsPerView] = useState(
-    window.innerWidth < 768 ? 1 : 3
-  );
-
-  useEffect(() => {
-    const handleResize = () =>
-      setItemsPerView(window.innerWidth < 768 ? 1 : 3);
+    const handleResize = () => setItemsPerView(window.innerWidth < 768 ? 1 : 3);
     window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  const handleNext = () => setIndex((prev) => (prev + 1) % features.length);
-  const handlePrev = () =>
-    setIndex((prev) => (prev - 1 + features.length) % features.length);
-
-  const [touchStart, setTouchStart] = useState(null);
-  const [touchEnd, setTouchEnd] = useState(null);
-  const minSwipeDistance = 50;
-
-  const onTouchStart = (e) => setTouchStart(e.targetTouches[0].clientX);
-  const onTouchMove = (e) => setTouchEnd(e.targetTouches[0].clientX);
-  const onTouchEnd = () => {
-    if (!touchStart || !touchEnd) return;
-    const distance = touchStart - touchEnd;
-    if (distance > minSwipeDistance) handleNext();
-    if (distance < -minSwipeDistance) handlePrev();
-    setTouchStart(null);
-    setTouchEnd(null);
-  };
+    const interval = setInterval(() => setIndex((prev) => (prev + 1) % features.length), 4000);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      clearInterval(interval);
+    };
+  }, [features.length]);
 
   const visible = [];
   for (let i = 0; i < itemsPerView; i++) {
@@ -292,63 +284,83 @@ const FeatureSlider = () => {
   }
 
   return (
-   <div className="relative flex items-center justify-center w-full overflow-visible">
-  {/* Left Arrow */}
-  <button
-    onClick={handlePrev}
-    className="hidden md:flex absolute -left-10 lg:-left-16 xl:-left-24 p-3 bg-gray-800 bg-opacity-80 hover:bg-opacity-100 rounded-full text-white text-2xl shadow-lg transition-transform hover:scale-110 z-10"
-  >
-    ‹
-  </button>
+    <>
+      <div className="relative flex items-center justify-center w-full overflow-visible">
+        {/* Left Arrow */}
+        <button
+          onClick={() => setIndex((prev) => (prev - 1 + features.length) % features.length)}
+          className="hidden md:flex absolute -left-12 xl:-left-20 p-4 bg-gray-800 bg-opacity-80 hover:bg-opacity-100 rounded-full text-white text-3xl shadow-lg transition-transform hover:scale-110 z-10"
+        >
+          ‹
+        </button>
 
-  {/* Slider */}
-  <div
-    className="flex justify-center gap-8 w-full max-w-6xl transition-transform duration-700 ease-out px-4 md:px-0"
-    onTouchStart={onTouchStart}
-    onTouchMove={onTouchMove}
-    onTouchEnd={onTouchEnd}
-  >
-    {visible.map((f, i) => (
-      <div
-        key={i}
-        className="flex-shrink-0 bg-gray-900 p-6 rounded-2xl border border-gray-800 hover:border-gray-700 shadow transition-transform transform hover:scale-[1.05]"
-        style={{
-          width: itemsPerView === 1 ? "90%" : "30%",
-          transformOrigin: "center",
-        }}
-      >
-        <img
-          src={f.img}
-          alt={f.title}
-          className="w-full h-48 object-cover rounded-xl mb-5 shadow-inner"
-        />
-        <h3 className="text-xl font-semibold text-white mb-2">{f.title}</h3>
-        <p className="text-gray-400">{f.desc}</p>
+        {/* Slider */}
+        <div className="flex justify-center gap-12 w-full max-w-7xl transition-transform duration-700 ease-out px-4 md:px-0">
+          {visible.map((f, i) => (
+            <div
+              key={i}
+              className="flex-shrink-0 bg-gray-900 p-7 rounded-2xl border border-gray-800 hover:border-gray-700 shadow-lg transition-transform transform hover:scale-[1.05] cursor-pointer"
+              style={{
+                width: itemsPerView === 1 ? "90%" : "35%",
+              }}
+              onClick={() => setSelectedImage(f.img)}
+            >
+              <img
+                src={f.img}
+                alt={f.title}
+                className="w-full h-60 object-cover rounded-xl mb-6 shadow-inner"
+              />
+              <h3 className="text-xl font-semibold text-white mb-2">{f.title}</h3>
+              <p className="text-gray-400">{f.desc}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Right Arrow */}
+        <button
+          onClick={() => setIndex((prev) => (prev + 1) % features.length)}
+          className="hidden md:flex absolute -right-12 xl:-right-20 p-4 bg-gray-800 bg-opacity-80 hover:bg-opacity-100 rounded-full text-white text-3xl shadow-lg transition-transform hover:scale-110 z-10"
+        >
+          ›
+        </button>
+
+        {/* Dots */}
+        <div className="flex justify-center mt-10 gap-2 absolute bottom-[-3rem] left-1/2 -translate-x-1/2">
+          {features.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setIndex(i)}
+              className={`w-3 h-3 rounded-full transition-all ${
+                i === index ? "bg-white scale-110" : "bg-gray-600"
+              }`}
+            />
+          ))}
+        </div>
       </div>
-    ))}
-  </div>
 
-  {/* Right Arrow */}
-  <button
-    onClick={handleNext}
-    className="hidden md:flex absolute -right-10 lg:-right-16 xl:-right-24 p-3 bg-gray-800 bg-opacity-80 hover:bg-opacity-100 rounded-full text-white text-2xl shadow-lg transition-transform hover:scale-110 z-10"
-  >
-    ›
-  </button>
-
-  {/* Dots */}
-  <div className="flex justify-center mt-8 gap-2 absolute bottom-[-3rem] left-1/2 -translate-x-1/2">
-    {features.map((_, i) => (
-      <button
-        key={i}
-        onClick={() => setIndex(i)}
-        className={`w-3 h-3 rounded-full transition-all ${
-          i === index ? "bg-white scale-110" : "bg-gray-600"
-        }`}
-      />
-    ))}
-  </div>
-</div>
-
+      {/* Modal for Image Preview */}
+      {selectedImage && (
+        <div
+          className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 px-4"
+          onClick={() => setSelectedImage(null)}
+        >
+          <div className="relative max-w-5xl w-full max-h-[85vh] flex justify-center">
+            <img
+              src={selectedImage}
+              alt="Feature Preview"
+              className="w-full h-auto max-h-[85vh] object-contain rounded-2xl shadow-2xl border border-gray-700"
+            />
+            <button
+              onClick={() => setSelectedImage(null)}
+              className="absolute top-3 right-3 bg-gray-800 bg-opacity-80 hover:bg-opacity-100 text-white text-2xl rounded-full p-2 transition-transform hover:scale-110"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
+
+
