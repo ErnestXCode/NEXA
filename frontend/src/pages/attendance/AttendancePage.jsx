@@ -6,7 +6,7 @@ import {
   deleteAttendanceRecord,
 } from "../../utils/indexedDB";
 import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 const AttendancePage = () => {
   // const [students, setStudents] = useState([]);
@@ -23,6 +23,9 @@ const AttendancePage = () => {
   const [terms] = useState(["Term 1", "Term 2", "Term 3"]);
   const [selectedTerm, setSelectedTerm] = useState("Term 1");
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+  const queryClient = useQueryClient();
+
 
   const navigate = useNavigate();
 
@@ -241,7 +244,7 @@ const AttendancePage = () => {
             </select>
           </div>
           <div className="flex flex-wrap items-center gap-3">
-            <button
+            {/* <button
               onClick={() =>
                 setRecords(
                   Object.fromEntries(
@@ -255,7 +258,14 @@ const AttendancePage = () => {
               className="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg text-sm font-medium shadow-sm"
             >
               Mark All Present
-            </button>
+            </button> */}
+            <button
+  onClick={() => queryClient.refetchQueries({ queryKey: ["attendance-students"]})}
+  className="bg-emerald-600 hover:bg-emerald-700 px-4 py-2 rounded-lg text-sm font-medium shadow-sm flex items-center gap-2 transition"
+>
+  🔄 Refresh
+</button>
+
             <button
               onClick={handleSubmit}
               className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg text-sm font-medium shadow-sm"

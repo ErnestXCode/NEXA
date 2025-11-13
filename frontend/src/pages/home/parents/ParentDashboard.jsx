@@ -6,8 +6,11 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import CustomSelect from "../../../components/layout/CustomSelect";
 import { NavLink, useNavigate } from "react-router-dom";
 import StudentFeeSummary from "../../fees/StudentFeeSummary";
+import { useSelector } from "react-redux";
+import { selectCurrentUser } from "../../../redux/slices/authSlice";
 
 const ParentDashboard = () => {
+   const currentUser = useSelector(selectCurrentUser);
   const [children, setChildren] = useState([]);
   const [selectedChild, setSelectedChild] = useState(null);
   const [attendanceSummary, setAttendanceSummary] = useState(null);
@@ -54,7 +57,7 @@ const ParentDashboard = () => {
   };
 
   // ✅ hook for unread badge
-  const { unreadCount } = useUnreadMessages();
+  const { unreadCount } = useUnreadMessages(currentUser);
 
   const fetchDashboard = async () => {
     try {
@@ -164,22 +167,25 @@ const ParentDashboard = () => {
     }
   }, [selectedChild]);
 
+  if(!unreadCount) console.log('unreadCount---------not availabel')
+
   return (
     <div className="p-4 sm:p-6 space-y-8 min-h-screen bg-gray-950 text-gray-200">
       {/* 🔹 Messages NavLink */}
-      <NavLink
-        to="/dashboard/communication"
-        className="relative block bg-gradient-to-r from-indigo-700 via-purple-700 to-pink-700 shadow-md rounded-2xl p-6 transition transform hover:scale-101 hover:shadow-xl hover:from-indigo-600 hover:via-purple-600 hover:to-pink-600 duration-300"
-      >
-        <h2 className="text-white text-2xl font-bold mb-2">Messages</h2>
-        <p className="text-gray-200 text-sm">Check school communications</p>
+     <NavLink
+  to="/dashboard/communication"
+  className="relative flex flex-col items-start bg-gradient-to-r from-indigo-700 via-purple-700 to-pink-700 shadow-md rounded-2xl p-6 transition transform hover:scale-105 hover:shadow-xl hover:from-indigo-600 hover:via-purple-600 hover:to-pink-600 duration-300"
+>
+  <h2 className="text-white text-2xl font-bold mb-2">Messages</h2>
+  <p className="text-gray-200 text-sm">Check school communications</p>
 
-        {unreadCount > 0 && (
-          <span className="absolute -top-2 -right-2 bg-gray-950 text-white text-xs font-bold px-2 py-0.5 rounded-full ring-2 ring-purple-400 shadow-lg">
-            {unreadCount > 9 ? "9+" : unreadCount}
-          </span>
-        )}
-      </NavLink>
+  {unreadCount > 0 && (
+    <span className="absolute -top-2 -right-2 bg-gray-950 text-white text-xs font-bold px-2 py-0.5 rounded-full ring-2 ring-purple-400 shadow-lg">
+      {unreadCount > 9 ? "9+" : unreadCount}
+    </span>
+  )}
+</NavLink>
+
 
       {/* Child Selection */}
       {children.length > 1 && (
@@ -219,6 +225,123 @@ const ParentDashboard = () => {
               </p>
             </div>
           </div>
+
+            {/* Exams Section */}
+          {childExams.length > 0 && (
+            <div className="bg-gradient-to-r from-gray-900 to-gray-800 p-6 rounded-2xl shadow-md">
+              <h2 className="text-xl sm:text-2xl font-bold mb-4 border-b border-gray-700 pb-2">
+                Exam Results
+              </h2>
+
+              {/* Dropdown to pick exam */}
+              <div className="mb-4">
+                {/* <select
+                  value={selectedExamId}
+                  onChange={(e) => setSelectedExamId(e.target.value)}
+                  className="w-full p-2 rounded bg-gray-800 text-white border border-gray-700"
+                >
+                  <option value="">Select Exam</option>
+                  {childExams.map((exam) => (
+                    <option key={exam.examId} value={exam.examId}>
+                      {exam.examName} – {exam.term}
+                    </option>
+                  ))}
+                </select> */}
+
+                <CustomSelect
+                  value={selectedExamId}
+                  onChange={setSelectedExamId}
+                  placeholder="Select Exam"
+                  options={childExams.map((exam) => ({
+                    value: exam.examId,
+                    label: `${exam.examName} – ${exam.term}`,
+                  }))}
+                />
+              </div>
+
+              {/* Show chosen exam */}
+              {(() => {
+                const examToShow =
+                  selectedExamId &&
+                  childExams.find((exam) => exam.examId === selectedExamId);
+
+                if (!examToShow) return null;
+
+                return (
+                  <div className="space-y-4">
+                    {/* Exam meta */}
+                    <div className="bg-gray-950 p-4 rounded-xl shadow">
+                      <p className="text-gray-300 text-sm">
+                        <span className="font-semibold">Exam:</span>{" "}
+                        {examToShow.examName}
+                      </p>
+                      <p className="text-gray-300 text-sm">
+                        <span className="font-semibold">Term:</span>{" "}
+                        {examToShow.term}
+                      </p>
+                      <p className="text-gray-300 text-sm">
+                        <span className="font-semibold">Date:</span>{" "}
+                        {new Date(examToShow.date).toLocaleDateString()}
+                      </p>
+                    </div>
+
+                    {/* Subjects table */}
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm text-gray-300 border border-gray-700 rounded-lg">
+                        <thead className="bg-gray-800 text-gray-200">
+                          <tr>
+                            <th className="px-4 py-2 text-left">Subject</th>
+                            <th className="px-4 py-2 text-right">Score</th>
+                            <th className="px-4 py-2 text-right">Grade</th>
+                            <th className="px-4 py-2 text-right">Remark</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {examToShow.subjects.map((subj, idx) => (
+                            <tr
+                              key={idx}
+                              className={
+                                idx % 2 === 0
+                                  ? "bg-gray-950/40"
+                                  : "bg-gray-900/40"
+                              }
+                            >
+                              <td className="px-4 py-2">{subj.name}</td>
+                              <td className="px-4 py-2 text-right">
+                                {subj.score}
+                              </td>
+                              <td className="px-4 py-2 text-right">
+                                {subj.grade}
+                              </td>
+                              <td className="px-4 py-2 text-right">
+                                {subj.remark}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* Totals */}
+                    <div className="bg-gray-950 p-4 rounded-xl shadow flex justify-between text-sm">
+                      <span>Total: {examToShow.total}</span>
+                      <span>Average: {examToShow.average}</span>
+                      {/* <span>Grade: {examToShow.grade}</span>
+            <span>Remark: {examToShow.remark}</span> */}
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+          )}
+
+                 <button
+  onClick={() => queryClient.refetchQueries({ queryKey: ["studentSummary"]})}
+  className="bg-emerald-600 hover:bg-emerald-700 px-4 py-2 rounded-lg text-sm font-medium shadow-sm flex items-center gap-2 transition"
+>
+  Update Fees Feed
+</button>
+
           {/* ✅ New Outstanding Fees Block (from /fees/outstanding) */}
           {selectedChild && <StudentFeeSummary studentId={selectedChild._id} />}
 
@@ -494,115 +617,8 @@ const ParentDashboard = () => {
               </div>
             </div>
           )}
-          {/* Exams Section */}
-          {/* Exams Section */}
-          {childExams.length > 0 && (
-            <div className="bg-gradient-to-r from-gray-900 to-gray-800 p-6 rounded-2xl shadow-md">
-              <h2 className="text-xl sm:text-2xl font-bold mb-4 border-b border-gray-700 pb-2">
-                Exam Results
-              </h2>
-
-              {/* Dropdown to pick exam */}
-              <div className="mb-4">
-                {/* <select
-                  value={selectedExamId}
-                  onChange={(e) => setSelectedExamId(e.target.value)}
-                  className="w-full p-2 rounded bg-gray-800 text-white border border-gray-700"
-                >
-                  <option value="">Select Exam</option>
-                  {childExams.map((exam) => (
-                    <option key={exam.examId} value={exam.examId}>
-                      {exam.examName} – {exam.term}
-                    </option>
-                  ))}
-                </select> */}
-
-                <CustomSelect
-                  value={selectedExamId}
-                  onChange={setSelectedExamId}
-                  placeholder="Select Exam"
-                  options={childExams.map((exam) => ({
-                    value: exam.examId,
-                    label: `${exam.examName} – ${exam.term}`,
-                  }))}
-                />
-              </div>
-
-              {/* Show chosen exam */}
-              {(() => {
-                const examToShow =
-                  selectedExamId &&
-                  childExams.find((exam) => exam.examId === selectedExamId);
-
-                if (!examToShow) return null;
-
-                return (
-                  <div className="space-y-4">
-                    {/* Exam meta */}
-                    <div className="bg-gray-950 p-4 rounded-xl shadow">
-                      <p className="text-gray-300 text-sm">
-                        <span className="font-semibold">Exam:</span>{" "}
-                        {examToShow.examName}
-                      </p>
-                      <p className="text-gray-300 text-sm">
-                        <span className="font-semibold">Term:</span>{" "}
-                        {examToShow.term}
-                      </p>
-                      <p className="text-gray-300 text-sm">
-                        <span className="font-semibold">Date:</span>{" "}
-                        {new Date(examToShow.date).toLocaleDateString()}
-                      </p>
-                    </div>
-
-                    {/* Subjects table */}
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-sm text-gray-300 border border-gray-700 rounded-lg">
-                        <thead className="bg-gray-800 text-gray-200">
-                          <tr>
-                            <th className="px-4 py-2 text-left">Subject</th>
-                            <th className="px-4 py-2 text-right">Score</th>
-                            <th className="px-4 py-2 text-right">Grade</th>
-                            <th className="px-4 py-2 text-right">Remark</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {examToShow.subjects.map((subj, idx) => (
-                            <tr
-                              key={idx}
-                              className={
-                                idx % 2 === 0
-                                  ? "bg-gray-950/40"
-                                  : "bg-gray-900/40"
-                              }
-                            >
-                              <td className="px-4 py-2">{subj.name}</td>
-                              <td className="px-4 py-2 text-right">
-                                {subj.score}
-                              </td>
-                              <td className="px-4 py-2 text-right">
-                                {subj.grade}
-                              </td>
-                              <td className="px-4 py-2 text-right">
-                                {subj.remark}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-
-                    {/* Totals */}
-                    <div className="bg-gray-950 p-4 rounded-xl shadow flex justify-between text-sm">
-                      <span>Total: {examToShow.total}</span>
-                      <span>Average: {examToShow.average}</span>
-                      {/* <span>Grade: {examToShow.grade}</span>
-            <span>Remark: {examToShow.remark}</span> */}
-                    </div>
-                  </div>
-                );
-              })()}
-            </div>
-          )}
+          
+        
         </div>
       )}
     </div>

@@ -608,6 +608,13 @@ const AddFeePage = () => {
         </div>
       </div>
 
+
+             <button
+  onClick={() => queryClient.refetchQueries({ queryKey: ['proofs', 'pending']})}
+  className="bg-emerald-600 hover:bg-emerald-700 px-4 py-2 rounded-lg text-sm font-medium shadow-sm flex items-center gap-2 transition"
+>
+  Refresh Proofs
+</button>
       <div className="p-6 bg-gray-900 rounded-md shadow-md">
   <h2 className="text-2xl font-bold mb-6 border-b border-gray-800 pb-2">Payment Proofs</h2>
 

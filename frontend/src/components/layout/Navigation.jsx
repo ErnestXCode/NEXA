@@ -52,7 +52,7 @@ const Navigation = () => {
 
         <button
           onClick={() => setSidenav(true)}
-          className="px-3 md:px-4 py-2 rounded-lg border border-gray-700 bg-gray-800/70 hover:bg-gray-700 transition font-medium text-white text-sm md:text-base"
+          className="px-3 md:px-4 py-2 rounded-lg border cursor-pointer border-gray-700 bg-gray-800/70 hover:bg-gray-700 transition font-medium text-white text-sm md:text-base"
         >
           ☰ Menu
         </button>

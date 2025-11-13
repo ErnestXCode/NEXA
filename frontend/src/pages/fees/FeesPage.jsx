@@ -240,7 +240,8 @@ const FeesPage = () => {
         <div className="flex flex-col lg:flex-row gap-6 items-start">
           {/* Summary with bars */}
           <div className="flex-1 space-y-4">
-            <div className="bg-gray-950 rounded-lg p-4 shadow flex justify-between items-center">
+            <div className="bg-gradient-to-br from-gray-950 to-gray-800 
+            border-b-2 border-gray-600  rounded-lg p-4 shadow flex justify-between items-center">
               <div>
                 <p className="text-gray-400 text-sm">Expected</p>
                 <p className="text-xl font-bold text-blue-400">
@@ -260,7 +261,8 @@ const FeesPage = () => {
               </div>
             </div>
 
-            <div className="bg-gray-950 rounded-lg p-4 shadow flex justify-between items-center">
+            <div className="bg-gradient-to-br from-gray-950 to-gray-800 
+            border-b-2 border-gray-600  rounded-lg p-4 shadow flex justify-between items-center">
               <div>
                 <p className="text-gray-400 text-sm">Paid</p>
                 <p className="text-xl font-bold text-green-400">
@@ -280,7 +282,9 @@ const FeesPage = () => {
               </div>
             </div>
 
-            <div className="bg-gray-950 rounded-lg p-4 shadow flex justify-between items-center">
+            <div className="bg-gradient-to-br from-gray-950 to-gray-800 
+            border-b-2 border-gray-600 
+            rounded-lg p-4 shadow flex justify-between items-center">
               <div>
                 <p className="text-gray-400 text-sm">Outstanding</p>
                 <p className="text-xl font-bold text-red-400">

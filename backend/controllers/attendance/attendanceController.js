@@ -282,6 +282,7 @@ exports.getAttendanceDetails = async (req, res) => {
 exports.getStatsByRange = async (req, res) => {
   try {
     console.log("=== HIT /attendance/range ===");
+    const requester = await User.findById(req.user.userId)
 
     const { startDate, endDate, academicYear, term } = req.query;
     console.log("🔹 Raw query params:", req.query);
@@ -311,6 +312,7 @@ exports.getStatsByRange = async (req, res) => {
       academicYear,
       term,
       school: new mongoose.Types.ObjectId(req.user.school),
+      classLevel: requester.classLevel
     };
 
     console.log("🧩 Aggregation match filter:", matchStage);
@@ -344,6 +346,7 @@ exports.getAbsenteeListRange = async (req, res) => {
   try {
     console.log("▶️ Hit /attendance/absentees");
     const { days = 30, academicYear, term } = req.query; // default now 30 days
+    const requester = await User.findById(req.user.userId)
 
     if (!academicYear || !term) {
       return res.status(400).json({ error: "Missing required query params" });
@@ -359,6 +362,7 @@ exports.getAbsenteeListRange = async (req, res) => {
           academicYear,
           term,
           status: "absent",
+          classLevel: requester.classLevel
         },
       },
       {

@@ -1,0 +1,7 @@
+attendance cache after changing the class a teacher is supposed to be class teacher attendance
+attendance trigger notifications but as unreadMessages which its not really , so maybe we dont update the unread but we show the notification , or maybe have a diff section about child updates 
+attendance is cumulating in classteacher dashboard 
+updates upto grade 10 for some reason
+
+
+update to next year button in settings , classlevels and all that good stuff, we can also keep the same rules for fees as an option , will remove that headache , so the rules in prev year are copied to next year but with diff academic year.
